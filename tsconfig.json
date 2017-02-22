@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es5",
+    "noImplicitAny": false,
+    "strictNullChecks": true,
+    "stripInternal": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "typeRoots" : ["./node_modules/@types","./custom-typings"]
+  },
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

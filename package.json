@@ -1,0 +1,60 @@
+{
+  "name": "scs",
+  "version": "0.0.1",
+  "description": "Ship Control System - Empty Epsilon integration server",
+  "main": "dist/src/nodejs.js",
+  "browser": "dist/src/browser.js",
+  "scripts": {
+    "clean": "rimraf ./dist",
+    "build": "tsc -d",
+    "build:watch": "tsc -d -w",
+    "bundle": "webpack --progress",
+    "pretest": "npm run clean && npm run build && npm run bundle",
+    "test": "npm run test:node && npm run test:browser",
+    "test:node": "mocha --reporter mocha-env-reporter dist/test/nodejs",
+    "test:browser": "karma start --single-run",
+    "start": "webpack-dev-server --progress"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:CommaSword/scs.git"
+  },
+  "keywords": [
+    "empty epsilon",
+    "SBS"
+  ],
+  "author": "Amir Arad (amira@wix.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/CommaSword/scs/issues"
+  },
+  "homepage": "https://github.com/CommaSword/scs#readme",
+  "devDependencies": {
+    "@types/bluebird": "3.0.37",
+    "@types/chai": "3.4.35",
+    "@types/chai-as-promised": "0.0.29",
+    "@types/mocha": "2.2.39",
+    "@types/node": "7.0.5",
+    "chai": "3.5.0",
+    "chai-as-promised": "6.0.0",
+    "json-loader": "0.5.4",
+    "karma": "1.4.1",
+    "karma-chrome-launcher": "2.0.0",
+    "karma-env-reporter": "1.0.13",
+    "karma-firefox-launcher": "1.0.0",
+    "karma-mocha": "1.3.0",
+    "mocha": "3.2.0",
+    "mocha-env-reporter": "2.0.4",
+    "mocha-loader": "1.1.0",
+    "rimraf": "2.6.0",
+    "sinon": "2.0.0-pre.2",
+    "source-map-support": "0.4.11",
+    "ts-loader": "2.0.0",
+    "typescript": "2.1.6",
+    "webpack": "1.14.0",
+    "webpack-dev-server": "1.16.2"
+  },
+  "dependencies": {
+    "bluebird": "3.4.7"
+  }
+}
