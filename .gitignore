@@ -39,4 +39,7 @@ dist
 .vscode
 
 .idea
-./config.json
+config.json
+src/*.js
+test/*.js
+test-kit/*.js

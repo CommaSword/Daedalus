@@ -1,4 +1,4 @@
 {
-  "runServer": "c:\\Users\\danielstr\\Desktop\\EmptyEpsilon.exe headless=scenario_01_waves.lua headless_name=Federation headless_password=xxx headless_internet=1 httpserver=8080",
-  "serverAddress":"localhost:8080"
+  "runServer": "/Users/amira/ee/emptyepsilon/EmptyEpsilon/EmptyEpsilon.app/Contents/MacOS/EmptyEpsilon headless=scenario_01_waves.lua headless_name=Federation headless_password=supersecretpassword headless_internet=1 httpserver=8080",
+  "serverAddress":"http://localhost:8080"
 }

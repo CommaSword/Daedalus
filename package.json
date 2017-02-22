@@ -31,6 +31,7 @@
   "homepage": "https://github.com/CommaSword/scs#readme",
   "devDependencies": {
     "@types/bluebird": "3.0.37",
+    "@types/bluebird-retry": "0.0.31",
     "@types/chai": "3.4.35",
     "@types/chai-as-promised": "0.0.29",
     "@types/mocha": "2.2.39",
@@ -55,6 +56,8 @@
     "webpack-dev-server": "1.16.2"
   },
   "dependencies": {
-    "bluebird": "3.4.7"
+    "axios": "0.15.3",
+    "bluebird": "3.4.7",
+    "bluebird-retry": "0.10.1"
   }
 }
