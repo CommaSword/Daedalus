@@ -39,3 +39,4 @@ dist
 .vscode
 
 .idea
+./config.json
