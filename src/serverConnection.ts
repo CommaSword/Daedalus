@@ -1,5 +1,9 @@
-import {ServerDriver} from "./api";
+import * as Promise from 'bluebird';
+import {exec} from 'child_process';
+import * as config from '../../config.json';
 
-export class ServerConnection implements ServerDriver{
-
+export class ServerConnection{
+    init() {
+        exec(config.runServer);
+    }
 }
