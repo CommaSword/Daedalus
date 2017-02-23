@@ -3,16 +3,15 @@ import {HttpServerDriver} from '../src/http-server-driver';
 import {ChildProcess} from "child_process";
 import {expect} from 'chai';
 
-describe('Server Manager', function () {
+describe('HTTP Server Driver', function () {
     let server:ChildProcess;
-    before(function(){
-        this.timeout(10 * 1000);
+    before(()=>{
         return new ServerManager().init().then(p => server = p);
     });
     after(()=>{
         server && server.kill();
     });
-    it('Starts a new server', function () {
+    it('gets the hull of a spaceship', function () {
         return expect(new HttpServerDriver().getHull()).to.eventually.equal(250);
     })
 });

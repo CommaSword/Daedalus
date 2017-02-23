@@ -10,17 +10,20 @@ export class HttpServerDriver implements ServerDriver{
     }
 
     getHull():Promise<number>{
+        return this.get({hull: 'getHull()'}).then(data => data.hull);
+    }
+
+    private get(query: {}) {
         return this.http.request({
-            method:'get',
+            method: 'get',
             url: '/get.lua',
-            data: {
-                hull: 'getHull()'
+            params: query,
+            transformResponse: JSON.parse
+        }).then((res: AxiosResponse) => {
+            if (res.data['error']) {
+                throw new Error('server returned error:' + res.data['error']);
             }
-        }).then((res:AxiosResponse) => {
-            if (res.data['error']){
-                throw new Error('server returned error:'+res.data['error']);
-            }
-            return res.data.hull;
-        })
+            return res.data;
+        });
     }
 }
