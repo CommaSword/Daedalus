@@ -1,7 +1,7 @@
 import * as Promise from 'bluebird';
 import {exec, ChildProcess} from 'child_process';
 import * as config from '../../config.json';
-import {HttpServerDriver} from "./http-server-driver";
+import {HttpServerDriver} from "../src/http-server-driver";
 import retry = require('bluebird-retry');
 
 export class ServerManager {

@@ -1,4 +1,6 @@
 {
-  "runServer": "/Users/amira/ee/emptyepsilon/EmptyEpsilon/EmptyEpsilon.app/Contents/MacOS/EmptyEpsilon headless=scenario_01_waves.lua headless_name=Federation headless_password=supersecretpassword headless_internet=1 httpserver=8080",
-  "serverAddress":"http://localhost:8080"
+  "_runServer": "/Users/amira/ee/emptyepsilon/EmptyEpsilon/EmptyEpsilon.app/Contents/MacOS/EmptyEpsilon headless=scenario_01_waves.lua headless_name=Federation headless_password=supersecretpassword headless_internet=1 httpserver=8080",
+  "_serverAddress":"http://localhost:8080",
+  "runServer": ";",
+  "serverAddress":"http://192.168.1.104:8080"
 }
