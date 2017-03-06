@@ -12,6 +12,14 @@ describe('Managed server (e2e)', function () {
     after(()=>{
         server && server.kill();
     });
+    it('HTTP Server Driver gets and sets the position of a spaceship', function () {
+        let originalHull:number;
+        let ship = new HttpServerDriver(config.serverAddress).getPlayerShip();
+        return expect(ship.getPosition()).to.eventually.eql([0,0])
+            .then(() => ship.setPosition(123, 321))
+            .then(()=>expect(ship.getPosition()).to.eventually.eql([123, 321]))
+    });
+
     it('HTTP Server Driver gets and sets the hull of a spaceship', function () {
         let originalHull:number;
         let ship = new HttpServerDriver(config.serverAddress).getPlayerShip();
@@ -23,5 +31,5 @@ describe('Managed server (e2e)', function () {
             .then(()=>expect(ship.getHull()).to.eventually.equal(originalHull * 2))
             .then(() => ship.setHull(originalHull))
             .then(()=>expect(ship.getHull()).to.eventually.equal(originalHull))
-    })
+    });
 });
