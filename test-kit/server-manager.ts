@@ -5,11 +5,11 @@ import {HttpServerDriver} from "../src/http-server-driver";
 import retry = require('bluebird-retry');
 
 export class ServerManager {
-    driver = new HttpServerDriver();
+    driver = new HttpServerDriver(config.serverAddress);
 
     init(): Promise<ChildProcess> {
         const result = exec(config.runServer);
-        return retry(() => this.driver.getHull(), {interval: 20, timeout: 10 * 1000})
+        return retry(() => this.driver.getPlayerShip().getHull(), {interval: 20, timeout: 10 * 1000})
             .then(
                 () => result,
                 (e) => {

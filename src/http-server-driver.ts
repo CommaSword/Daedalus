@@ -1,27 +1,19 @@
 import {ServerDriver} from "./api";
 import {default as Axios, AxiosInstance, Promise, AxiosResponse} from "axios";
-import * as config from '../../config.json';
+import {PlayerShip} from "./player-ship";
+export {Promise}  from "axios";
 
-export class HttpServerDriver implements ServerDriver{
+export class HttpDriver {
     private http: AxiosInstance;
 
-    constructor(){
-        this.http = Axios.create({baseURL: config.serverAddress});
-    }
-
-    set serverAddress(baseURL:string){
+    constructor(baseURL: string){
         this.http = Axios.create({baseURL});
     }
 
-    getHull():Promise<number>{
-        return this.get({hull: `getHull()`}).then(data => data.hull);
-    }
-
-    setHull(number: number):Promise<void> {
-        return this.set(`setHull(${number})`);
-    }
-
-    private get(query: {}) {
+    get(getter: string, contextGetter:string) {
+        const query:{[k:string]:string} = {};
+        query['result'] = getter;
+        query['_OBJECT_'] = contextGetter;
         return this.http.request({
             method: 'get',
             url: '/get.lua',
@@ -31,20 +23,38 @@ export class HttpServerDriver implements ServerDriver{
             if (res.data['error']) {
                 throw new Error('server returned error:' + res.data['error']);
             }
-            return res.data;
+            return res.data.result;
         });
     }
-    private set(query: string) {
+    set(setter: string, contextGetter:string) {
+        const query:string[] = [];
+        query.push(setter);
+        query.push('_OBJECT_='+contextGetter);
         return this.http.request({
             method: 'get',
             url: '/set.lua',
             params: {q:query},
-            paramsSerializer:(params)=>params.q,
+            paramsSerializer:(params)=>params.q.join('&'),
             transformResponse: (d)=>d? JSON.parse(d):{}
         }).then((res: AxiosResponse) => {
             if (res.data['error']) {
                 throw new Error('server returned error:' + res.data['error']);
             }
         });
+    }
+}
+
+export class HttpServerDriver implements ServerDriver{
+    private http:HttpDriver;
+    constructor(baseURL: string){
+        this.http = new HttpDriver(baseURL);
+    }
+
+    set serverAddress(baseURL:string){
+        this.http = new HttpDriver(baseURL);
+    }
+
+    getPlayerShip(index = -1){
+        return new PlayerShip(this.http, index);
     }
 }

@@ -1,5 +1,5 @@
-import {Promise} from "axios";
+import {PlayerShip} from "./player-ship";
 
 export interface ServerDriver{
-    getHull():Promise<number>;
+    getPlayerShip():PlayerShip;
 }
