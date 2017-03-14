@@ -1,4 +1,4 @@
-import {ObjectDriver} from "../http-server-driver";
+import {ObjectDriver} from "../driver";
 import {SpaceObject} from "./space-object";
 
 export abstract class SpaceShip extends SpaceObject{

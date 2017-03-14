@@ -7,7 +7,7 @@ export {Promise}  from "axios";
 /**
  * main API entry point. supplies access to game global actions and object queries
  */
-export class HttpServerDriver implements ServerDriver{
+export class EmptyEpsilonDriver implements ServerDriver{
     private http:HttpDriver;
     constructor(baseURL: string){
         this.http = new HttpDriver(baseURL);
@@ -99,7 +99,7 @@ export class ObjectDriver{
     getMultiple<T>(getter: string, numberOfResults:number):Promise<Array<T>> {
         return this.httpDriver.getMultiple(this.contextQuery, getter, numberOfResults);
     }
-    get<T>(getter: string, numberOfResults?:number):Promise<T> {
+    get<T>(getter: string):Promise<T> {
         return this.httpDriver.get(this.contextQuery, getter);
     }
     set(setter: string) {

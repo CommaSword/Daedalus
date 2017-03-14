@@ -1,4 +1,4 @@
-import {Promise, ObjectDriver} from "../http-server-driver";
+import {Promise, ObjectDriver} from "../driver";
 import {SpaceShip} from "./space-ship";
 
 export class PlayerShip extends SpaceShip {

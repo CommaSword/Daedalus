@@ -1,9 +1,6 @@
-import {ObjectDriver, Promise} from "../http-server-driver";
-/**
- * Created by amira on 6/3/17.
- */
+import {ObjectDriver, Promise} from "../driver";
 
-export abstract class SpaceObject{
+export abstract class SpaceObject {
     protected abstract readonly driver:ObjectDriver;
 
     getPosition():Promise<[number, number]>{

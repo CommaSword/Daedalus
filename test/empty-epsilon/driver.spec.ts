@@ -1,28 +1,27 @@
-import {ServerManager} from '../test-kit/server-manager'
-import {HttpServerDriver} from '../src/http-server-driver';
+import {ServerManager} from '../../test-kit/empty-epsylon-server-manager'
+import {EmptyEpsilonDriver} from '../../src/empty-epsilon/driver';
 import {ChildProcess} from "child_process";
 import {expect} from 'chai';
-import * as config from '../../config.json';
+import * as config from '../../../config.json';
 
-describe('Managed server (e2e)', function () {
+describe('HTTP Server Driver', ()=>{
     let server:ChildProcess;
-    before(()=>{
+    before('init managed server', ()=>{
         return new ServerManager().init().then(p => server = p);
     });
-    after(()=>{
+    after('destroy managed server', ()=>{
         server && server.kill();
     });
-    it('HTTP Server Driver gets and sets the position of a spaceship', function () {
-        let originalHull:number;
-        let ship = new HttpServerDriver(config.serverAddress).getPlayerShip();
+    it('gets and sets the position of a spaceship', function () {
+        let ship = new EmptyEpsilonDriver(config.serverAddress).getPlayerShip();
         return expect(ship.getPosition()).to.eventually.eql([0,0])
             .then(() => ship.setPosition(123, 321))
             .then(()=>expect(ship.getPosition()).to.eventually.eql([123, 321]))
     });
 
-    it('HTTP Server Driver gets and sets the hull of a spaceship', function () {
+    it('gets and sets the hull of a spaceship', function () {
         let originalHull:number;
-        let ship = new HttpServerDriver(config.serverAddress).getPlayerShip();
+        let ship = new EmptyEpsilonDriver(config.serverAddress).getPlayerShip();
         return ship.getHull()
             .then(hull => {
                 originalHull = hull;

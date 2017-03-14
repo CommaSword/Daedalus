@@ -1,3 +1,3 @@
 require('source-map-support').install();
 import './universal';
-import './e2e.spec';
+import './empty-epsilon/driver.spec';
