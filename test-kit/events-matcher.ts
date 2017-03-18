@@ -3,11 +3,12 @@ import * as Promise from 'bluebird';
 import * as retry from 'bluebird-retry';
 import {EventEmitter} from 'eventemitter3';
 import {Msg, IncomingMsg} from "../src/panels/protocol";
-import {Connection, Server, IncomingEventType} from "../src/panels/panels-server";
+import {PanelSession, Server, IncomingEvents} from "../src/panels/panels-server";
 
 export interface EventObj{
-    msg:Msg<any>;
-    panel:Connection;
+    event:keyof IncomingEvents;
+    msg:Msg<any>|undefined;
+    panel:PanelSession;
 }
 
 export type DeepPartial<T> = {
@@ -27,13 +28,9 @@ export class EventsMatcher{
     private events: Array<EventObj> = [];
     constructor(private options:EventsMatcher.Options){}
 
-    // track(server: Server, ...eventNames: Array<IncomingEventType>) {
     track(server: Server) {
-        Server.incomingEvents.forEach(eventName => server.on(eventName, (msg: IncomingMsg<any>, panel:Connection) => {
-            if (msg.type && msg.type !== 'unknown'){
-                expect(msg.type, `${msg.type} event dispatched as ${eventName}`).to.eql(eventName);
-            }
-            this.events.push({msg, panel});
+        Server.incomingEvents.forEach(event => server.on(event, (panel:PanelSession, msg?: IncomingMsg<any>) => {
+            this.events.push({event, msg, panel});
         }))
     }
 

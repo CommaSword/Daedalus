@@ -34,6 +34,7 @@
     "@types/bluebird-retry": "0.0.31",
     "@types/chai": "3.4.35",
     "@types/chai-as-promised": "0.0.29",
+    "@types/lodash": "4.14.55",
     "@types/mocha": "2.2.39",
     "@types/node": "7.0.5",
     "chai": "3.5.0",
@@ -60,6 +61,7 @@
     "axios": "0.15.3",
     "bluebird": "3.4.7",
     "bluebird-retry": "0.10.1",
-    "eventemitter3": "2.0.2"
+    "eventemitter3": "2.0.2",
+    "lodash": "4.17.4"
   }
 }
