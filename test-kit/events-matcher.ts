@@ -2,11 +2,11 @@ import {expect} from "chai";
 import * as Promise from 'bluebird';
 import * as retry from 'bluebird-retry';
 import {EventEmitter} from 'eventemitter3';
-import {Msg} from "../src/panels/protocol";
+import {Msg, IncomingMsg} from "../src/panels/protocol";
 import {Connection, Server, IncomingEventType} from "../src/panels/panels-server";
 
 export interface EventObj{
-    msg:Msg;
+    msg:Msg<any>;
     panel:Connection;
 }
 
@@ -29,10 +29,9 @@ export class EventsMatcher{
 
     // track(server: Server, ...eventNames: Array<IncomingEventType>) {
     track(server: Server) {
-        const incomingEvents:Array<IncomingEventType> = ['unknown'];
-        incomingEvents.forEach(eventName => server.on(eventName, (msg: Msg, panel:Connection) => {
-            if (eventName !== 'unknown'){
-                expect(msg.type, `type of event dispatched as ${eventName}`).to.eql(eventName);
+        Server.incomingEvents.forEach(eventName => server.on(eventName, (msg: IncomingMsg<any>, panel:Connection) => {
+            if (msg.type && msg.type !== 'unknown'){
+                expect(msg.type, `${msg.type} event dispatched as ${eventName}`).to.eql(eventName);
             }
             this.events.push({msg, panel});
         }))

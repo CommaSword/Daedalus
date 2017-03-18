@@ -1,14 +1,12 @@
 import * as Promise from 'bluebird';
 import {createServer} from 'net';
 import {Socket, Server as NetServer} from "net";
-import {} from './protocol';
-import {Msg} from "./protocol";
-import {MsgType} from "./protocol";
+import {Msg, MsgType, Noop_MsgType, IncomingMsg} from "./protocol";
 import {EventEmitter} from 'eventemitter3';
 
 
 export type IncomingEvents = {
-    unknown : Msg;
+    unknown : IncomingMsg<any>;
 }
 export type IncomingEventType = keyof IncomingEvents & (MsgType|'unknown');
 
@@ -34,8 +32,10 @@ export class Connection {
 
     private onConnData = (d) => {
         console.log('connection data from %s: %j', this.remoteAddress, d);
-        const msg = JSON.parse(d) as Msg;
+        const msg = JSON.parse(d) as Msg<any>;
         switch(msg.type){
+            case 'noop':
+                break;
             default:
                 this.serverEvents.emit('unknown', msg, this);
         }
@@ -68,6 +68,7 @@ export class Connection {
 
 
 export class Server{
+    static readonly incomingEvents:Array<IncomingEventType> = ['unknown'];
     private server:NetServer;
     private events = new EventEmitter();
     private panels:Array<Connection> = [];

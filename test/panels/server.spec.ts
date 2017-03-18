@@ -2,6 +2,7 @@ import {Server} from '../../src/panels/panels-server';
 import {FakePanel} from '../../test-kit/panels-client'
 import {expect} from 'chai';
 import {EventsMatcher} from "../../test-kit/events-matcher";
+import {Noop_MsgType, Msg, IncomingMsg} from "../../src/panels/protocol";
 
 const PORT_NUM = 8888;
 
@@ -32,9 +33,16 @@ describe('Panels server', ()=>{
     });
     it('gets and reports an unknown message', function () {
         panel = new FakePanel();
-        const emptyMsg = {foo:3};
+        const msg = {foo:3};
         return panel.connect(PORT_NUM)
-            .then(()=>panel.write(emptyMsg))
-            .then(()=>matcher.expect([{msg:emptyMsg}]))
+            .then(()=>panel.write(msg))
+            .then(()=>matcher.expect([{msg:msg}]))
+    });
+    it('does not report a no-op message', function () {
+        panel = new FakePanel();
+        const msg:IncomingMsg<Noop_MsgType> = {type:'noop', foo:3};
+        return panel.connect(PORT_NUM)
+            .then(()=>panel.write(msg))
+            .then(()=>matcher.expect([]))
     });
 });
