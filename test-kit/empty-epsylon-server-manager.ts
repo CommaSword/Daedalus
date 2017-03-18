@@ -10,8 +10,7 @@ export class ServerManager {
     init(): Promise<ChildProcess> {
         const result = exec(config.runServer);
         return retry(() => this.driver.getPlayerShip().getHull(), {interval: 20, timeout: 10 * 1000})
-            .then(
-                () => result,
+            .then(() => result,
                 (e) => {
                     result.kill();
                     throw e;

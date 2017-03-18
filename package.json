@@ -38,6 +38,7 @@
     "@types/node": "7.0.5",
     "chai": "3.5.0",
     "chai-as-promised": "6.0.0",
+    "chai-subset": "1.5.0",
     "json-loader": "0.5.4",
     "karma": "1.4.1",
     "karma-chrome-launcher": "2.0.0",
@@ -58,6 +59,7 @@
   "dependencies": {
     "axios": "0.15.3",
     "bluebird": "3.4.7",
-    "bluebird-retry": "0.10.1"
+    "bluebird-retry": "0.10.1",
+    "eventemitter3": "2.0.2"
   }
 }

@@ -1,4 +1,3 @@
-import {ServerDriver} from "./api";
 import {default as Axios, AxiosInstance, Promise, AxiosResponse} from "axios";
 import {PlayerShip} from "./objects/player-ship";
 export {Promise}  from "axios";
@@ -7,7 +6,7 @@ export {Promise}  from "axios";
 /**
  * main API entry point. supplies access to game global actions and object queries
  */
-export class EmptyEpsilonDriver implements ServerDriver{
+export class EmptyEpsilonDriver{
     private http:HttpDriver;
     constructor(baseURL: string){
         this.http = new HttpDriver(baseURL);
