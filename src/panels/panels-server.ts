@@ -91,14 +91,21 @@ export class PanelSession {
     public isConneted(){
         return typeof this._id === 'string';
     }
+    private outOfSync(d){
+        console.log('PanelSession %s out-of-sync message: %s', this, d);
+    }
     private onConnData = (d) => {
         const msg = JSON.parse(d) as Msg<any>;
         if (isNoopMsg(msg)){
             // do nothing, it's a no-op!
         } else if (isHelloMsg(msg)){
-            this._id = msg.id;
-            this._state = msg.state;
-            this.serverEvents.emit('connected', this);
+            if (this.isConneted()) {
+                this.outOfSync(d);
+            } else {
+                this._id = msg.id;
+                this._state = msg.state;
+                this.serverEvents.emit('connected', this);
+            }
         } else if (isStateMsg(msg)){
             if (this.isConneted()){
                 if (!isEqual(this._state, msg.state)){
@@ -106,10 +113,9 @@ export class PanelSession {
                     this.serverEvents.emit('stateChange', this);
                 }
             } else {
-                console.log('PanelSession %s out-of-sync message: %s', this, d);
+                this.outOfSync(d);
             }
         } else {
-            console.log('PanelSession %s unknown message: %s', this, d);
             this.serverEvents.emit('unknown', this, msg);
         }
     };

@@ -1,8 +1,7 @@
 import {Server} from '../../src/panels/panels-server';
 import {FakePanel} from '../../test-kit/panels-client'
-import {expect} from 'chai';
 import {EventsMatcher} from "../../test-kit/events-matcher";
-import {Noop_MsgType, Msg, IncomingMsg} from "../../src/panels/protocol";
+import {Noop_MsgType, IncomingMsg} from "../../src/panels/protocol";
 
 const PORT_NUM = 8888;
 
