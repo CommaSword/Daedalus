@@ -1,6 +1,7 @@
 import * as Promise from 'bluebird';
+import {EventEmitter} from 'eventemitter3';
 import io = require('socket.io-client');
-var patch = require('socketio-wildcard')(io.Manager);
+const patch = require('socketio-wildcard')(io.Manager);
 
 interface Osc{
     target: Array<any>; //WHAT TYPE?
@@ -15,33 +16,35 @@ const knownEvents = {
     'receiveOsc': (data: Osc) => data
 };
 class OscClient {
-    init() {
-        const socket = io('http://localhost:8081');
-        patch(socket);
-        socket.on('connect', () => {
+    private events = new EventEmitter();
+    private socket: SocketIOClient.Socket
+    constructor(){
+        this.socket = io('http://localhost:8081');
+        patch(this.socket);
+        this.socket.on('connect', () => {
             console.log('connect');
             Object.keys(knownEvents).forEach(eventName =>{
-                socket.on(eventName, (data)=>
+                this.socket.on(eventName, (data)=>
                     console.log('INCOMING', eventName, knownEvents[eventName](data)));
             });
-            socket.on('*', function(e){
+            this.socket.on('*', function(e){
                 if (!knownEvents[e.data[0]]) {
                     console.log('INCOMING unknown event', e);
                 }
             });
-            socket.on('receiveOsc', (data: Osc)=>{
+            this.socket.on('receiveOsc', (data: Osc)=>{
                 data.address = '/panel_1';
-                socket.emit('sendOsc', data);
+                this.socket.emit('sendOsc', data);
             });
-            socket.emit('ready');
-            socket.emit('sessionOpened');
+            this.socket.emit('ready');
+            this.socket.emit('sessionOpened');
         });
-        socket.on('event', (data) => {
+        this.socket.on('event', (data) => {
             console.log('data', data);
         });
-        socket.on('disconnect', () => {
+        this.socket.on('disconnect', () => {
             console.log('disconnect');
         });
     }
 }
-new OscClient().init();
+new OscClient();

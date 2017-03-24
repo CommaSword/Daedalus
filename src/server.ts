@@ -28,6 +28,7 @@ export function startServer(optionsArg:Partial<Options>){
     panelsServer.start();
 
     panelsServer.on('connected', (panel:PanelSession)=>{
+        panel.serverState = 0;
         const playerShip = eeDriver.getPlayerShip();
         let damageDealTimer:NodeJS.Timer;
         function dealDamage(){
@@ -39,7 +40,6 @@ export function startServer(optionsArg:Partial<Options>){
                     }
                 })
         }
-        panel.serverState = 0;
         panel.on('stateChange', ()=>{
             if (panel.clientState){
                 // ship should start taking damage
