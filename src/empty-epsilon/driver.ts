@@ -10,6 +10,7 @@ export class EmptyEpsilonDriver{
     private http:HttpDriver;
     constructor(baseURL: string){
         this.http = new HttpDriver(baseURL);
+        console.log('connecting to EE server at', baseURL)
     }
 
     set serverAddress(baseURL:string){

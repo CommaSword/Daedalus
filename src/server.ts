@@ -14,7 +14,7 @@ const DEFAULT_OPTIONS:Options = {
     panelsPort:8888
 };
 export function startServer(optionsArg:Partial<Options>){
-    const options:Options = Object.assign({}, optionsArg, DEFAULT_OPTIONS);
+    const options:Options = Object.assign({}, DEFAULT_OPTIONS, optionsArg);
 
     const eeDriver = new EmptyEpsilonDriver(`http://${options.eeHost}:${options.eePort}`);
     const panelsServer = new Server(options.panelsPort);
@@ -28,7 +28,7 @@ export function startServer(optionsArg:Partial<Options>){
     panelsServer.start();
 
     panelsServer.on('connected', (panel:PanelSession)=>{
-        panel.serverState = 0;
+        panel.serverState = 1;
         const playerShip = eeDriver.getPlayerShip();
         let damageDealTimer:NodeJS.Timer;
         function dealDamage(){
