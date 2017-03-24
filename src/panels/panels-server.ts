@@ -121,7 +121,7 @@ export class PanelSession {
             }
         } else {
             this.serverEvents.emit('unknown', this, msg);
-            console.log('PanelSession %s unknown message: %s', this, msg);
+            console.log('PanelSession %s unknown message: %s', this, d);
         }
     };
 
