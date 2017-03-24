@@ -20,11 +20,14 @@ export function startServer(optionsArg:Partial<Options>){
     const panelsServer = new Server(options.panelsPort);
 
     let panelListener = (panel:PanelSession)=>{
-        let state = panel.state;
+        let state = panel.clientState;
     };
 
-    panelsServer.on('connected', panelListener);
-    panelsServer.on('stateChange', panelListener);
+    panelsServer.on('connected', (panel:PanelSession)=>{
+        panel.serverState = -1;
+        const playerShip = eeDriver.getPlayerShip();
+        panel.on('stateChange', panelListener);
+    });
 
     process.on('uncaughtException', function (err) {
         console.error(err.message);

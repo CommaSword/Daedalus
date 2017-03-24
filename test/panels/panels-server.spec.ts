@@ -30,10 +30,10 @@ describe('Panels server', ()=>{
 
     it('reports connection after getting an ID', function () {
         return panel.write({type:'hello', id:'foo', state: {foo: {bar:5}}})
-            .then(()=>matcher.expect([{event:'connected', panel:{id:'foo', state: {foo: {bar:5}}}}]))
+            .then(()=>matcher.expect([{event:'connected', panel:{id:'foo', clientState: {foo: {bar:5}}}}]))
     });
     it('reports disconnection after getting an ID', function () {
-        return panel.write({type:'hello', id:'foo'})
+        return panel.write({type:'hello', id:'foo', state:2})
             .then(()=>panel.close())
             .then(()=>matcher.expect([{event:'disconnected', panel:{id:'foo'}}]))
     });
@@ -43,15 +43,15 @@ describe('Panels server', ()=>{
     });
     it('does not report state change if same as before', function () {
         return panel.write({type:'hello', id:'foo', state: {foo: {bar:5}}})
-            .then(()=>matcher.expect([{event:'connected', panel:{id:'foo', state: {foo: {bar:5}}}}]))
+            .then(()=>matcher.expect([{event:'connected', panel:{id:'foo', clientState: {foo: {bar:5}}}}]))
             .then(()=>panel.write({type:'state', state: {foo: {bar:5}}}))
             .then(()=>matcher.expect([]))
     });
     it('reports state change if new state', function () {
         return panel.write({type:'hello', id:'foo', state: {foo: {bar:5}}})
-            .then(()=>matcher.expect([{event:'connected', panel:{id:'foo', state: {foo: {bar:5}}}}]))
+            .then(()=>matcher.expect([{event:'connected', panel:{id:'foo', clientState: {foo: {bar:5}}}}]))
             .then(()=>panel.write({type:'state', state: {foo: {baz:'foo'}}}))
-            .then(()=>matcher.expect([{event:'stateChange', panel:{id:'foo', state: {foo: {baz:'foo'}}}}]))
+            .then(()=>matcher.expect([{event:'stateChange', panel:{id:'foo', clientState: {foo: {baz:'foo'}}}}]))
     });
     it('gets and reports an unknown message', function () {
         const msg = {foo:3};

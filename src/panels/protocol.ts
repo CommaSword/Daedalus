@@ -6,6 +6,7 @@ export type State_MsgType = 'state';
 
 export type MsgType = State_MsgType | Hello_MsgType | Noop_MsgType | Unknown_MsgType;
 
+export const delimitter = ';';
 export interface Msg<T extends MsgType> {
     type: T;
 }

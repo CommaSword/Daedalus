@@ -2,7 +2,7 @@ import * as Promise from 'bluebird';
 import {createServer} from 'net';
 import {Socket, Server as NetServer} from "net";
 import {isEqual} from 'lodash';
-import {IncomingMsg, isNoopMsg, validateHelloMsg, validateStateMsg} from "./protocol";
+import {IncomingMsg, isNoopMsg, validateHelloMsg, validateStateMsg, delimitter} from "./protocol";
 import {EventEmitter} from 'eventemitter3';
 
 
@@ -14,7 +14,7 @@ export type IncomingEvents = {
 }
 
 export interface IncompingReporter {
-    emit<T extends keyof IncomingEvents >(event: T, panel: PanelSession, msg?: IncomingEvents[T]);
+    emit<T extends keyof IncomingEvents >(event: T, ...args:any[]);
 }
 
 
@@ -53,6 +53,7 @@ export class Server {
         return result.promise;
     }
 
+
     on<T extends keyof IncomingEvents >(event: T, listener: (panel: PanelSession, msg?: IncomingEvents[T]) => any) {
         this.events.on(event, listener);
     }
@@ -64,9 +65,11 @@ export class Server {
 
 
 export class PanelSession {
+    private events = new EventEmitter();
     readonly remoteAddress: string;
+    public serverState: any;
     private _id: string;
-    private _state: any;
+    private _clientState: any;
     private lastInputLeftover: string;
     private stateSender: NodeJS.Timer;
 
@@ -80,10 +83,18 @@ export class PanelSession {
         socket.once('close', this.onConnClose);
         socket.on('timeout', this.onConnTimeout);
         socket.on('error', this.onConnError);
-        // this.stateSender = setInterval(()=>{
-        //      this.write(''+(Date.now() % 255));
-        // }, 2000);
+
+        this.events.on('connected', (...args)=>serverEvents.emit('connected', this, ...args));
+        this.events.on('disconnected', (...args)=>serverEvents.emit('disconnected', this, ...args));
+        this.events.on('stateChange', (...args)=>serverEvents.emit('stateChange', this, ...args));
+        this.events.on('unknown', (...args)=>serverEvents.emit('unknown', this, ...args));
+
+        this.stateSender = setInterval(()=>{
+            this.write(JSON.stringify(this.serverState));
+        }, 1000);
+
         console.log('new PanelSession %s waiting for hello', this);
+
     }
 
     toString() {
@@ -94,8 +105,8 @@ export class PanelSession {
         return this._id;
     }
 
-    get state() {
-        return this._state;
+    get clientState() {
+        return this._clientState;
     }
 
     public isConneted() {
@@ -107,11 +118,14 @@ export class PanelSession {
     }
 
     private onConnData = (rawMsg) => {
-        rawMsg = this.lastInputLeftover + rawMsg.trim();
-        this.lastInputLeftover = '';
+        rawMsg = rawMsg.trim();
+        if (this.lastInputLeftover) {
+            rawMsg = rawMsg + this.lastInputLeftover;
+            this.lastInputLeftover = '';
+        }
         console.log('PanelSession %s incoming message: %s', this, rawMsg);
         if (rawMsg) {
-            let lines = rawMsg.split('\n');
+            let lines = rawMsg.split(delimitter);
             lines.forEach((line: string, i: number) => {
                 line = line.trim();
                 let msg;
@@ -137,10 +151,10 @@ export class PanelSession {
             // do nothing, it's a no-op!
         } else if (validateStateMsg(msg)) {
             if (this.isConneted()) {
-                if (!isEqual(this._state, msg.state)) {
+                if (!isEqual(this._clientState, msg.state)) {
                     console.log('PanelSession %s updating state: %s', this, msg.state);
-                    this._state = msg.state;
-                    this.serverEvents.emit('stateChange', this);
+                    this._clientState = msg.state;
+                    this.events.emit('stateChange');
                 }
             } else {
                 this.outOfSync(msg);
@@ -150,20 +164,22 @@ export class PanelSession {
                 this.outOfSync(msg);
             } else {
                 this._id = msg.id;
-                this._state = msg.state;
-                this.serverEvents.emit('connected', this);
+                this._clientState = msg.state;
+                this.events.emit('connected', this);
                 console.log('PanelSession %s connected', this);
             }
         } else {
-            this.serverEvents.emit('unknown', this, msg);
+            this.events.emit('unknown', msg);
             console.log('PanelSession %s unknown message: %s', this, JSON.stringify(msg));
         }
     }
 
     private onConnClose = () => {
+        clearInterval(this.stateSender);
         if (this.isConneted()) {
-            this.serverEvents.emit('disconnected', this);
+            this.events.emit('disconnected');
         }
+        this.events.removeAllListeners();
     };
 
     private onConnError = (err) => {
@@ -179,11 +195,17 @@ export class PanelSession {
         }, 1000);
     };
 
-    write(data: string);
-    write(data: Buffer);
-    write(data: string|Buffer): Promise<void> {
-        const result = Promise.defer<void>();
-        this.socket.write(data as any, result.resolve);
-        return result.promise;
+    private write(data: string|Buffer){ //: Promise<void> {
+        data = (data as any)+delimitter;
+        console.log('PanelSession %s sending: %s', this, data);
+        this.socket.write(data);
+    }
+
+    on<T extends keyof IncomingEvents >(event: T, listener: (panel: PanelSession, msg?: IncomingEvents[T]) => any) {
+        this.events.on(event, listener);
+    }
+
+    once<T extends keyof IncomingEvents >(event: T, listener: (panel: PanelSession, msg?: IncomingEvents[T]) => any) {
+        this.events.once(event, listener);
     }
 }
