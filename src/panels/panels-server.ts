@@ -89,9 +89,13 @@ export class PanelSession {
         this.events.on('stateChange', (...args)=>serverEvents.emit('stateChange', this, ...args));
         this.events.on('unknown', (...args)=>serverEvents.emit('unknown', this, ...args));
 
-        this.stateSender = setInterval(()=>{
-            this.write(JSON.stringify(this.serverState));
-        }, 1000);
+        this.events.once('connected', ()=>{
+            this.stateSender = setInterval(()=>{
+                if (this.serverState !== undefined) {
+                    this.write(JSON.stringify(this.serverState));
+                }
+            }, 1000);
+        });
 
         console.log('new PanelSession %s waiting for hello', this);
 
@@ -166,6 +170,7 @@ export class PanelSession {
                 this._id = msg.id;
                 this._clientState = msg.state;
                 this.events.emit('connected', this);
+                this.events.emit('stateChange');
                 console.log('PanelSession %s connected', this);
             }
         } else {

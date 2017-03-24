@@ -19,22 +19,37 @@ export function startServer(optionsArg:Partial<Options>){
     const eeDriver = new EmptyEpsilonDriver(`http://${options.eeHost}:${options.eePort}`);
     const panelsServer = new Server(options.panelsPort);
 
-    let panelListener = (panel:PanelSession)=>{
-        let state = panel.clientState;
-    };
-
-    panelsServer.on('connected', (panel:PanelSession)=>{
-        panel.serverState = -1;
-        const playerShip = eeDriver.getPlayerShip();
-        panel.on('stateChange', panelListener);
-    });
 
     process.on('uncaughtException', function (err) {
         console.error(err.message);
         console.error(err.stack);
     });
 
-
     panelsServer.start();
+
+    panelsServer.on('connected', (panel:PanelSession)=>{
+        const playerShip = eeDriver.getPlayerShip();
+        let damageDealTimer:NodeJS.Timer;
+        function dealDamage(){
+            playerShip.getHull()
+                .then(hull =>  playerShip.setHull(hull * 0.99))
+                .then(()=>{
+                    if (panel.clientState) {
+                        damageDealTimer = setTimeout(dealDamage, 150);
+                    }
+                })
+        }
+        panel.serverState = 0;
+        panel.on('stateChange', ()=>{
+            if (panel.clientState){
+                // ship should start taking damage
+                dealDamage();
+            } else {
+                // stop taking damage
+                clearTimeout(damageDealTimer);
+            }
+        });
+    });
+
 }
 
