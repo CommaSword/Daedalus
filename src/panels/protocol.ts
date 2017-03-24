@@ -1,3 +1,4 @@
+import {isUndefined} from "util";
 export type Unknown_MsgType = 'unknown';
 export type Noop_MsgType = 'noop';
 export type Hello_MsgType = 'hello';
@@ -27,9 +28,16 @@ export function isHelloMsg(msg:Msg<any>):msg is HelloMsg{
     return msg.type === 'hello';
 }
 
+export function validateHelloMsg(msg:Msg<any>):msg is HelloMsg{
+    return isHelloMsg(msg) && typeof msg.id === 'string' && msg.state !== undefined;
+}
+
 export interface StateMsg extends IncomingMsg<State_MsgType>{
     state:any;
 }
 export function isStateMsg(msg:Msg<any>):msg is StateMsg{
     return msg.type === 'state';
+}
+export function validateStateMsg(msg:Msg<any>):msg is StateMsg{
+    return isStateMsg(msg) && msg.state !== undefined;
 }

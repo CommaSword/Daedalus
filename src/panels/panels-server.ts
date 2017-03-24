@@ -2,7 +2,7 @@ import * as Promise from 'bluebird';
 import {createServer} from 'net';
 import {Socket, Server as NetServer} from "net";
 import {isEqual} from 'lodash';
-import {Msg, IncomingMsg, isHelloMsg, isNoopMsg, isStateMsg} from "./protocol";
+import {IncomingMsg, isNoopMsg, validateHelloMsg, validateStateMsg} from "./protocol";
 import {EventEmitter} from 'eventemitter3';
 
 
@@ -77,6 +77,8 @@ export class PanelSession {
         socket.once('close', this.onConnClose);
         socket.on('timeout', this.onConnTimeout);
         socket.on('error', this.onConnError);
+
+        console.log('new PanelSession %s waiting for hello', this);
     }
 
     toString(){
@@ -95,18 +97,11 @@ export class PanelSession {
         console.log('PanelSession %s out-of-sync message: %s', this, d);
     }
     private onConnData = (d) => {
-        const msg = JSON.parse(d) as Msg<any>;
+        console.log('PanelSession %s incoming message: %s', this, d);
+        const msg = JSON.parse(d);
         if (isNoopMsg(msg)){
             // do nothing, it's a no-op!
-        } else if (isHelloMsg(msg)){
-            if (this.isConneted()) {
-                this.outOfSync(d);
-            } else {
-                this._id = msg.id;
-                this._state = msg.state;
-                this.serverEvents.emit('connected', this);
-            }
-        } else if (isStateMsg(msg)){
+        } else if (validateStateMsg(msg)){
             if (this.isConneted()){
                 if (!isEqual(this._state, msg.state)){
                     this._state = msg.state;
@@ -115,8 +110,18 @@ export class PanelSession {
             } else {
                 this.outOfSync(d);
             }
+        } else if (validateHelloMsg(msg)){
+            if (this.isConneted()) {
+                this.outOfSync(d);
+            } else {
+                this._id = msg.id;
+                this._state = msg.state;
+                this.serverEvents.emit('connected', this);
+                console.log('PanelSession %s connected', this);
+            }
         } else {
             this.serverEvents.emit('unknown', this, msg);
+            console.log('PanelSession %s unknown message: %s', this, msg);
         }
     };
 

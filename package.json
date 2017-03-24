@@ -37,6 +37,7 @@
     "@types/lodash": "4.14.55",
     "@types/mocha": "2.2.39",
     "@types/node": "7.0.5",
+    "@types/socket.io-client": "1.4.29",
     "chai": "3.5.0",
     "chai-as-promised": "6.0.0",
     "chai-subset": "1.5.0",
@@ -62,6 +63,9 @@
     "bluebird": "3.4.7",
     "bluebird-retry": "0.10.1",
     "eventemitter3": "2.0.2",
-    "lodash": "4.17.4"
+    "lodash": "4.17.4",
+    "socket.io-client": "1.7.3",
+    "socketio-wildcard": "0.4.0",
+    "source-map-support": "0.4.11"
   }
 }

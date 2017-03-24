@@ -23,5 +23,7 @@ export function startServer(optionsArg:Partial<Options>){
         console.error(err.stack);
     });
 
+
+    panelsServer.start();
 }
 
