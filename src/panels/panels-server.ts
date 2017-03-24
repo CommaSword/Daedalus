@@ -67,6 +67,7 @@ export class PanelSession {
     readonly remoteAddress: string;
     private _id: string;
     private _state: any;
+    private lastInputLeftover: string;
     private stateSender: NodeJS.Timer;
 
     constructor(private readonly socket: Socket, private serverEvents: IncompingReporter) {
@@ -101,48 +102,63 @@ export class PanelSession {
         return typeof this._id === 'string';
     }
 
-    private outOfSync(d) {
-        console.log('PanelSession %s out-of-sync message: %s', this, d);
+    private outOfSync(msg) {
+        console.log('PanelSession %s out-of-sync message: %s', this, JSON.stringify(msg));
     }
 
-    private onConnData = (d) => {
-        d = d.trim();
-        console.log('PanelSession %s incoming message: %s', this, d);
-        if (d) {
-            let msg;
-            try {
-                msg = JSON.parse(d);
-                if (isNoopMsg(msg)) {
-                    // do nothing, it's a no-op!
-                } else if (validateStateMsg(msg)) {
-                    if (this.isConneted()) {
-                        if (!isEqual(this._state, msg.state)) {
-                            console.log('PanelSession %s updating state: %s', this, msg.state);
-                            this._state = msg.state;
-                            this.serverEvents.emit('stateChange', this);
-                        }
+    private onConnData = (rawMsg) => {
+        rawMsg = this.lastInputLeftover + rawMsg.trim();
+        this.lastInputLeftover = '';
+        console.log('PanelSession %s incoming message: %s', this, rawMsg);
+        if (rawMsg) {
+            let lines = rawMsg.split('\n');
+            lines.forEach((line: string, i: number) => {
+                line = line.trim();
+                let msg;
+                try {
+                    msg = JSON.parse(line);
+                } catch (e) {
+                    if (i + 1 === lines.length) {
+                        this.lastInputLeftover = line;
                     } else {
-                        this.outOfSync(d);
+                        console.log(e.message, e.stack);
+                        console.log('PanelSession %s illegal message format: %s', this, line);
                     }
-                } else if (validateHelloMsg(msg)) {
-                    if (this.isConneted()) {
-                        this.outOfSync(d);
-                    } else {
-                        this._id = msg.id;
-                        this._state = msg.state;
-                        this.serverEvents.emit('connected', this);
-                        console.log('PanelSession %s connected', this);
-                    }
-                } else {
-                    this.serverEvents.emit('unknown', this, msg);
-                    console.log('PanelSession %s unknown message: %s', this, d);
                 }
-            } catch (e) {
-                console.log(e.message, e.stack);
-                console.log('PanelSession %s illegal message format: %s', this, d);
-            }
+                if (msg) {
+                    this.handleMessage(msg);
+                }
+            });
         }
     };
+
+    private handleMessage(msg) {
+        if (isNoopMsg(msg)) {
+            // do nothing, it's a no-op!
+        } else if (validateStateMsg(msg)) {
+            if (this.isConneted()) {
+                if (!isEqual(this._state, msg.state)) {
+                    console.log('PanelSession %s updating state: %s', this, msg.state);
+                    this._state = msg.state;
+                    this.serverEvents.emit('stateChange', this);
+                }
+            } else {
+                this.outOfSync(msg);
+            }
+        } else if (validateHelloMsg(msg)) {
+            if (this.isConneted()) {
+                this.outOfSync(msg);
+            } else {
+                this._id = msg.id;
+                this._state = msg.state;
+                this.serverEvents.emit('connected', this);
+                console.log('PanelSession %s connected', this);
+            }
+        } else {
+            this.serverEvents.emit('unknown', this, msg);
+            console.log('PanelSession %s unknown message: %s', this, JSON.stringify(msg));
+        }
+    }
 
     private onConnClose = () => {
         if (this.isConneted()) {
