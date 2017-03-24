@@ -1,4 +1,4 @@
 {
-  "runServer": "killall EmptyEpsilon; /Users/amira/ee/emptyepsilon/EmptyEpsilon/EmptyEpsilon.app/Contents/MacOS/EmptyEpsilon headless=amir.lua headless_name=Federation headless_internet=1 httpserver=8080",
+  "runServer": "killall EmptyEpsilon; /Users/amira/ee/emptyepsilon/EmptyEpsilon/EmptyEpsilon.app/Contents/MacOS/EmptyEpsilon headless=amir.lua headless_name=Federation httpserver=8080",
   "serverAddress":"http://localhost:8080"
 }

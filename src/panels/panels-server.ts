@@ -76,7 +76,7 @@ export class PanelSession {
     constructor(private readonly socket: Socket, private serverEvents: IncompingReporter) {
         this.remoteAddress = socket.remoteAddress + ':' + socket.remotePort;
 
-        //    socket.setTimeout(2000);
+        socket.setTimeout(2000);
         //    socket.setKeepAlive(true, 300);
         socket.setEncoding('utf8');
         socket.on('data', this.onConnData);
