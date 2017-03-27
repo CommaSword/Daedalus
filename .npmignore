@@ -3,7 +3,7 @@ node_modules
 .npmrc
 .idea
 
-config.json
+test/config.ts
 src/*.js
 test/*.js
 test-kit/*.js

@@ -190,15 +190,20 @@ export class PanelSession {
     private onConnError = (err) => {
         console.log('PanelSession %s error: %s', this, err.message);
     };
+
     private onConnTimeout = () => {
         console.log('PanelSession %s timeout', this);
+        this.close();
+    };
+
+    public close() {
         this.socket.end();
         setTimeout(() => {
             if (!this.socket.destroyed) {
                 this.socket.destroy();
             }
         }, 1000);
-    };
+    }
 
     private write(data: string|Buffer){ //: Promise<void> {
         data = (data as any)+delimitter;

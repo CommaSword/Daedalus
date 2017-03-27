@@ -1,5 +1,5 @@
-import {EmptyEpsilonDriver} from './empty-epsilon/driver';
-import {Server, PanelSession} from "./panels/panels-server";
+import {EmptyEpsilonDriver} from './empty-epsilon-client/driver';
+import {Server, PanelSession} from "./panels-server";
 
 export type Options = {
     eeHost:string;
@@ -50,6 +50,36 @@ export function startServer(optionsArg:Partial<Options>){
             }
         });
     });
-
 }
 
+
+
+function gizmoImplPOC(
+    panel:{serverState:any, clientState:any, connected:boolean},
+    dashboard:{state:any},
+    emptyEpsilon:EmptyEpsilonDriver){
+
+    let damageDealTimer:NodeJS.Timer;
+    function dealDamage(){
+        const playerShip = emptyEpsilon.getPlayerShip();
+        playerShip.getHull()
+            .then(hull =>  playerShip.setHull(hull * 0.99))
+            .then(()=>{
+                if (panel.clientState) {
+                    damageDealTimer = setTimeout(dealDamage, 150);
+                }
+            })
+    }
+    return () => {
+        dashboard.state.connected = panel.connected;
+        panel.serverState = dashboard.state.active ? 1 : 0;
+
+        if (panel.clientState) {
+            // ship should start taking damage
+            dealDamage();
+        } else {
+            // stop taking damage
+            clearTimeout(damageDealTimer);
+        }
+    }
+}

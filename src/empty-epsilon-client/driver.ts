@@ -106,3 +106,24 @@ export class ObjectDriver{
         return this.httpDriver.set(this.contextQuery, setter);
     }
 }
+
+export class Property<T>{
+// TODO: mobx cache
+    private readonly valueExpression:string;
+    constructor(private name:string, protected driver:ObjectDriver){
+        this.valueExpression = `get${name}()`;
+    }
+
+    get():Promise<T>{
+        return this.driver.get(this.valueExpression);
+    }
+
+    set(value: T):Promise<void> {
+        return this.driver.set(`set${name}(${value})`);
+    }
+    // TODO test
+    change(mutator:(valueExpr:string)=>string):Promise<void>{
+        const mutatorStr = mutator(this.valueExpression);
+        return this.driver.set(`set${name}(${mutatorStr})`);
+    }
+}

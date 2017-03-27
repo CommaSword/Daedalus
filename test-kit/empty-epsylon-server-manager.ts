@@ -1,19 +1,48 @@
 import * as Promise from 'bluebird';
-import {exec, ChildProcess} from 'child_process';
-import * as config from '../../config.json';
-import {EmptyEpsilonDriver} from "../src/empty-epsilon/driver";
+import {exec, execSync, ChildProcess} from 'child_process';
+import {EmptyEpsilonDriver} from "../src/empty-epsilon-client/driver";
 import retry = require('bluebird-retry');
 
-export class ServerManager {
-    driver = new EmptyEpsilonDriver(config.serverAddress);
+const timeout = 10 * 1000;
 
-    init(): Promise<ChildProcess> {
-        const result = exec(config.runServer);
-        return retry(() => this.driver.getPlayerShip().getHull(), {interval: 20, timeout: 10 * 1000})
-            .then(() => result,
+export type Config = {
+    runServer: string;
+    killServer: string;
+    serverAddress: string;
+}
+
+export class ServerManager {
+    private serverProcess:ChildProcess;
+    private driver = new EmptyEpsilonDriver(this.config.serverAddress);
+    private assertServerIsUp = ()=>{
+        return this.driver.getPlayerShip().getHull();
+    };
+    constructor(private config:Config){}
+
+    init(): Promise<void> {
+        this.serverProcess = exec(this.config.runServer);
+        return retry(this.assertServerIsUp, {interval: 20, timeout: timeout})
+            .then(() => {},
                 (e) => {
-                    result.kill();
+                    this.destroy();
                     throw e;
                 });
     }
+
+    destroy(){
+        this.serverProcess && this.serverProcess.kill();
+        execSync(this.config.killServer);
+    }
+}
+
+export function beforeAndAfter(config:Config){
+    let mgr:ServerManager;
+    before('init managed server', function(){
+        this.timeout(timeout);
+        mgr = new ServerManager(config);
+        return mgr.init();
+    });
+    after('destroy managed server', ()=>{
+        mgr.destroy();
+    });
 }

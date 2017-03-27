@@ -2,8 +2,8 @@ import {expect} from "chai";
 import * as Promise from 'bluebird';
 import * as retry from 'bluebird-retry';
 import {EventEmitter} from 'eventemitter3';
-import {Msg, IncomingMsg} from "../src/panels/protocol";
-import {PanelSession, Server, IncomingEvents} from "../src/panels/panels-server";
+import {Msg, IncomingMsg} from "../src/panels-server/protocol";
+import {PanelSession, Server, IncomingEvents} from "../src/panels-server";
 
 export interface EventObj{
     event:keyof IncomingEvents;
