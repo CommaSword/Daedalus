@@ -20,9 +20,15 @@ export abstract class SpaceShip extends SpaceObject {
         return this.driver.set(`setSystemHealth(${system}, ${health})`);
     }
 
+    getSystemHeat(system: ESystem): Promise<number> {
+        return this.driver.get(`getSystemHeat(${system})`);
+    }
+
+    setSystemHeat(system: ESystem, health: number): Promise<void> {
+        return this.driver.set(`setSystemHeat(${system}, ${health})`);
+    }
+
     /*
-     SpaceShip:getSystemHeat(ESystem system)
-     SpaceShip:setSystemHeat(ESystem system, float heat)
      SpaceShip:getSystemPower(ESystem system)
      SpaceShip:setSystemPower(ESystem system, float power)
      SpaceShip:getSystemCoolant(ESystem system)
