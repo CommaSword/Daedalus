@@ -2,8 +2,7 @@
   "compilerOptions": {
     "module": "commonjs",
     "target": "es2015",
-    "noImplicitAny": false,
-    "strictNullChecks": true,
+    "strict": true,
     "stripInternal": true,
     "sourceMap": true,
     "outDir": "dist",

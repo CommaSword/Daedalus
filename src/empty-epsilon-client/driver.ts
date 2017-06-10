@@ -1,7 +1,8 @@
 import {default as Axios, AxiosInstance, Promise, AxiosResponse} from "axios";
 import {PlayerShip} from "./objects/player-ship";
 export {Promise}  from "axios";
-
+export {ESystem} from './objects/space-ship';
+import {escape} from 'querystring';
 
 /**
  * main API entry point. supplies access to game global actions and object queries
@@ -10,14 +11,14 @@ export class EmptyEpsilonDriver{
     private http:HttpDriver;
     constructor(baseURL: string){
         this.http = new HttpDriver(baseURL);
-        console.log('connecting to EE server at', baseURL)
+        // console.log('connecting to EE server at', baseURL)
     }
 
     set serverAddress(baseURL:string){
         this.http = new HttpDriver(baseURL);
     }
 
-    getPlayerShip(index = -1){
+    getPlayerShip(index = -1): PlayerShip{
         return new PlayerShip(new ObjectDriver(this.http, `getPlayerShip(${index})`));
     }
 }
@@ -55,8 +56,8 @@ export class HttpDriver {
 
     get(contextGetter:string, getter: string) {
         const query:{[k:string]:string} = {};
-        query['result'] = getter;
-        query['_OBJECT_'] = contextGetter;
+        query['result'] = escape(getter);
+        query['_OBJECT_'] = escape(contextGetter);
         return this.http.request({
             method: 'get',
             url: '/get.lua',
@@ -73,8 +74,8 @@ export class HttpDriver {
     }
     set(contextGetter:string, setter: string) {
         const query:string[] = [];
-        query.push(setter);
-        query.push('_OBJECT_='+contextGetter);
+        query.push(escape(setter));
+        query.push('_OBJECT_='+escape(contextGetter));
         return this.http.request({
             method: 'get',
             url: '/set.lua',

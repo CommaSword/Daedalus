@@ -10,7 +10,7 @@ interface Osc{
     args: Array<string|number>; //from the editor
     syncOnly: boolean
 }
-const knownEvents = {
+const knownEvents:{[k:string]:(d:any)=>any} = {
     'sessionOpen': (data: string) => JSON.parse(data),
     'sessionList': (data:string[]) => data,
     'receiveOsc': (data: Osc) => data
@@ -24,10 +24,10 @@ class OscClient {
         this.socket.on('connect', () => {
             console.log('connect');
             Object.keys(knownEvents).forEach(eventName =>{
-                this.socket.on(eventName, (data)=>
+                this.socket.on(eventName, (data:any)=>
                     console.log('INCOMING', eventName, knownEvents[eventName](data)));
             });
-            this.socket.on('*', function(e){
+            this.socket.on('*', function(e:any){
                 if (!knownEvents[e.data[0]]) {
                     console.log('INCOMING unknown event', e);
                 }
@@ -39,7 +39,7 @@ class OscClient {
             this.socket.emit('ready');
             this.socket.emit('sessionOpened');
         });
-        this.socket.on('event', (data) => {
+        this.socket.on('event', (data:any) => {
             console.log('data', data);
         });
         this.socket.on('disconnect', () => {

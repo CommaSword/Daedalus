@@ -7,12 +7,4 @@ export class PlayerShip extends SpaceShip {
         super();
     }
 
-    getHull():Promise<number>{
-        return this.driver.get(`getHull()`);
-    }
-
-    setHull(number: number):Promise<void> {
-        return this.driver.set(`setHull(${number})`);
-    }
-
 }

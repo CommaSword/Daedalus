@@ -2,7 +2,7 @@ import * as Promise from 'bluebird';
 import {createServer} from 'net';
 import {Socket, Server as NetServer} from "net";
 import {isEqual} from 'lodash';
-import {IncomingMsg, isNoopMsg, validateHelloMsg, validateStateMsg, delimitter} from "./protocol";
+import {IncomingMsg, isNoopMsg, validateHelloMsg, validateStateMsg, delimitter, Msg} from "./protocol";
 import {EventEmitter} from 'eventemitter3';
 
 
@@ -14,7 +14,7 @@ export type IncomingEvents = {
 }
 
 export interface IncompingReporter {
-    emit<T extends keyof IncomingEvents >(event: T, ...args:any[]);
+    emit<T extends keyof IncomingEvents >(event: T, ...args:any[]):any;
 }
 
 
@@ -35,7 +35,7 @@ export class Server {
 
     start() {
         let result = Promise.defer();
-        this.server.listen(this.port, (err) => {
+        this.server.listen(this.port, (err?:Error) => {
             if (err) return result.reject(err);
             console.log("\nserver listening for panels on port " + this.port);
             result.resolve();
@@ -45,7 +45,7 @@ export class Server {
 
     stop() {
         let result = Promise.defer();
-        this.server.close((err) => {
+        this.server.close((err?:Error) => {
             if (err) return result.reject(err);
             console.log("server no longer listening for panels on port " + this.port + '\n');
             result.resolve();
@@ -117,11 +117,11 @@ export class PanelSession {
         return typeof this._id === 'string';
     }
 
-    private outOfSync(msg) {
+    private outOfSync(msg:any) {
         console.log('PanelSession %s out-of-sync message: %s', this, JSON.stringify(msg));
     }
 
-    private onConnData = (rawMsg) => {
+    private onConnData = (rawMsg:string) => {
         rawMsg = rawMsg.trim();
         if (this.lastInputLeftover) {
             rawMsg = rawMsg + this.lastInputLeftover;
@@ -150,7 +150,7 @@ export class PanelSession {
         }
     };
 
-    private handleMessage(msg) {
+    private handleMessage(msg:Msg<any>) {
         if (isNoopMsg(msg)) {
             // do nothing, it's a no-op!
         } else if (validateStateMsg(msg)) {
@@ -187,7 +187,7 @@ export class PanelSession {
         this.events.removeAllListeners();
     };
 
-    private onConnError = (err) => {
+    private onConnError = (err:Error) => {
         console.log('PanelSession %s error: %s', this, err.message);
     };
 
@@ -205,7 +205,7 @@ export class PanelSession {
         }, 1000);
     }
 
-    private write(data: string|Buffer){ //: Promise<void> {
+    private write(data: string|Buffer){
         data = (data as any)+delimitter;
         console.log('PanelSession %s sending: %s', this, data);
         this.socket.write(data);
