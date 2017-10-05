@@ -97,8 +97,8 @@ export class HttpDriver {
  */
 export class ObjectDriver{
     constructor(private httpDriver:HttpDriver, public contextQuery:string){}
-    getMultiple<T>(getter: string, numberOfResults:number):Promise<Array<T>> {
-        return this.httpDriver.getMultiple(this.contextQuery, getter, numberOfResults);
+    getMultiple<T extends Array<any>>(getter: string, numberOfResults:number):Promise<T> {
+        return this.httpDriver.getMultiple(this.contextQuery, getter, numberOfResults) as Promise<T>;
     }
     get<T>(getter: string):Promise<T> {
         return this.httpDriver.get(this.contextQuery, getter);

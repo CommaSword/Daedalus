@@ -5,7 +5,10 @@ import {EventEmitter} from 'eventemitter3';
 import {Msg, IncomingMsg} from "../src/panels-server/protocol";
 import {PanelSession, Server, IncomingEvents} from "../src/panels-server";
 
-export interface EventObj{
+export type EventObj = {
+    event : 'unknown';
+
+} | {
     event:keyof IncomingEvents;
     msg:Msg<any>|undefined;
     panel:PanelSession;

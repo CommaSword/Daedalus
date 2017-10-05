@@ -20,7 +20,7 @@ export function startServer(optionsArg:Partial<Options>){
     const panelsServer = new Server(options.panelsPort);
 
 
-    process.on('uncaughtException', function (err) {
+    process.on('uncaughtException', function (err:Error) {
         console.error(err.message);
         console.error(err.stack);
     });
