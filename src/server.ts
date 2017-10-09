@@ -10,7 +10,7 @@ const DEFAULT_OPTIONS:Options = {
     // TODO support server auto-detection
     // see https://github.com/daid/SeriousProton/blob/dc232f90c755fe001310409d4a7556e0f1d2f3b8/src/multiplayer_server_scanner.cpp
     eeHost:'localhost',
-    eePort:8080,
+    eePort:8081,
     panelsPort:8888
 };
 export function startServer(optionsArg:Partial<Options>){
