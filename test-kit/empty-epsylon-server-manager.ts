@@ -1,7 +1,6 @@
-import * as Promise from 'bluebird';
 import {exec, execSync, ChildProcess} from 'child_process';
-import {EmptyEpsilonDriver} from "../src/empty-epsilon-client/driver";
-import retry = require('bluebird-retry');
+import {EmptyEpsilonDriver} from "../src/core/empty-epsilon/driver";
+import {retry} from "./retry";
 
 const timeout = 10 * 1000;
 
@@ -21,15 +20,15 @@ export class ServerManager {
     constructor(private config: Config) {
     }
 
-    init(): Promise<void> {
+    async init(): Promise<void> {
         this.serverProcess = exec(this.config.runServer);
-        return retry(this.assertServerIsUp, {interval: 20, timeout: timeout})
-            .then(() => {
-                },
-                (e) => {
-                    this.destroy();
-                    throw e;
-                });
+        try {
+
+            await retry(this.assertServerIsUp, {interval: 20, timeout: timeout});
+        } catch(e) {
+            this.destroy();
+            throw e;
+        }
     }
 
     destroy() {

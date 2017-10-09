@@ -1,5 +1,5 @@
 import {SpaceObject} from "./space-object";
-import {Promise, ObjectDriver} from "../driver";
+import {ObjectDriver} from "../driver";
 
 export abstract class SpaceShip extends SpaceObject {
     protected abstract readonly driver: ObjectDriver;
