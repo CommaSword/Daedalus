@@ -1,6 +1,9 @@
 import {createServer, Server as NetServer, Socket} from 'net';
 import {isEqual} from 'lodash';
-import {delimitter, IncomingMsg, isNoopMsg, Msg, validateHelloMsg, validateStateMsg} from "./protocol";
+import {
+    delimitter, HelloMsg, IncomingMsg, isNoopMsg, Msg, StateMsg, validateHelloMsg,
+    validateStateMsg
+} from "./protocol";
 import {EventEmitter} from 'eventemitter3';
 
 
@@ -18,13 +21,13 @@ export interface IncompingReporter {
 
 export class Server {
     static readonly incomingEvents: Array<keyof IncomingEvents> = ['connected', 'disconnected', 'stateChange', 'unknown'];
-    private server: NetServer;
+    private socketServer: NetServer;
     private events = new EventEmitter();
     private terminals: Array<TerminalSession> = [];
 
     constructor(private port: number) {
-        this.server = createServer();
-        this.server.on('connection', (socket: Socket) => {
+        this.socketServer = createServer();
+        this.socketServer.on('connection', (socket: Socket) => {
             const terminal = new TerminalSession(socket, this.events);
             socket.once('close', () => this.terminals = this.terminals.filter(p => p !== terminal));
             this.terminals.push(terminal);
@@ -33,7 +36,7 @@ export class Server {
 
     start() {
         return new Promise((resolve, reject) => {
-            this.server.listen(this.port, (err?: Error) => {
+            this.socketServer.listen(this.port, (err?: Error) => {
                 if (err) return reject(err);
                 console.log("\nserver listening for terminals on port " + this.port);
                 resolve();
@@ -43,14 +46,13 @@ export class Server {
 
     stop() {
         return new Promise((resolve, reject) => {
-            this.server.close((err?: Error) => {
+            this.socketServer.close((err?: Error) => {
                 if (err) return reject(err);
                 console.log("server no longer listening for terminals on port " + this.port + '\n');
                 resolve();
             })
         });
     }
-
 
     on<T extends keyof IncomingEvents>(event: T, listener: (terminal: TerminalSession, msg?: IncomingEvents[T]) => any) {
         this.events.on(event, listener);
@@ -61,57 +63,17 @@ export class Server {
     }
 }
 
-
 export class TerminalSession {
+    private _id: string;
+    private _clientState: any;
+
     readonly remoteAddress: string;
     public serverState: any;
     private events = new EventEmitter();
     private lastInputLeftover: string;
     private stateSender: NodeJS.Timer;
-    private onConnData = (rawMsg: string) => {
-        rawMsg = rawMsg.trim();
-        if (this.lastInputLeftover) {
-            rawMsg = rawMsg + this.lastInputLeftover;
-            this.lastInputLeftover = '';
-        }
-        console.log('TerminalSession %s incoming message: %s', this, rawMsg);
-        if (rawMsg) {
-            let lines = rawMsg.split(delimitter);
-            lines.forEach((line: string, i: number) => {
-                line = line.trim();
-                let msg;
-                try {
-                    msg = JSON.parse(line);
-                } catch (e) {
-                    if (i + 1 === lines.length) {
-                        this.lastInputLeftover = line;
-                    } else {
-                        console.log(e.message, e.stack);
-                        console.log('TerminalSession %s illegal message format: %s', this, line);
-                    }
-                }
-                if (msg) {
-                    this.handleMessage(msg);
-                }
-            });
-        }
-    };
-    private onConnClose = () => {
-        clearInterval(this.stateSender);
-        if (this.isConneted()) {
-            this.events.emit('disconnected');
-        }
-        this.events.removeAllListeners();
-    };
-    private onConnError = (err: Error) => {
-        console.log('TerminalSession %s error: %s', this, err.message);
-    };
-    private onConnTimeout = () => {
-        console.log('TerminalSession %s timeout', this);
-        this.close();
-    };
 
-    constructor(private readonly socket: Socket, private serverEvents: IncompingReporter) {
+    constructor(private readonly socket: Socket, serverEvents: IncompingReporter) {
         this.remoteAddress = socket.remoteAddress + ':' + socket.remotePort;
 
         socket.setTimeout(2000);
@@ -139,13 +101,9 @@ export class TerminalSession {
 
     }
 
-    private _id: string;
-
     get id() {
         return this._id;
     }
-
-    private _clientState: any;
 
     get clientState() {
         return this._clientState;
@@ -176,6 +134,52 @@ export class TerminalSession {
         this.events.once(event, listener);
     }
 
+    private onConnData = (rawMsg: string) => {
+        rawMsg = rawMsg.trim();
+        if (this.lastInputLeftover) {
+            rawMsg = rawMsg + this.lastInputLeftover;
+            this.lastInputLeftover = '';
+        }
+        console.log('TerminalSession %s incoming message: %s', this, rawMsg);
+        if (rawMsg) {
+            let lines = rawMsg.split(delimitter);
+            lines.forEach((line: string, i: number) => {
+                line = line.trim();
+                let msg;
+                try {
+                    msg = JSON.parse(line);
+                } catch (e) {
+                    if (i + 1 === lines.length) {
+                        this.lastInputLeftover = line;
+                    } else {
+                        console.log(e.message, e.stack);
+                        console.log('TerminalSession %s illegal message format: %s', this, line);
+                    }
+                }
+                if (msg) {
+                    this.handleMessage(msg);
+                }
+            });
+        }
+    };
+
+    private onConnClose = () => {
+        clearInterval(this.stateSender);
+        if (this.isConneted()) {
+            this.events.emit('disconnected');
+        }
+        this.events.removeAllListeners();
+    };
+
+    private onConnError = (err: Error) => {
+        console.log('TerminalSession %s error: %s', this, err.message);
+    };
+
+    private onConnTimeout = () => {
+        console.log('TerminalSession %s timeout', this);
+        this.close();
+    };
+
     private outOfSync(msg: any) {
         console.log('TerminalSession %s out-of-sync message: %s', this, JSON.stringify(msg));
     }
@@ -184,29 +188,42 @@ export class TerminalSession {
         if (isNoopMsg(msg)) {
             // do nothing, it's a no-op!
         } else if (validateStateMsg(msg)) {
-            if (this.isConneted()) {
-                if (!isEqual(this._clientState, msg.state)) {
-                    console.log('TerminalSession %s updating state: %s', this, msg.state);
-                    this._clientState = msg.state;
-                    this.events.emit('stateChange');
-                }
-            } else {
-                this.outOfSync(msg);
-            }
+            this.handleStateMsg(msg);
         } else if (validateHelloMsg(msg)) {
-            if (this.isConneted()) {
-                this.outOfSync(msg);
-            } else {
-                this._id = msg.id;
+            this.handleHelloMsg(msg);
+        } else {
+            this.handleUnknownMsg(msg);
+        }
+    }
+
+    private handleHelloMsg(msg: HelloMsg) {
+        if (this.isConneted()) {
+            this.outOfSync(msg);
+        } else {
+            this._id = msg.id;
+            this._clientState = msg.state;
+            this.events.emit('connected', this);
+            this.events.emit('stateChange');
+            console.log('TerminalSession %s connected', this);
+        }
+    }
+
+    private handleStateMsg(msg: StateMsg) {
+        if (this.isConneted()) {
+            if (!isEqual(this._clientState, msg.state)) {
+                console.log('TerminalSession %s updating state: %s', this, msg.state);
                 this._clientState = msg.state;
-                this.events.emit('connected', this);
                 this.events.emit('stateChange');
-                console.log('TerminalSession %s connected', this);
             }
         } else {
-            this.events.emit('unknown', msg);
-            console.log('TerminalSession %s unknown message: %s', this, JSON.stringify(msg));
+            this.outOfSync(msg);
         }
+    }
+
+
+    private handleUnknownMsg(msg: Msg<any>) {
+        this.events.emit('unknown', msg);
+        console.log('TerminalSession %s unknown message: %s', this, JSON.stringify(msg));
     }
 
     private write(data: string | Buffer) {
