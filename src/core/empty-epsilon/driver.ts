@@ -126,10 +126,4 @@ export class Property<T> {
     async set(value: T): Promise<void> {
         return await this.driver.set(`set${name}(${value})`);
     }
-
-    // TODO test
-    async change(mutator: (valueExpr: string) => string): Promise<void> {
-        const mutatorStr = mutator(this.valueExpression);
-        return await this.driver.set(`set${name}(${mutatorStr})`);
-    }
 }

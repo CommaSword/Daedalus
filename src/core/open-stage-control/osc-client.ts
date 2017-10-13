@@ -13,7 +13,7 @@ interface Osc {
 
 const eventParsers: { [k: string]: (d: any) => any } = {
     'sessionOpen': (data: string) => JSON.parse(data),
-    'sessionList': (data: string[]) => data,
+    'sessionList': (data: string[]) => data, // ["/app/app/examples/ardour.json","/app/app/examples/demo.json","/app/app/examples/sysex.json"]
     'receiveOsc': (data: Osc) => data,
     'connected': (data: null) => data,
     'sessionNew': (data: null) => data,
@@ -41,7 +41,7 @@ class OscClient {
                 // data.address = '/panel_1';
                 // this.socket.emit('sendOsc', data);
             });
-            this.socket.emit('ready');
+            this.socket.emit('ready'); // ``
             this.socket.emit('sessionOpened');
         });
         this.socket.on('event', (data: any) => {
