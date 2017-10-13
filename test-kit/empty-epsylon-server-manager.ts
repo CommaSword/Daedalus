@@ -1,7 +1,6 @@
-import * as Promise from 'bluebird';
 import {exec, execSync, ChildProcess} from 'child_process';
-import {EmptyEpsilonDriver} from "../src/empty-epsilon-client/driver";
-import retry = require('bluebird-retry');
+import {EmptyEpsilonDriver} from "../src/core/empty-epsilon/driver";
+import {retry} from "./retry";
 
 const timeout = 10 * 1000;
 
@@ -12,37 +11,44 @@ export type Config = {
 }
 
 export class ServerManager {
-    private serverProcess:ChildProcess;
+    private serverProcess: ChildProcess;
     private driver = new EmptyEpsilonDriver(this.config.serverAddress);
-    private assertServerIsUp = ()=>{
+    private assertServerIsUp = () => {
         return this.driver.getPlayerShip().getHull();
     };
-    constructor(private config:Config){}
 
-    init(): Promise<void> {
-        this.serverProcess = exec(this.config.runServer);
-        return retry(this.assertServerIsUp, {interval: 20, timeout: timeout})
-            .then(() => {},
-                (e) => {
-                    this.destroy();
-                    throw e;
-                });
+    constructor(private config: Config) {
     }
 
-    destroy(){
+    async init(): Promise<void> {
+        this.serverProcess = exec(this.config.runServer);
+        try {
+
+            await retry(this.assertServerIsUp, {interval: 20, timeout: timeout});
+        } catch(e) {
+            this.destroy();
+            throw e;
+        }
+    }
+
+    destroy() {
         this.serverProcess && this.serverProcess.kill();
-        execSync(this.config.killServer);
+        try {
+            execSync(this.config.killServer);
+        } catch (e) {
+
+        }
     }
 }
 
-export function beforeAndAfter(config:Config){
-    let mgr:ServerManager;
-    before('init managed server', function(){
+export function beforeAndAfter(config: Config) {
+    let mgr: ServerManager;
+    before('init managed server', function () {
         this.timeout(timeout);
         mgr = new ServerManager(config);
         return mgr.init();
     });
-    after('destroy managed server', ()=>{
+    after('destroy managed server', () => {
         mgr.destroy();
     });
 }

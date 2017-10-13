@@ -1,14 +1,15 @@
 import {expect} from "chai";
-import * as Promise from 'bluebird';
-import * as retry from 'bluebird-retry';
-import {EventEmitter} from 'eventemitter3';
-import {Msg, IncomingMsg} from "../src/panels-server/protocol";
-import {PanelSession, Server, IncomingEvents} from "../src/panels-server";
+import {Msg, IncomingMsg} from "../src/core/terminals/protocol";
+import {TerminalSession, Server, IncomingEvents} from "../src/core/terminals";
+import {retry} from "./retry";
 
-export interface EventObj{
+export type EventObj = {
+    event : 'unknown';
+
+} | {
     event:keyof IncomingEvents;
     msg:Msg<any>|undefined;
-    panel:PanelSession;
+    terminal:TerminalSession;
 }
 
 export type DeepPartial<T> = {
@@ -24,32 +25,36 @@ export namespace EventsMatcher {
     };
 }
 
+
+function delayedPromise(delay: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, delay));
+}
+
 export class EventsMatcher{
     private events: Array<EventObj> = [];
     constructor(private options:EventsMatcher.Options){}
 
     track(server: Server) {
-        Server.incomingEvents.forEach(event => server.on(event, (panel:PanelSession, msg?: IncomingMsg<any>) => {
-            this.events.push({event, msg, panel});
+        Server.incomingEvents.forEach(event => server.on(event, (terminal:TerminalSession, msg?: IncomingMsg<any>) => {
+            this.events.push({event, msg, terminal});
         }))
     }
 
-    expect(events: Array<DeepPartial<EventObj>>):Promise<void>{
-        return this.expectEvents(events)
-            .delay(this.options.noExtraEventsGrace)
-            .then(()=>{expect(this.events, 'no further events after matching').to.eql([]);});
+    async expect(events: Array<DeepPartial<EventObj>>):Promise<void>{
+        await this.expectEvents(events);
+        await delayedPromise(this.options.noExtraEventsGrace);
+        expect(this.events, 'no further events after matching').to.eql([]);
     }
 
-    private expectEvents(events: Array<DeepPartial<EventObj>>):Promise<void>{
+    private async expectEvents(events: Array<DeepPartial<EventObj>>):Promise<void>{
         if (events.length) {
-            return retry(this.checkEvents.bind(this, events), this.options)
-                .then(()=>undefined)
-                .catch(e => {
-                    throw e.failure;
-                });
+            try {
+                await retry(this.checkEvents.bind(this, events), this.options);
+            } catch (e){
+                throw e.failure;
+            }
         } else {
             expect(this.events).to.eql([]);
-            return Promise.resolve();
         }
     }
 

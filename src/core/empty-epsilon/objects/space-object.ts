@@ -1,12 +1,13 @@
-import {ObjectDriver, Promise} from "../driver";
+import {ObjectDriver} from "../driver";
 
 export abstract class SpaceObject {
-    protected abstract readonly driver:ObjectDriver;
+    protected abstract readonly driver: ObjectDriver;
 
-    getPosition():Promise<[number, number]>{
+    getPosition(): Promise<[number, number]> {
         return this.driver.getMultiple(`getPosition()`, 2);
     }
-    setPosition(x:number, y:number):Promise<void>{
+
+    setPosition(x: number, y: number): Promise<void> {
         return this.driver.set(`setPosition(${x},${y})`);
     }
 
@@ -17,14 +18,14 @@ export abstract class SpaceObject {
      * The value returned here can also go below 0 degrees or higher then 360 degrees,
      * there is no limiting on the rotation.
      */
-    getRotation():Promise<number>{
+    getRotation(): Promise<number> {
         return this.driver.get(`getRotation()`);
     }
 
     /**
      * Sets the absolute rotation of this object. In degrees.
      */
-    setRotation(angle:number):Promise<void>{
+    setRotation(angle: number): Promise<void> {
         return this.driver.set(`setRotation(${angle})`);
     }
 
@@ -32,63 +33,63 @@ export abstract class SpaceObject {
      * Get the heading of this object, in the range of 0 to 360.
      * The heading is 90 degrees off from the rotation.
      */
-    getHeading():Promise<number>{
+    getHeading(): Promise<number> {
         return this.driver.get(`getHeading()`);
     }
 
-    setHeading(angle:number):Promise<void>{
+    setHeading(angle: number): Promise<void> {
         return this.driver.set(`setHeading(${angle})`);
     }
 
     /**
      * Gets the velocity of the object, in 2D space, in meters/second
      */
-    getVelocity():Promise<number>{
+    getVelocity(): Promise<number> {
         return this.driver.get(`getVelocity()`);
     }
 
-    setVelocity(velocity:number):Promise<void>{
+    setVelocity(velocity: number): Promise<void> {
         return this.driver.set(`setVelocity(${velocity})`);
     }
 
     /**
      * Gets the rotational velocity of the object, in degree/second
      */
-    getAngularVelocity():Promise<number>{
+    getAngularVelocity(): Promise<number> {
         return this.driver.get(`getAngularVelocity()`);
     }
 
-    setAngularVelocity(velocity:number):Promise<void>{
+    setAngularVelocity(velocity: number): Promise<void> {
         return this.driver.set(`setAngularVelocity(${velocity})`);
     }
 
     /**
      * Gets the faction name to which this object belongs.
      */
-    getFaction():Promise<string>{
+    getFaction(): Promise<string> {
         return this.driver.get(`getFaction()`);
     }
 
-    setFaction(faction:string):Promise<void>{
+    setFaction(faction: string): Promise<void> {
         return this.driver.set(`setFaction(${faction})`);
     }
 
     /**
      * Gets the rotational velocity of the object, in degree/second
      */
-    getFactionId():Promise<number>{
+    getFactionId(): Promise<number> {
         return this.driver.get(`getFactionId()`);
     }
 
-    setFactionId(factionId:number):Promise<void>{
+    setFactionId(factionId: number): Promise<void> {
         return this.driver.set(`setFactionId(${factionId})`);
     }
 
-    setCommsScript(scriptName:number):Promise<void>{
+    setCommsScript(scriptName: number): Promise<void> {
         return this.driver.set(`setCommsScript(${scriptName})`);
     }
 
-    isEnemy(other:SpaceObject){
+    isEnemy(other: SpaceObject) {
         return this.driver.get(`isEnemy(${other.driver.contextQuery})`);
     }
 
