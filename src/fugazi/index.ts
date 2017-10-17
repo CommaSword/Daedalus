@@ -36,6 +36,6 @@ export async function run(configPath:string) {
 	const connector = builder.build();
 
 	// bootstrap connector
-	connector.start().then(() => connector.logger.info("started"));
-
+	await connector.start();
+	connector.logger.info("started");
 }
