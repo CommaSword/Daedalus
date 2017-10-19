@@ -12,11 +12,6 @@ export enum Status {
 
 export class Entry {
 
-    static parse(rawContent: string, path: string): Entry {
-        const parsed = fm<Metadata>(rawContent);
-        return new Entry(path, parsed.attributes, parsed.body);
-    }
-
     constructor(public path: string,
                 public meta: Metadata,
                 public content: string) {
@@ -26,6 +21,11 @@ export class Entry {
         if (this.meta.securityClass === undefined) {
             this.meta.securityClass = ExcaliburSecClass.CONFIDENTIAL;
         }
+    }
+
+    static parse(rawContent: string, path: string): Entry {
+        const parsed = fm<Metadata>(rawContent);
+        return new Entry(path, parsed.attributes, parsed.body);
     }
 
     toString(): string {
@@ -60,6 +60,51 @@ export class Entries {
         this.init(fs);
     }
 
+    open(user: User, search: string): string | undefined {
+        let entry = [... this.entries.values()].find(e =>
+            user.isPermitted(e.meta.securityClass) && e.meta.name.includes(search));
+        return entry && entry.content;
+    }
+
+    list(): string | undefined {
+        let allowedEntries = [... this.entries.values()]
+            .map(e => `${e.meta.name} (${ExcaliburSecClass[e.meta.securityClass]})`);
+        return allowedEntries.join(', ')
+    }
+
+    async query(user: User, search: string): Promise<string | undefined> {
+        let queryFileName = `query_${Date.now().toString()}.md`;
+
+        let newPath = join(Entries.queriesPath, queryFileName);
+        let queryEntry = new Entry(newPath, {
+                status: Status.QUERY,
+                securityClass: user.excaliburClearance,
+                name: search
+            },
+            `This entry was created due to a query by ${user.name} at SD${Date.now()}`
+        );
+        await this.fs.saveFile(newPath, queryEntry.toString());
+        const queryFinished = await new Promise<Entry>((resolve: Function) => {
+            const listner = (e: FileChangedEvent) => {
+                if (normalize(e.fullPath) === normalize(newPath)) {
+                    let entry = Entry.parse(e.newContent, e.fullPath);
+                    if (entry.meta.status === Status.ENTRY) {
+                        this.fs.events.removeListener('fileChanged', listner)
+                        resolve(entry);
+                    }
+                }
+            };
+            this.fs.events.on('fileChanged', listner);
+        });
+
+        // We move the finished file from the queries folder to the entries folder
+        let finalPath = join(Entries.entriesPath, basename(queryFinished.path));
+        await this.fs.saveFile(finalPath, queryFinished.toString());
+        await this.fs.deleteFile(newPath);
+        this.entries.set(finalPath, queryFinished); // add new entry to memory instead of waiting for watch event, to make sure it's there when this.open() runs (race condition)
+        return this.open(user, queryFinished.meta.name);
+    }
+
     private async init(fs: FileSystem) {
         const fsItems = await fs.loadDirectoryChildren(Entries.entriesPath);
         fsItems.filter(isFile).forEach(async file => {
@@ -84,50 +129,6 @@ export class Entries {
                 this.entries.delete(e.fullPath);
             }
         });
-    }
-
-    open(user: User, search: string): string | undefined {
-        let entry = [... this.entries.values()].find(e =>
-            user.isPermitted(e.meta.securityClass) && e.meta.name.includes(search));
-        return entry && entry.content;
-    }
-
-    list(): string | undefined {
-        let allowedEntries = [... this.entries.values()]
-            .map(e => `${e.meta.name} (${ExcaliburSecClass[e.meta.securityClass]})`);
-        return allowedEntries.join(', ')
-    }
-
-    async query(user: User, search: string): Promise<string | undefined> {
-        let queryFileName = `query_${Date.now().toString()}.md`;
-
-        let newPath = join(Entries.queriesPath, queryFileName);
-        let queryEntry = new Entry(newPath, {
-            status: Status.QUERY,
-            securityClass: user.excaliburClearance,
-            name : search},
-            `This entry was created due to a query by ${user.name} at SD${Date.now()}`
-        );
-        await this.fs.saveFile(newPath, queryEntry.toString());
-        const queryFinished = await new Promise<Entry>((resolve: Function) => {
-            const listner = (e: FileChangedEvent) => {
-                if (normalize(e.fullPath) === normalize(newPath)) {
-                    let entry = Entry.parse(e.newContent, e.fullPath);
-                    if (entry.meta.status === Status.ENTRY) {
-                        this.fs.events.removeListener('fileChanged', listner)
-                        resolve(entry);
-                    }
-                }
-            };
-            this.fs.events.on('fileChanged', listner);
-        });
-
-        // We move the finished file from the queries folder to the entries folder
-        let finalPath = join(Entries.entriesPath, basename(queryFinished.path));
-        await this.fs.saveFile(finalPath, queryFinished.toString());
-        await this.fs.deleteFile(newPath);
-        this.entries.set(finalPath, queryFinished); // add new entry to memory instead of waiting for watch event, to make sure it's there when this.open() runs (race condition)
-        return this.open(user, queryFinished.meta.name);
     }
 
 }

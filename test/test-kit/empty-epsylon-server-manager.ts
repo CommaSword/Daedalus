@@ -1,5 +1,5 @@
-import {exec, execSync, ChildProcess} from 'child_process';
-import {EmptyEpsilonDriver} from "../src/core/empty-epsilon/driver";
+import {ChildProcess, exec, execSync} from 'child_process';
+import {EmptyEpsilonDriver} from "../../src/core/empty-epsilon/driver";
 import {retry} from "./retry";
 
 const timeout = 10 * 1000;
@@ -25,7 +25,7 @@ export class ServerManager {
         try {
 
             await retry(this.assertServerIsUp, {interval: 20, timeout: timeout});
-        } catch(e) {
+        } catch (e) {
             this.destroy();
             throw e;
         }

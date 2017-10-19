@@ -1,7 +1,13 @@
 import {createServer, Server as NetServer, Socket} from 'net';
 import {isEqual} from 'lodash';
 import {
-    delimitter, HelloMsg, IncomingMsg, isNoopMsg, Msg, StateMsg, validateHelloMsg,
+    delimitter,
+    HelloMsg,
+    IncomingMsg,
+    isNoopMsg,
+    Msg,
+    StateMsg,
+    validateHelloMsg,
     validateStateMsg
 } from "./protocol";
 import {EventEmitter} from 'eventemitter3';
@@ -64,14 +70,53 @@ export class Server {
 }
 
 export class TerminalSession {
-    private _id: string;
-    private _clientState: any;
-
     readonly remoteAddress: string;
     public serverState: any;
     private events = new EventEmitter();
     private lastInputLeftover: string;
     private stateSender: NodeJS.Timer;
+    private onConnData = (rawMsg: string) => {
+        rawMsg = rawMsg.trim();
+        if (this.lastInputLeftover) {
+            rawMsg = rawMsg + this.lastInputLeftover;
+            this.lastInputLeftover = '';
+        }
+        console.log('TerminalSession %s incoming message: %s', this, rawMsg);
+        if (rawMsg) {
+            let lines = rawMsg.split(delimitter);
+            lines.forEach((line: string, i: number) => {
+                line = line.trim();
+                let msg;
+                try {
+                    msg = JSON.parse(line);
+                } catch (e) {
+                    if (i + 1 === lines.length) {
+                        this.lastInputLeftover = line;
+                    } else {
+                        console.log(e.message, e.stack);
+                        console.log('TerminalSession %s illegal message format: %s', this, line);
+                    }
+                }
+                if (msg) {
+                    this.handleMessage(msg);
+                }
+            });
+        }
+    };
+    private onConnClose = () => {
+        clearInterval(this.stateSender);
+        if (this.isConneted()) {
+            this.events.emit('disconnected');
+        }
+        this.events.removeAllListeners();
+    };
+    private onConnError = (err: Error) => {
+        console.log('TerminalSession %s error: %s', this, err.message);
+    };
+    private onConnTimeout = () => {
+        console.log('TerminalSession %s timeout', this);
+        this.close();
+    };
 
     constructor(private readonly socket: Socket, serverEvents: IncompingReporter) {
         this.remoteAddress = socket.remoteAddress + ':' + socket.remotePort;
@@ -101,9 +146,13 @@ export class TerminalSession {
 
     }
 
+    private _id: string;
+
     get id() {
         return this._id;
     }
+
+    private _clientState: any;
 
     get clientState() {
         return this._clientState;
@@ -133,52 +182,6 @@ export class TerminalSession {
     once<T extends keyof IncomingEvents>(event: T, listener: (terminal: TerminalSession, msg?: IncomingEvents[T]) => any) {
         this.events.once(event, listener);
     }
-
-    private onConnData = (rawMsg: string) => {
-        rawMsg = rawMsg.trim();
-        if (this.lastInputLeftover) {
-            rawMsg = rawMsg + this.lastInputLeftover;
-            this.lastInputLeftover = '';
-        }
-        console.log('TerminalSession %s incoming message: %s', this, rawMsg);
-        if (rawMsg) {
-            let lines = rawMsg.split(delimitter);
-            lines.forEach((line: string, i: number) => {
-                line = line.trim();
-                let msg;
-                try {
-                    msg = JSON.parse(line);
-                } catch (e) {
-                    if (i + 1 === lines.length) {
-                        this.lastInputLeftover = line;
-                    } else {
-                        console.log(e.message, e.stack);
-                        console.log('TerminalSession %s illegal message format: %s', this, line);
-                    }
-                }
-                if (msg) {
-                    this.handleMessage(msg);
-                }
-            });
-        }
-    };
-
-    private onConnClose = () => {
-        clearInterval(this.stateSender);
-        if (this.isConneted()) {
-            this.events.emit('disconnected');
-        }
-        this.events.removeAllListeners();
-    };
-
-    private onConnError = (err: Error) => {
-        console.log('TerminalSession %s error: %s', this, err.message);
-    };
-
-    private onConnTimeout = () => {
-        console.log('TerminalSession %s timeout', this);
-        this.close();
-    };
 
     private outOfSync(msg: any) {
         console.log('TerminalSession %s out-of-sync message: %s', this, JSON.stringify(msg));

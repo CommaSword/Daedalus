@@ -11,7 +11,7 @@
     "build": "tsc -d",
     "pretest": "npm run clean && npm run build",
     "reset": "rimraf node_modules dist && yarn install && yarn test",
-    "test": "mocha --reporter mocha-env-reporter dist/test/index",
+    "test": "mocha --require dist/test/setup.js --require source-map-support/register --reporter nyan \"dist/test/**/*.spec.js\"",
     "start": "rimraf dist && yarn build && node ./main.js",
     "debug": "rimraf dist && yarn build && concurrently --kill-others --success first \"yarn build -- -w\" \"node --inspect-brk ./main.js\""
   },
@@ -47,7 +47,6 @@
     "chai-subset": "1.5.0",
     "concurrently": "~3.5.0",
     "mocha": "3.2.0",
-    "mocha-env-reporter": "2.0.4",
     "rimraf": "~2.6.1",
     "sinon": "~2.3.5",
     "sinon-chai": "~2.11.0",
