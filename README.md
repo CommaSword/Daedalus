@@ -1,17 +1,22 @@
-# E.E.M.R.O
-Empty Epsilon Maintenance, Repair and Operations.
+# Daedalus
+Empty Epsilon extension.
 
 This project extends the [Empty Epsilon](http://daid.github.io/EmptyEpsilon/) spaceship bridge simulator game,
 by simulating the spaceship's need for [Maintenance, Repair and Operations](https://en.wikipedia.org/wiki/Maintenance,_repair_and_operations) during the game.
 
 ## Core concept
-eemro replaces the singular auto-repair screen with a simulation of the ship's several sub-systems engineering interfaces. 
+Daedalus replaces the singular auto-repair screen with a simulation of the ship's several sub-systems engineering interfaces. 
 
 ## developer documentation
 how to build and test:
  - clone the repository
  - in the cloned folder, run `yarn install`
- - run `yarn test` to build and test the code in both nodejs and browser
+ 
+how to run tests:
+ - (do once) in the project's root open the file `test-config.json`
+   - change `runServer` and `killServer` to commands that can start and stop an empty-epsilon game server with open http api and one player ship ready.
+   - make sure `serverAddress` correctly describes the server's http api address
+ - run `yarn test` to build and test the code
 
 how to debug:
  1. run `yarn debug`. the server will start and halt on the first line of code

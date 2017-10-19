@@ -32,7 +32,7 @@ export default function init(builder: RootModuleBuilder, entries: Entries) {
             } else {
                 return {
                     status: ResponseStatus.Failure,
-                    data: 'You must logged in'
+                    data: 'You must be logged in'
                 };
             }
         })
@@ -71,13 +71,13 @@ export default function init(builder: RootModuleBuilder, entries: Entries) {
                 } else {
                     return {
                         status: ResponseStatus.Failure,
-                        data: 'Query finished'
+                        data: 'Excalibur clearance insufficient'
                     };
                 }
             } else {
                 return {
                     status: ResponseStatus.Failure,
-                    data: 'You must logged in'
+                    data: 'You must be logged in'
                 };
             }
         })

@@ -1,6 +1,6 @@
 import {beforeAndAfter} from '../../test-kit/empty-epsylon-server-manager'
 import {EmptyEpsilonDriver} from '../../../src/core/empty-epsilon/driver';
-import * as config from '../../test-kit/config';
+import config from '../../test-kit/config';
 import {expect} from 'chai';
 import {ESystem} from "../../../src/core/empty-epsilon/objects/space-ship";
 import {PlayerShip} from "../../../src/core/empty-epsilon/objects/player-ship";

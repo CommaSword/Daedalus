@@ -1,5 +1,5 @@
 {
-  "name": "ee-mro",
+  "name": "Daedalus",
   "version": "0.0.1",
   "description": "Empty Epsilon - Maintainence, Repair and Operations extension",
   "main": "main.js",
@@ -11,7 +11,7 @@
     "build": "tsc -d",
     "pretest": "npm run clean && npm run build",
     "reset": "rimraf node_modules dist && yarn install && yarn test",
-    "test": "mocha --require dist/test/setup.js --require source-map-support/register --reporter nyan \"dist/test/**/*.spec.js\"",
+    "test": "mocha --require test-setup.js --require source-map-support/register --reporter list \"dist/test/**/*.spec.js\"",
     "start": "rimraf dist && yarn build && node ./main.js",
     "debug": "rimraf dist && yarn build && concurrently --kill-others --success first \"yarn build -- -w\" \"node --inspect-brk ./main.js\""
   },
