@@ -1,4 +1,3 @@
-
 export interface RetryPromiseOptions {
     interval: number;
     timeout: number;

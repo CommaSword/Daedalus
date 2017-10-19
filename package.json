@@ -1,20 +1,23 @@
 {
-  "name": "scs",
+  "name": "Daedalus",
   "version": "0.0.1",
-  "description": "Ship Control System - Empty Epsilon integration server",
-  "main": "dist/src/server.js",
+  "description": "Empty Epsilon - Maintainence, Repair and Operations extension",
+  "main": "main.js",
   "scripts": {
+    "build:client": "tsc -p node_modules/@fugazi/webclient/scripts & tsc -p node_modules/@fugazi/webclient/modules/scripts & echo 'done'",
+    "reset:client": "yarn upgrade @fugazi/connector && yarn upgrade @fugazi/webclient && yarn prepublish",
+    "prepublish": "yarn build:client",
     "clean": "rimraf ./dist",
     "build": "tsc -d",
     "pretest": "npm run clean && npm run build",
     "reset": "rimraf node_modules dist && yarn install && yarn test",
-    "test": "mocha --reporter mocha-env-reporter dist/test/index",
+    "test": "mocha --require test-setup.js --require source-map-support/register --reporter list \"dist/test/**/*.spec.js\"",
     "start": "rimraf dist && yarn build && node ./main.js",
     "debug": "rimraf dist && yarn build && concurrently --kill-others --success first \"yarn build -- -w\" \"node --inspect-brk ./main.js\""
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:CommaSword/scs.git"
+    "url": "git@github.com:CommaSword/ee-mro.git"
   },
   "keywords": [
     "empty epsilon",
@@ -23,30 +26,42 @@
   "author": "Amir Arad (amira@wix.com)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/CommaSword/scs/issues"
+    "url": "https://github.com/CommaSword/ee-mro/issues"
   },
-  "homepage": "https://github.com/CommaSword/scs#readme",
+  "homepage": "https://github.com/CommaSword/ee-mro#readme",
   "devDependencies": {
-    "@types/chai": "3.4.35",
+    "@fugazi/connector": "^1.0.16",
+    "@fugazi/webclient": "^1.0.16",
+    "@types/autobahn": "^0.9.37",
+    "@types/chai": "~4.0.4",
     "@types/chai-as-promised": "0.0.29",
     "@types/lodash": "4.14.55",
-    "@types/mocha": "2.2.39",
+    "@types/mocha": "~2.2.41",
     "@types/node": "8.0.33",
+    "@types/resolve": "^0.0.4",
+    "@types/sinon": "~2.3.1",
+    "@types/sinon-chai": "~2.7.28",
     "@types/socket.io-client": "1.4.29",
-    "chai": "3.5.0",
+    "chai": "~4.1.2",
     "chai-as-promised": "6.0.0",
     "chai-subset": "1.5.0",
     "concurrently": "~3.5.0",
     "mocha": "3.2.0",
-    "mocha-env-reporter": "2.0.4",
-    "rimraf": "2.6.0",
-    "sinon": "2.0.0-pre.2",
+    "rimraf": "~2.6.1",
+    "sinon": "~2.3.5",
+    "sinon-chai": "~2.11.0",
+    "source-map-support": "~0.4.15",
+    "tslib": "~1.7.1",
     "typescript": "2.5.3"
   },
   "dependencies": {
     "axios": "0.15.3",
     "eventemitter3": "2.0.2",
+    "front-matter": "^2.2.0",
+    "jsonschema": "^1.1.1",
+    "kissfs": "^0.3.0",
     "lodash": "4.17.4",
+    "resolve": "^1.4.0",
     "socket.io-client": "1.7.3",
     "socketio-wildcard": "0.4.0",
     "source-map-support": "0.4.11"

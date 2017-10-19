@@ -1,5 +1,5 @@
 import {EmptyEpsilonDriver} from './empty-epsilon/driver';
-import {TerminalSession, Server} from "./terminals";
+import {Server, TerminalSession} from "./terminals";
 
 export type Options = {
     eeHost: string;
@@ -60,7 +60,7 @@ function gizmoImplPOC(terminal: { serverState: any, clientState: any, connected:
     let damageDealTimer: NodeJS.Timer;
 
     async function dealDamage() {
-        const playerShip =  emptyEpsilon.getPlayerShip();
+        const playerShip = emptyEpsilon.getPlayerShip();
         const hull = await playerShip.getHull();
         await playerShip.setHull(hull * 0.99);
         if (terminal.clientState) {

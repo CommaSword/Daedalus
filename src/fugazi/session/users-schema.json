@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "users list",
+  "type": "array",
+  "items": {
+    "title": "user",
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string"
+      },
+      "key": {
+        "type": "string"
+      },
+      "excaliburClearance": {
+        "enum": [
+          "CONFIDENTIAL",
+          "SECRET",
+          "TOP_SECRET"
+        ]
+      },
+      "gender": {
+        "enum": [
+          "MALE",
+          "FEMALE",
+          "ADVANCED"
+        ]
+      }
+    },
+    "required": [
+      "name",
+      "key",
+      "clearance"
+    ]
+  }
+}

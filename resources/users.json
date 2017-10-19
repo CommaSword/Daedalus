@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Ann",
+    "key": "a",
+    "excaliburClearance": "CONFIDENTIAL"
+  },
+  {
+    "name": "Ben",
+    "key": "b",
+    "excaliburClearance": "SECRET"
+  },
+  {
+    "name": "Cedric",
+    "key": "c",
+    "excaliburClearance": "TOP_SECRET"
+  }
+]

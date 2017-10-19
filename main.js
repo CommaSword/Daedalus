@@ -1,7 +1,8 @@
 require('source-map-support').install();
-const server = require('./dist/src/server');
+const path = require('path');
 
-server.startServer({
+require('./dist/src/index').main({
+    resources : path.join(__dirname, 'resources'),
     terminalsPort: 8888,
     eeHost:'10.0.0.7'
 });
