@@ -66,7 +66,7 @@ export class Entries {
         return entry && entry.content;
     }
 
-    list(): string | undefined {
+    list(): string {
         let allowedEntries = [... this.entries.values()]
             .map(e => `${e.meta.name} (${ExcaliburSecClass[e.meta.securityClass]})`);
         return allowedEntries.join(', ')

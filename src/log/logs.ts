@@ -6,11 +6,17 @@ export class Logs {
     static readonly logInitMetadata = "";
 
     constructor(private fs: FileSystem) {
-        this.init(fs);
+        this.init();
     }
 
-    async openLogFile(): Promise<string | undefined> {
-        return await this.fs.loadTextFile(Logs.logPath);
+    async openLogFile(): Promise<string> {
+        const log = await this.fs.loadTextFile(Logs.logPath);
+        if (log) {
+            return log;
+        } else {
+            await this.init();
+            return await this.openLogFile();
+        }
     }
 
     saveLogFile(data: string): void {
@@ -24,12 +30,11 @@ export class Logs {
         this.saveLogFile(newLog);
     }
 
-    private async init(fs: FileSystem) {
-
-        const fsItems = await fs.loadDirectoryChildren(".");
+    private async init() {
+        const fsItems = await this.fs.loadDirectoryChildren(".");
         if (!fsItems.find(file => file.type === "file" && file.name === Logs.logPath)) {
             console.info(`Missing log file. Creating a new one ${Logs.logPath}`);
-            fs.saveFile(Logs.logPath, Logs.logInitMetadata);
+            await this.fs.saveFile(Logs.logPath, Logs.logInitMetadata);
         }
     }
 }

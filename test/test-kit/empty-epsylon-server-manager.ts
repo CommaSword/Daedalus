@@ -1,5 +1,5 @@
 import {ChildProcess, exec, execSync} from 'child_process';
-import {EmptyEpsilonDriver} from "../../src/core/empty-epsilon/driver";
+import {EmptyEpsilonDriver} from "../../src/empty-epsilon/driver";
 import {retry} from "./retry";
 
 const timeout = 10 * 1000;

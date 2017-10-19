@@ -1,6 +1,6 @@
 import {expect} from "chai";
-import {IncomingMsg, Msg} from "../../src/core/terminals/protocol";
-import {IncomingEvents, Server, TerminalSession} from "../../src/core/terminals";
+import {IncomingMsg, Msg} from "../../src/terminals/protocol";
+import {IncomingEvents, Server, TerminalSession} from "../../src/terminals";
 import {retry} from "./retry";
 
 export type EventObj = {

@@ -1,9 +1,9 @@
-import {beforeAndAfter} from '../../test-kit/empty-epsylon-server-manager'
-import {EmptyEpsilonDriver} from '../../../src/core/empty-epsilon/driver';
-import config from '../../test-kit/config';
+import {beforeAndAfter} from '../test-kit/empty-epsylon-server-manager'
+import {EmptyEpsilonDriver} from '../../src/empty-epsilon/driver';
+import config from '../test-kit/config';
 import {expect} from 'chai';
-import {ESystem} from "../../../src/core/empty-epsilon/objects/space-ship";
-import {PlayerShip} from "../../../src/core/empty-epsilon/objects/player-ship";
+import {ESystem} from "../../src/empty-epsilon/objects/space-ship";
+import {PlayerShip} from "../../src/empty-epsilon/objects/player-ship";
 
 describe('HTTP Server Driver', () => {
     beforeAndAfter(config);

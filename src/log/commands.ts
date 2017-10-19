@@ -1,10 +1,9 @@
-import {Request} from "../command-utils";
 import {RootModuleBuilder} from "@fugazi/connector/scripts/bin/components";
-import {ResponseStatus} from "@fugazi/connector/scripts/bin/server";
 import {Logs} from "./logs";
+import {withUser, Request} from "../session/command-utils";
+import {User} from "../session/users";
 
 export default function init(builder: RootModuleBuilder, logs: Logs) {
-
     builder
         .descriptor({
             title: "log"
@@ -15,13 +14,10 @@ export default function init(builder: RootModuleBuilder, logs: Logs) {
             returns: "void",
             syntax: `log (newLogLine string)`
         })
-        .handler(async (request: Request) => {
-            const result = await logs.writeToLog(request.data("newLogLine"));
-            return {
-                status: ResponseStatus.Success,
-                data: null
-            };
-        })
+        .handler(withUser(async (request: Request, user: User) => {
+            await logs.writeToLog(request.data("newLogLine"));
+            return '';
+        }))
         .parent()
         .command('read-log', {
             title: 'read log',
@@ -29,11 +25,7 @@ export default function init(builder: RootModuleBuilder, logs: Logs) {
             returns: "string",
             syntax: `read-log`
         })
-        .handler(async (request: Request) => {
-            const logData = await logs.openLogFile();
-            return {
-                status: ResponseStatus.Success,
-                data: logData
-            };
-        })
+        .handler(withUser(async (request: Request, user: User) => {
+            return await logs.openLogFile();
+        }));
 }

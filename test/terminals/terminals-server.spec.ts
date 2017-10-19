@@ -1,7 +1,7 @@
-import {Server} from '../../../src/core/terminals';
-import {Terminal} from '../../test-kit/terminal'
-import {EventsMatcher} from "../../test-kit/events-matcher";
-import {IncomingMsg, Noop_MsgType} from "../../../src/core/terminals/protocol";
+import {Server} from '../../src/terminals';
+import {Terminal} from '../test-kit/terminal'
+import {EventsMatcher} from "../test-kit/events-matcher";
+import {IncomingMsg, Noop_MsgType} from "../../src/terminals/protocol";
 
 const PORT_NUM = 8888;
 
