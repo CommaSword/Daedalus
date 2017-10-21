@@ -1,4 +1,4 @@
-import {MemoryFileSystem, File} from "kissfs";
+import {File, FileSystem, MemoryFileSystem} from "kissfs";
 import {Entries, Entry, Status} from "../../src/excalibur/entries";
 import {User} from "../../src/session/users";
 import {ExcaliburSecClass} from "../../src/excalibur/clearence";
@@ -33,7 +33,7 @@ async function makeEntriesWithPreExistingFile(fileContent: string) {
     return entries;
 }
 
-async function makeEntrieandFileSystem(): Promise<{fs:MemoryFileSystem; entries:Entries}> {
+async function makeEntrieandFileSystem(): Promise<{ fs: MemoryFileSystem; entries: Entries }> {
     const fs: MemoryFileSystem = new MemoryFileSystem();
     await fs.ensureDirectory('entries');
     await fs.ensureDirectory('queries');
@@ -100,24 +100,47 @@ describe.only('excalibur module', () => {
 
     describe('query', () => {
 
-        it('finds entry file', async () => {
-            const {entries, fs} = await makeEntrieandFileSystem();
-            expect( await fs.loadDirectoryChildren('queries')).to.have.length(0);
 
+        async function query(entries: Entries, fs: FileSystem) {
             const result = entries.query(makeUser(ExcaliburSecClass.CONFIDENTIAL), 'foo');
-            await new Promise(r => setTimeout(r, 50));
+            await new Promise(r => setTimeout(r, 1));
             const children = await fs.loadDirectoryChildren('queries');
-            expect( children).to.have.length(1);
+            expect(children).to.have.length(1);
             const file = children[0] as File;
             file.content = await fs.loadTextFile(file.fullPath);
             const entry = Entry.parse(file.content, file.fullPath);
+            return {result, entry};
+        }
+
+        it('finds entry file', async () => {
+            const {entries, fs} = await makeEntrieandFileSystem();
+            expect(await fs.loadDirectoryChildren('queries')).to.have.length(0);
+            const {result, entry} = await query(entries, fs);
             expect(entry.meta.status).to.eql(Status.QUERY);
             expect(entry.meta.securityClass).to.eql(ExcaliburSecClass.CONFIDENTIAL);
             entry.content = 'bar123';
             entry.meta.status = Status.ENTRY;
-            await fs.saveFile(file.fullPath, entry.toString());
+            await fs.saveFile(entry.path, entry.toString());
             expect(await result).to.eql('bar123');
         });
 
+        describe('afterwards', () => {
+            let entries: Entries;
+            let fs: FileSystem;
+            beforeEach('finds entry file', async () => {
+                const enf = await makeEntrieandFileSystem();
+                entries = enf.entries;
+                fs = enf.fs;
+                const {entry} = await query(entries, fs);
+                entry.content = 'bar123';
+                entry.meta.status = Status.ENTRY;
+                await fs.saveFile(entry.path, entry.toString());
+            });
+
+            it('entry moves from queries to entries folder', async () => {
+                // TODO ...
+            });
+
+        });
     });
 });
