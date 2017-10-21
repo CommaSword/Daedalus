@@ -1,14 +1,13 @@
 import * as fugazi from "@fugazi/connector";
+import {LocalFileSystem} from "kissfs";
+import resolve = require("resolve");
 import initExcalibur from "./excalibur/commands";
 import initLogin from "./session/commands";
 import initLog from "./log/commands";
 import {parse} from "path";
-import {ServerBuilder} from "@fugazi/connector/scripts/bin/server";
 import {Users} from "./session/users";
 import {Entries} from "./excalibur/entries";
 import {Logs} from "./log/logs";
-import {LocalFileSystem} from "kissfs";
-import resolve = require("resolve");
 import {EmptyEpsilonDriver} from './empty-epsilon/driver';
 import {Server, TerminalSession} from "./terminals";
 
@@ -23,10 +22,7 @@ export async function main(optionsArg: ServerOptions) {
     const eeDriver = new EmptyEpsilonDriver(`http://${options.eeHost}:${options.eePort}`);
     const terminalsServer = new Server(options.terminalsPort);
 
-
-
     terminalsServer.start();
-    await demoApplication(terminalsServer, eeDriver);
 
     // FS drivers
     const fs: LocalFileSystem = await new LocalFileSystem(optionsArg.resources).init();
@@ -49,6 +45,9 @@ export async function main(optionsArg: ServerOptions) {
 
     // bootstrap connector
     await connector.start();
+
+    await demoApplication(terminalsServer, eeDriver);
+
     connector.logger.info("started");
 }
 

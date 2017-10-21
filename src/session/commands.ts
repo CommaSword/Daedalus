@@ -24,7 +24,7 @@ export default function init(builder: RootModuleBuilder, users: Users) {
                     status: ResponseStatus.Failure,
                     data: 'no matching user record found'
                 }
-            }
+            } 
             return {
                 status: ResponseStatus.Success,
                 data: `Welcome to Fugazi, ${request.session.user.name}, your Excalibur clearance is ${request.session.user.excaliburClearance}.`
