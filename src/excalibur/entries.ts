@@ -84,16 +84,16 @@ export class Entries {
         );
         await this.fs.saveFile(newPath, queryEntry.toString());
         const entry = await new Promise<Entry>((resolve: Function) => {
-            const listner = (e: FileChangedEvent) => {
+            const listener = (e: FileChangedEvent) => {
                 if (normalize(e.fullPath) === normalize(newPath)) {
                     let entry = Entry.parse(e.newContent, e.fullPath);
                     if (entry.meta.status === Status.ENTRY) {
-                        this.fs.events.removeListener('fileChanged', listner)
+                        this.fs.events.removeListener('fileChanged', listener)
                         resolve(entry);
                     }
                 }
             };
-            this.fs.events.on('fileChanged', listner);
+            this.fs.events.on('fileChanged', listener);
         });
 
         // We move the finished file from the queries folder to the entries folder
