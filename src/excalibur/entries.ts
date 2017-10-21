@@ -24,7 +24,7 @@ export class Entry {
     }
 
     static parse(rawContent: string, path: string): Entry {
-        const parsed = fm<Metadata>(rawContent);
+        const parsed = fm<Metadata>(rawContent.trim());
         return new Entry(path, parsed.attributes, parsed.body);
     }
 
@@ -57,12 +57,11 @@ export class Entries {
     private entries = new Map<string, Entry>();
 
     constructor(private fs: FileSystem) {
-        this.init(fs);
     }
 
     open(user: User, search: string): string | undefined {
         let entry = [... this.entries.values()].find(e =>
-            user.isPermitted(e.meta.securityClass) && e.meta.name.includes(search));
+            user.isPermitted(e.meta.securityClass) && e.meta.name.toLowerCase().includes(search.toLowerCase()));
         return entry && entry.content;
     }
 
@@ -84,7 +83,7 @@ export class Entries {
             `This entry was created due to a query by ${user.name} at SD${Date.now()}`
         );
         await this.fs.saveFile(newPath, queryEntry.toString());
-        const queryFinished = await new Promise<Entry>((resolve: Function) => {
+        const entry = await new Promise<Entry>((resolve: Function) => {
             const listner = (e: FileChangedEvent) => {
                 if (normalize(e.fullPath) === normalize(newPath)) {
                     let entry = Entry.parse(e.newContent, e.fullPath);
@@ -98,19 +97,16 @@ export class Entries {
         });
 
         // We move the finished file from the queries folder to the entries folder
-        let finalPath = join(Entries.entriesPath, basename(queryFinished.path));
-        await this.fs.saveFile(finalPath, queryFinished.toString());
+        let finalPath = join(Entries.entriesPath, basename(entry.path));
+        await this.fs.saveFile(finalPath, entry.toString());
         await this.fs.deleteFile(newPath);
-        this.entries.set(finalPath, queryFinished); // add new entry to memory instead of waiting for watch event, to make sure it's there when this.open() runs (race condition)
-        return this.open(user, queryFinished.meta.name);
+        this.entries.set(finalPath, entry); // add new entry to memory instead of waiting for watch event, to make sure it's there when this.open() runs (race condition)
+        return this.open(user, entry.meta.name);
     }
 
-    private async init(fs: FileSystem) {
-        const fsItems = await fs.loadDirectoryChildren(Entries.entriesPath);
-        fsItems.filter(isFile).forEach(async file => {
-            const content = await fs.loadTextFile(file.fullPath);
-            fileHandler({type: "fileChanged", fullPath: file.fullPath, newContent: content});
-        });
+    async init() {
+        const fsItems = await this.fs.loadDirectoryChildren(Entries.entriesPath);
+
         const fileHandler = (e: FileChangedEvent | FileCreatedEvent) => {
             // Handle all new files found in the folder
             if (e.fullPath.startsWith(Entries.entriesPath)) {
@@ -122,9 +118,22 @@ export class Entries {
                 }
             }
         };
-        fs.events.on('fileChanged', fileHandler);
-        fs.events.on('fileCreated', fileHandler);
-        fs.events.on('fileDeleted', (e: FileDeletedEvent) => {
+        // process all files
+        await fsItems.filter(isFile)
+            // load file
+            .map(async file => {
+                const content = await this.fs.loadTextFile(file.fullPath);
+                fileHandler({type: "fileChanged", fullPath: file.fullPath, newContent: content});
+            })
+            // wait for all loading
+            .reduce(async (r, p) => {
+                await r;
+                await p;
+            }, {});
+
+        this.fs.events.on('fileChanged', fileHandler);
+        this.fs.events.on('fileCreated', fileHandler);
+        this.fs.events.on('fileDeleted', (e: FileDeletedEvent) => {
             if (e.fullPath.startsWith(Entries.entriesPath)) {
                 this.entries.delete(e.fullPath);
             }
