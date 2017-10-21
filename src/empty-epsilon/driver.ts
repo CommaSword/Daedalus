@@ -29,9 +29,11 @@ export class EmptyEpsilonDriver {
  */
 export class HttpDriver {
     private http: AxiosInstance;
+    private getQueue: any[];
 
     constructor(baseURL: string) {
         this.http = Axios.create({baseURL});
+        this.getQueue = []
     }
 
     async getMultiple(contextGetter: string, getter: string, numberOfResults: number) {
@@ -70,6 +72,42 @@ export class HttpDriver {
             throw new Error('server returned error:' + res.data['ERROR']);
         }
         return res.data.result;
+    }
+
+    getBuffered(getter: string) {
+
+        let resolver : Function = null as any;
+        const resultPromise = new Promise(resolve => resolver = resolve);
+        const req = {resolver, getter};
+        this.getQueue.push(req);
+        return resultPromise;
+    }
+
+    async flush() {
+        const locals: string[] = [];
+        let  i: number = 0;
+        let q: string = '';
+
+        while (i < this.getQueue.length) {
+            locals.push('l' + i);
+            q += `local l${i} = ${this.getQueue[i].getter}; `;
+            i++;
+        }
+        q += `return {${locals.map(e => e + '=' + e).join(',')}}`;
+        const res: AxiosResponse = await this.http.request({
+            method: 'post',
+            url: '/exec.lua',
+            data: q,
+            //transformResponse: JSON.parse
+            transformResponse: (d) => console.log(d) || JSON.parse(d)
+        });
+
+        i = 0;
+        while ( this.getQueue.length > 0 ) {
+            this.getQueue.shift().resolver(res.data[`l${i}`]);
+            i++;
+        }
+
     }
 
     async set(contextGetter: string, setter: string) {
