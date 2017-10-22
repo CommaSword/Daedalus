@@ -80,7 +80,7 @@ export class Entries {
         this.fs.events.on('fileChanged', this.fileHandler);
         this.fs.events.on('fileCreated', this.fileHandler);
         this.fs.events.on('fileDeleted', (e: FileDeletedEvent) => {
-            if (e.fullPath.startsWith(Entries.entriesPath)) {
+            if (e.fullPath.startsWith(Entries.entriesPath) || e.fullPath.startsWith(Entries.queriesPath)) {
                 this.entries.delete(e.fullPath);
             }
         });
