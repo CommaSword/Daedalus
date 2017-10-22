@@ -24,12 +24,18 @@ export class EmptyEpsilonDriver {
     }
 }
 
+type GetRequest = {
+    resolver: Function;
+    getter: string;
+}
+
 /**
  * internal object for any http communication with game server
  */
 export class HttpDriver {
+    private static readonly flushDelay = 200;
     private http: AxiosInstance;
-    private getQueue: any[];
+    private getQueue: GetRequest[];
 
     constructor(baseURL: string) {
         this.http = Axios.create({baseURL});
@@ -76,39 +82,33 @@ export class HttpDriver {
 
     getBuffered(getter: string) {
 
-        let resolver : Function = null as any;
+        let resolver: Function = null as any;
         const resultPromise = new Promise(resolve => resolver = resolve);
-        const req = {resolver, getter};
+        const req: GetRequest = {resolver, getter};
+        if (!this.getQueue.length) {
+            setTimeout(this.flush, HttpDriver.flushDelay);
+        }
         this.getQueue.push(req);
         return resultPromise;
     }
 
-    async flush() {
-        const locals: string[] = [];
-        let  i: number = 0;
-        let q: string = '';
+    private flush = async() => {
+        const buffer = this.getQueue;
+        this.getQueue = [];
 
-        while (i < this.getQueue.length) {
-            locals.push('l' + i);
-            q += `local l${i} = ${this.getQueue[i].getter}; `;
-            i++;
-        }
-        q += `return {${locals.map(e => e + '=' + e).join(',')}}`;
+        const script =
+`${buffer.map(({getter}, i) => `local l${i} = ${getter}; `).join('\n')}
+return {${buffer.map((_, i) => `l${i} = l${i}`).join(',')}};`;
+
         const res: AxiosResponse = await this.http.request({
             method: 'post',
             url: '/exec.lua',
-            data: q,
-            //transformResponse: JSON.parse
-            transformResponse: (d) => console.log(d) || JSON.parse(d)
+            data: script,
+            transformResponse: JSON.parse
         });
 
-        i = 0;
-        while ( this.getQueue.length > 0 ) {
-            this.getQueue.shift().resolver(res.data[`l${i}`]);
-            i++;
-        }
-
-    }
+        buffer.forEach(({resolver}, i) => resolver(res.data[`l${i}`]));
+    };
 
     async set(contextGetter: string, setter: string) {
         const query: string[] = [];
