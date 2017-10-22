@@ -61,7 +61,6 @@
     "lodash": "4.17.4",
     "resolve": "^1.4.0",
     "socket.io-client": "1.7.3",
-    "socketio-wildcard": "0.4.0",
-    "source-map-support": "0.4.11"
+    "socketio-wildcard": "0.4.0"
   }
 }
