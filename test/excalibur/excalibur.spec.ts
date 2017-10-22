@@ -28,8 +28,11 @@ ${content}`;
 
 async function makeEntriesWithPreExistingFile(fileContent: string) {
     const fs: MemoryFileSystem = new MemoryFileSystem();
+    await fs.ensureDirectory('entries');
+    await fs.ensureDirectory('queries');
     await fs.saveFile('entries/zagzag.md', fileContent);
     const entries = new Entries(fs);
+    after(()=>entries.destroy());
     await entries.init();
     return entries;
 }
@@ -39,6 +42,7 @@ async function makeEntrieandFileSystem(): Promise<{ fs: MemoryFileSystem; entrie
     await fs.ensureDirectory('entries');
     await fs.ensureDirectory('queries');
     const entries = new Entries(fs);
+    after(()=>entries.destroy());
     await entries.init();
     return {fs, entries};
 }
@@ -57,7 +61,8 @@ describe.only('excalibur module', () => {
 
         it('on non-empty file sytsem - passes', async () => {
             const fs: MemoryFileSystem = new MemoryFileSystem();
-            await fs.saveFile('entries/foo.md', '');
+            await fs.ensureDirectory('entries');
+            await fs.ensureDirectory('queries');
             const entries = new Entries(fs);
             await entries.init();
         });
@@ -160,8 +165,8 @@ describe.only('excalibur module', () => {
 
             it('entry moves from queries to entries folder', async () => {
                 await retry(async () => expect(await fs.loadDirectoryChildren('queries')).to.have.length(0), {
-                    interval: 10,
-                    timeout: 1000
+                    interval: 100,
+                    timeout: 5 * 1000
                 });
                 expect(await fs.loadDirectoryChildren('entries')).to.have.length(1);
                 const entryInEntries = await loadSingleEntry(fs, 'entries');

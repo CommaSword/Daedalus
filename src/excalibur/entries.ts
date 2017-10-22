@@ -54,9 +54,81 @@ export class Entries {
     static readonly entriesPath = 'entries';
     static readonly queriesPath = 'queries';
 
+    private watchdog: NodeJS.Timer;
+
     private entries = new Map<string, Entry>();
 
     constructor(private fs: FileSystem) {
+    }
+
+    async init() {
+        const fsItems = await this.fs.loadDirectoryChildren(Entries.entriesPath);
+
+        // process all files
+        await fsItems.filter(isFile)
+        // load file
+            .map(async file => {
+                const content = await this.fs.loadTextFile(file.fullPath);
+                this.fileHandler({type: "fileChanged", fullPath: file.fullPath, newContent: content});
+            })
+            // wait for all loading
+            .reduce(async (r, p) => {
+                await r;
+                await p;
+            }, {});
+
+        this.fs.events.on('fileChanged', this.fileHandler);
+        this.fs.events.on('fileCreated', this.fileHandler);
+        this.fs.events.on('fileDeleted', (e: FileDeletedEvent) => {
+            if (e.fullPath.startsWith(Entries.entriesPath)) {
+                this.entries.delete(e.fullPath);
+            }
+        });
+        await this.scanQueries();
+    }
+    destroy(){
+        clearTimeout(this.watchdog);
+    }
+    private fileHandler = (e: FileChangedEvent | FileCreatedEvent) => {
+        // Handle all new files found in the folder
+        if (e.fullPath.startsWith(Entries.entriesPath) || e.fullPath.startsWith(Entries.queriesPath)) {
+            let entry = Entry.parse(e.newContent, e.fullPath);
+            if (entry.meta.status === Status.ENTRY) {
+                this.entries.set(e.fullPath, entry);
+            } else {
+                this.entries.delete(e.fullPath);
+            }
+        }
+    }
+    private scanQueries = async () => {
+        try {
+            const queries = await this.fs.loadDirectoryChildren(Entries.queriesPath);
+            await queries.filter(isFile)
+            // load file
+                .map(async file => {
+                    try {
+                        file.content = await this.fs.loadTextFile(file.fullPath);
+                        const entry = Entry.parse(file.content, file.fullPath);
+                        if (entry.meta.status === Status.ENTRY) {
+                            await this.copyToEntries(entry);
+                        }
+                    } catch {
+                    }
+                })
+                // wait for all loading
+                .reduce(async (r, p) => {
+                    await r;
+                    await p;
+                }, {});
+        } finally {
+            this.watchdog = setTimeout(this.scanQueries, 1000);
+        }
+    };
+
+    private async copyToEntries(entry: Entry) {
+        let entriesPath = join(Entries.entriesPath, basename(entry.path));
+        await this.fs.saveFile(entriesPath, entry.toString());
+        await this.fs.deleteFile(entry.path);
     }
 
     open(user: User, search: string): string | undefined {
@@ -95,49 +167,7 @@ export class Entries {
             };
             this.fs.events.on('fileChanged', listener);
         });
-
-        // We move the finished file from the queries folder to the entries folder
-        let finalPath = join(Entries.entriesPath, basename(entry.path));
-        await this.fs.saveFile(finalPath, entry.toString());
-        await this.fs.deleteFile(newPath);
-        this.entries.set(finalPath, entry); // add new entry to memory instead of waiting for watch event, to make sure it's there when this.open() runs (race condition)
         return this.open(user, entry.meta.name);
-    }
-
-    async init() {
-        const fsItems = await this.fs.loadDirectoryChildren(Entries.entriesPath);
-
-        const fileHandler = (e: FileChangedEvent | FileCreatedEvent) => {
-            // Handle all new files found in the folder
-            if (e.fullPath.startsWith(Entries.entriesPath)) {
-                let entry = Entry.parse(e.newContent, e.fullPath);
-                if (entry.meta.status === Status.ENTRY) {
-                    this.entries.set(e.fullPath, entry);
-                } else {
-                    this.entries.delete(e.fullPath);
-                }
-            }
-        };
-        // process all files
-        await fsItems.filter(isFile)
-            // load file
-            .map(async file => {
-                const content = await this.fs.loadTextFile(file.fullPath);
-                fileHandler({type: "fileChanged", fullPath: file.fullPath, newContent: content});
-            })
-            // wait for all loading
-            .reduce(async (r, p) => {
-                await r;
-                await p;
-            }, {});
-
-        this.fs.events.on('fileChanged', fileHandler);
-        this.fs.events.on('fileCreated', fileHandler);
-        this.fs.events.on('fileDeleted', (e: FileDeletedEvent) => {
-            if (e.fullPath.startsWith(Entries.entriesPath)) {
-                this.entries.delete(e.fullPath);
-            }
-        });
     }
 
 }
