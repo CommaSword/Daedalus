@@ -47,7 +47,7 @@ async function makeEntrieandFileSystem(): Promise<{ fs: MemoryFileSystem; entrie
     return {fs, entries};
 }
 
-describe.only('excalibur module', () => {
+describe('excalibur module', () => {
     describe('init', () => {
         it('on empty file sytsem - throws', async () => {
             const fs: MemoryFileSystem = new MemoryFileSystem();
