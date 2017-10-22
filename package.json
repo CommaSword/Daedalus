@@ -17,18 +17,19 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:CommaSword/ee-mro.git"
+    "url": "git@github.com:CommaSword/Daedalus.git"
   },
   "keywords": [
     "empty epsilon",
-    "SBS"
+    "SBS",
+    "OSC"
   ],
   "author": "Amir Arad (amira@wix.com)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/CommaSword/ee-mro/issues"
+    "url": "https://github.com/CommaSword/Daedalus/issues"
   },
-  "homepage": "https://github.com/CommaSword/ee-mro#readme",
+  "homepage": "https://github.com/CommaSword/Daedalus#readme",
   "devDependencies": {
     "@fugazi/connector": "^1.0.16",
     "@fugazi/webclient": "^1.0.16",
