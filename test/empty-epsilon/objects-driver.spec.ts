@@ -5,7 +5,7 @@ import {expect} from 'chai';
 import {ESystem} from "../../src/empty-epsilon/objects/space-ship";
 import {PlayerShip} from "../../src/empty-epsilon/objects/player-ship";
 
-describe('HTTP Server Driver', () => {
+describe('EE objects Driver', () => {
     beforeAndAfter(config);
     it('gets and sets the position of a spaceship', async function () {
         let ship = new EmptyEpsilonDriver(config.serverAddress).getPlayerShip();

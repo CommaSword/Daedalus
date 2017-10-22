@@ -29,6 +29,7 @@ export async function main(optionsArg: ServerOptions) {
     // application BL modules
     const users = new Users(fs);
     const entries = new Entries(fs);
+    await entries.init();
     const logs = new Logs(fs);
 
     // connector API

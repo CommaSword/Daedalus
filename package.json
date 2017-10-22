@@ -44,9 +44,11 @@
     "chai-subset": "1.5.0",
     "concurrently": "~3.5.0",
     "mocha": "3.2.0",
+    "nyc": "~11.2.1",
     "rimraf": "~2.6.1",
     "sinon": "~2.3.5",
-    "source-map-support": "~0.4.15",
+    "source-map-support": "~0.5.0",
+    "ts-node": "^3.3.0",
     "tslib": "~1.7.1",
     "typescript": "2.5.3"
   },
