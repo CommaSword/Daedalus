@@ -3,6 +3,7 @@ import {Entries, Entry, Status} from "../../src/excalibur/entries";
 import {User} from "../../src/session/users";
 import {ExcaliburSecClass} from "../../src/excalibur/clearence";
 import {expect} from 'chai';
+import {retry} from "../test-kit/retry";
 
 
 function makeUser(clearence: ExcaliburSecClass): User {
@@ -63,6 +64,22 @@ describe.only('excalibur module', () => {
 
     });
 
+    describe('list', () => {
+        describe('pre-existing file', () => {
+
+            it('shows only entries', async () => {
+                const {entries, fs} = await makeEntrieandFileSystem();
+                await fs.saveFile('entries/foo1.md', makeEntryFile(Status.DRAFT, ExcaliburSecClass.CONFIDENTIAL, 'foo1', 'bar'));
+                await fs.saveFile('entries/foo2.md', makeEntryFile(Status.QUERY, ExcaliburSecClass.CONFIDENTIAL, 'foo2', 'bar'));
+                await fs.saveFile('entries/foo3.md', makeEntryFile(Status.ENTRY, ExcaliburSecClass.CONFIDENTIAL, 'foo3', 'bar'));
+                await fs.saveFile('entries/foo4.md', makeEntryFile(Status.ENTRY, ExcaliburSecClass.SECRET, 'foo4', 'bar'));
+
+                const result = entries.list();
+                expect(result.split(',').map(s => s.trim()).sort()).to.eql(['foo3 (CONFIDENTIAL)', 'foo4 (SECRET)']);
+            });
+        });
+    });
+
     describe('open', () => {
         describe('pre-existing file', () => {
 
@@ -100,15 +117,18 @@ describe.only('excalibur module', () => {
 
     describe('query', () => {
 
+        async function loadSingleEntry(fs: FileSystem, path: string): Promise<Entry> {
+            const children = await fs.loadDirectoryChildren(path);
+            expect(children).to.have.length(1);
+            const file = children[0] as File;
+            file.content = await fs.loadTextFile(file.fullPath);
+            return Entry.parse(file.content, file.fullPath);
+        }
 
         async function query(entries: Entries, fs: FileSystem) {
             const result = entries.query(makeUser(ExcaliburSecClass.CONFIDENTIAL), 'foo');
             await new Promise(r => setTimeout(r, 1));
-            const children = await fs.loadDirectoryChildren('queries');
-            expect(children).to.have.length(1);
-            const file = children[0] as File;
-            file.content = await fs.loadTextFile(file.fullPath);
-            const entry = Entry.parse(file.content, file.fullPath);
+            const entry = await loadSingleEntry(fs, 'queries');
             return {result, entry};
         }
 
@@ -126,19 +146,32 @@ describe.only('excalibur module', () => {
 
         describe('afterwards', () => {
             let entries: Entries;
+            let entry: Entry;
             let fs: FileSystem;
             beforeEach('finds entry file', async () => {
                 const enf = await makeEntrieandFileSystem();
                 entries = enf.entries;
                 fs = enf.fs;
-                const {entry} = await query(entries, fs);
+                entry = (await query(entries, fs)).entry!;
                 entry.content = 'bar123';
                 entry.meta.status = Status.ENTRY;
                 await fs.saveFile(entry.path, entry.toString());
             });
 
             it('entry moves from queries to entries folder', async () => {
-                // TODO ...
+                await retry(async () => expect(await fs.loadDirectoryChildren('queries')).to.have.length(0), {
+                    interval: 10,
+                    timeout: 1000
+                });
+                expect(await fs.loadDirectoryChildren('entries')).to.have.length(1);
+                const entryInEntries = await loadSingleEntry(fs, 'entries');
+                expect(entryInEntries.meta).to.eql(entry.meta);
+                expect(entryInEntries.content).to.eql(entry.content);
+            });
+
+            it('entry immediately appears in list, opens in open', async () => {
+                const result = entries.list();
+                expect(result).to.eql('foo (CONFIDENTIAL)');
             });
 
         });

@@ -11,7 +11,7 @@
     "build": "tsc -d",
     "pretest": "npm run clean && npm run build",
     "reset": "rimraf node_modules dist && yarn install && yarn test",
-    "test": "mocha --require test-setup.js --require source-map-support/register --reporter list \"dist/test/**/*.spec.js\"",
+    "test": "mocha --require test-setup.js --require source-map-support/register --require longjohn --reporter list \"dist/test/**/*.spec.js\"",
     "start": "rimraf dist && yarn build && node ./main.js",
     "debug": "rimraf dist && yarn build && concurrently --kill-others --success first \"yarn build -- -w\" \"node --inspect-brk ./main.js\""
   },
@@ -43,10 +43,12 @@
     "chai": "~4.1.2",
     "chai-subset": "1.5.0",
     "concurrently": "~3.5.0",
+    "longjohn": "^0.2.12",
     "mocha": "3.2.0",
     "rimraf": "~2.6.1",
     "sinon": "~2.3.5",
-    "source-map-support": "~0.4.15",
+    "source-map-support": "~0.5.0",
+    "ts-node": "^3.3.0",
     "tslib": "~1.7.1",
     "typescript": "2.5.3"
   },
