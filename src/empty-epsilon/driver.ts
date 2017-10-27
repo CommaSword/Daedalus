@@ -90,13 +90,17 @@ export class HttpDriver {
             return pendingQuery;
         } else {
             let resolver: Function = null as any;
-            const resultPromise = new Promise<T>(resolve => resolver = resolve);
+            const resultPromise = this.pendingGetResults[getter] = new Promise<T>(resolve => resolver = resolve).then((result : T)=>{
+                if (this.pendingGetResults[getter] === resultPromise){
+                    delete this.pendingGetResults[getter];
+                }
+                return result;
+            });
             if (!this.isFlushing && !this.getQueue.length) {
                 setTimeout(this.flush, HttpDriver.minTimeBetweenFlushes);
             }
             const req: GetRequest = {resolver, getter};
             this.getQueue.push(req);
-            this.pendingGetResults[getter] = resultPromise;
             return resultPromise;
         }
     }
