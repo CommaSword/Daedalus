@@ -33,9 +33,11 @@ type GetRequest = {
  * internal object for any http communication with game server
  */
 export class HttpDriver {
-    private static readonly flushDelay = 200;
+    private static readonly minTimeBetweenFlushes = 50;
     private http: AxiosInstance;
+    private pendingGetResults: { [q: string]: Promise<any> } = {};
     private getQueue: GetRequest[];
+    private isFlushing = false;
 
     constructor(baseURL: string) {
         this.http = Axios.create({baseURL});
@@ -80,34 +82,53 @@ export class HttpDriver {
         return res.data.result;
     }
 
-    getBuffered(getter: string) {
-
-        let resolver: Function = null as any;
-        const resultPromise = new Promise(resolve => resolver = resolve);
-        const req: GetRequest = {resolver, getter};
-        if (!this.getQueue.length) {
-            setTimeout(this.flush, HttpDriver.flushDelay);
+    getBuffered<T>(getter: string): Promise<T> {
+        const pendingQuery = this.pendingGetResults[getter];
+        if (pendingQuery) {
+            return pendingQuery;
+        } else {
+            let resolver: Function = null as any;
+            const resultPromise = new Promise<T>(resolve => resolver = resolve);
+            if (!this.isFlushing && !this.getQueue.length) {
+                setTimeout(this.flush, HttpDriver.minTimeBetweenFlushes);
+            }
+            const req: GetRequest = {resolver, getter};
+            this.getQueue.push(req);
+            this.pendingGetResults[getter] = resultPromise;
+            return resultPromise;
         }
-        this.getQueue.push(req);
-        return resultPromise;
     }
 
-    private flush = async() => {
-        const buffer = this.getQueue;
-        this.getQueue = [];
+    /**
+     * flush all commands to the game server
+     * at most, only a single flush is active at each point in time
+     * at least `HttpDriver.minTimeBetweenFlushes` milliseconds will puss between the end of one flush and the beginning of the other
+     * @returns {Promise<void>}
+     */
+    private flush = async () => {
+        try {
+            this.isFlushing = true;
+            const buffer = this.getQueue;
+            this.getQueue = [];
 
-        const script =
-`${buffer.map(({getter}, i) => `local l${i} = ${getter}; `).join('\n')}
+            const script =
+                `${buffer.map(({getter}, i) => `local l${i} = ${getter}; `).join('\n')}
 return {${buffer.map((_, i) => `l${i} = l${i}`).join(',')}};`;
 
-        const res: AxiosResponse = await this.http.request({
-            method: 'post',
-            url: '/exec.lua',
-            data: script,
-            transformResponse: JSON.parse
-        });
-
-        buffer.forEach(({resolver}, i) => resolver(res.data[`l${i}`]));
+            const res: AxiosResponse = await this.http.request({
+                // timeout ?
+                method: 'post',
+                url: '/exec.lua',
+                data: script,
+                transformResponse: JSON.parse
+            });
+            buffer.forEach(({resolver}, i) => resolver(res.data[`l${i}`]));
+        } finally {
+            this.isFlushing = false;
+            if (this.getQueue.length) {
+                setTimeout(this.flush, HttpDriver.minTimeBetweenFlushes);
+            }
+        }
     };
 
     async set(contextGetter: string, setter: string) {
