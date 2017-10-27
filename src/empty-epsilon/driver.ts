@@ -110,9 +110,6 @@ export class HttpDriver {
                 return result;
             });
             this.requestFlush();
-            // if (!this.isFlushing && !this.getQueue.length) {
-            //     setTimeout(this.flush, HttpDriver.minTimeBetweenFlushes);
-            // }
             const req: GetRequest = {resolver, getter};
             this.getQueue.push(req);
             return resultPromise;
@@ -141,7 +138,6 @@ export class HttpDriver {
      */
     private flush = async () => {
         try {
-            // this.isFlushing = true;
             const buffer = this.getQueue;
             const setBuffer = this.setMap;
             this.getQueue = [];
@@ -163,7 +159,7 @@ return {${buffer.map((_, i) => `l${i} = l${i}`).join(',')}};`;
             Object.keys(setBuffer).forEach(s => setBuffer[s].resolver(null));
         } finally {
             this.isFlushing = false;
-            if (this.getQueue.length) {
+            if (this.getQueue.length || Object.keys(this.setMap).length) {
                 this.requestFlush();
             }
         }
