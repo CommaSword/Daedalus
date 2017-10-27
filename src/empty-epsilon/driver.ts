@@ -41,7 +41,7 @@ export class HttpDriver {
 
     constructor(baseURL: string) {
         this.http = Axios.create({baseURL});
-        this.getQueue = []
+        this.getQueue = [];
     }
 
     async getMultiple(contextGetter: string, getter: string, numberOfResults: number) {
