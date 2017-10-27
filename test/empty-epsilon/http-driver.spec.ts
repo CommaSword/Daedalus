@@ -14,11 +14,19 @@ describe('EE HTTP Driver', () => {
         return {rotation, hull};
     }
 
+    async function setShipState(httpDriver: HttpDriver, sRotation: string, sHull: string) {
+        let rotation = httpDriver.setToValueBuffered('getPlayerShip(-1):setRotation', sRotation);
+        let hull = httpDriver.setToValueBuffered('getPlayerShip(-1):setHull', sHull);
+        await rotation;
+        await hull
+    }
+
     it('gets rotation and heading ', async function () {
         let ship = new EmptyEpsilonDriver(config.serverAddress).getPlayerShip();
         let httpDriver = new HttpDriver(config.serverAddress);
         await expectShipState(httpDriver, 0, 250);
-        await ship.setHull(50);
-        await expectShipState(httpDriver, 0, 50);
+        await setShipState(httpDriver, '0', '122');
+        // await ship.setHull(50);
+        await expectShipState(httpDriver, 0, 122);
     });
 });

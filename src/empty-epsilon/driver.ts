@@ -29,6 +29,13 @@ type GetRequest = {
     getter: string;
 }
 
+type SetToAbsolute = {
+    setter: string;
+    value: string;
+    resolver: Function
+    promise: Promise<any>;
+}
+
 /**
  * internal object for any http communication with game server
  */
@@ -36,12 +43,12 @@ export class HttpDriver {
     private static readonly minTimeBetweenFlushes = 50;
     private http: AxiosInstance;
     private pendingGetResults: { [q: string]: Promise<any> } = {};
-    private getQueue: GetRequest[];
+    private getQueue: GetRequest[] = [];
+    private setMap: { [setter: string]: SetToAbsolute } = {};
     private isFlushing = false;
 
     constructor(baseURL: string) {
         this.http = Axios.create({baseURL});
-        this.getQueue = [];
     }
 
     async getMultiple(contextGetter: string, getter: string, numberOfResults: number) {
@@ -82,24 +89,44 @@ export class HttpDriver {
         return res.data.result;
     }
 
+    requestFlush() {
+        if (!this.isFlushing) {
+            setTimeout(this.flush, HttpDriver.minTimeBetweenFlushes);
+            this.isFlushing = true;
+        }
+    }
+
     getBuffered<T>(getter: string): Promise<T> {
         const pendingQuery = this.pendingGetResults[getter];
         if (pendingQuery) {
             return pendingQuery;
         } else {
             let resolver: Function = null as any;
-            const resultPromise = this.pendingGetResults[getter] = new Promise<T>(resolve => resolver = resolve).then((result : T)=>{
+            const resultPromise = this.pendingGetResults[getter] = new Promise<T>(resolve => resolver = resolve)
+                .then((result : T)=>{
                 if (this.pendingGetResults[getter] === resultPromise){
                     delete this.pendingGetResults[getter];
                 }
                 return result;
             });
-            if (!this.isFlushing && !this.getQueue.length) {
-                setTimeout(this.flush, HttpDriver.minTimeBetweenFlushes);
-            }
+            this.requestFlush();
             const req: GetRequest = {resolver, getter};
             this.getQueue.push(req);
             return resultPromise;
+        }
+    }
+
+    setToValueBuffered(setter: string, value: string): Promise<null> {
+        let existingSet = this.setMap[setter];
+        if (existingSet) {
+            existingSet.value = value;
+            return existingSet.promise;
+        } else {
+            let resolver: Function = null as any;
+            const promise = new Promise<null>(resolve => resolver = resolve);
+            this.setMap[setter] = {setter, value, resolver, promise};
+            this.requestFlush();
+            return promise;
         }
     }
 
@@ -111,12 +138,14 @@ export class HttpDriver {
      */
     private flush = async () => {
         try {
-            this.isFlushing = true;
             const buffer = this.getQueue;
+            const setBuffer = this.setMap;
             this.getQueue = [];
+            this.setMap = {};
 
             const script =
-                `${buffer.map(({getter}, i) => `local l${i} = ${getter}; `).join('\n')}
+                `${Object.keys(setBuffer).map((s: string) => `${setBuffer[s].setter}(${setBuffer[s].value})`).join('\n')}
+${buffer.map(({getter}, i) => `local l${i} = ${getter}; `).join('\n')}
 return {${buffer.map((_, i) => `l${i} = l${i}`).join(',')}};`;
 
             const res: AxiosResponse = await this.http.request({
@@ -127,10 +156,11 @@ return {${buffer.map((_, i) => `l${i} = l${i}`).join(',')}};`;
                 transformResponse: JSON.parse
             });
             buffer.forEach(({resolver}, i) => resolver(res.data[`l${i}`]));
+            Object.keys(setBuffer).forEach(s => setBuffer[s].resolver(null));
         } finally {
             this.isFlushing = false;
-            if (this.getQueue.length) {
-                setTimeout(this.flush, HttpDriver.minTimeBetweenFlushes);
+            if (this.getQueue.length || Object.keys(this.setMap).length) {
+                this.requestFlush();
             }
         }
     };
