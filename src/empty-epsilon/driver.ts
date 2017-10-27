@@ -1,7 +1,6 @@
 import {AxiosInstance, AxiosResponse, default as Axios} from "axios";
 import {PlayerShip} from "./objects/player-ship";
 import {escape} from 'querystring';
-import set = Reflect.set;
 
 export {ESystem} from './objects/space-ship';
 
