@@ -37,6 +37,8 @@ export class HttpDriver {
     private http: AxiosInstance;
     private pendingGetResults: { [q: string]: Promise<any> } = {};
     private getQueue: GetRequest[];
+    private setQueue: string[];
+    private pendingSets: { [q: string]: number } = {}
     private isFlushing = false;
 
     constructor(baseURL: string) {
@@ -97,6 +99,10 @@ export class HttpDriver {
             this.pendingGetResults[getter] = resultPromise;
             return resultPromise;
         }
+    }
+
+    setToValueBuffered(setter: string, value: string): void {
+
     }
 
     /**
