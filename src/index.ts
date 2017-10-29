@@ -1,6 +1,5 @@
 import * as fugazi from "@fugazi/connector";
 import {LocalFileSystem} from "kissfs";
-import resolve = require("resolve");
 import initExcalibur from "./excalibur/commands";
 import initLogin from "./session/commands";
 import initLog from "./log/commands";
@@ -10,13 +9,38 @@ import {Entries} from "./excalibur/entries";
 import {Logs} from "./log/logs";
 import {EmptyEpsilonDriver} from './empty-epsilon/driver';
 import {Server, TerminalSession} from "./terminals";
+import {UDPPort} from 'osc';
+import {Pulser} from "./pulse/pulser";
+import resolve = require("resolve");
 
 export type ServerOptions = Partial<Options> & {
     resources: string
 }
 
+function initPulser() {
+    const oscServer = new UDPPort({
+        localAddress: "0.0.0.0",
+        localPort: 57121,
+        remotePort: 57121,
+        remoteAddress: "0.0.0.0"
+    });
+    oscServer.open();
+
+    const p = new Pulser();
+    p.pulse
+        .switchMap(_ => ['/getter1', '/getter2'])
+        .subscribe(i => {
+            console.log(i);
+            oscServer.send({
+                address: '/hello',
+                args: ['world', i]
+            });
+        });
+    p.start();
+}
 
 export async function main(optionsArg: ServerOptions) {
+    initPulser();
     const options: Options = Object.assign({}, DEFAULT_OPTIONS, optionsArg);
 
     const eeDriver = new EmptyEpsilonDriver(`http://${options.eeHost}:${options.eePort}`);
