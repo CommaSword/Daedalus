@@ -95,9 +95,11 @@ declare module "osc" {
 
     }
 
+    export interface OscSender {
+        send(msg: OscMessage, address?: string, port?: number): void;
+    }
 
-    export abstract class Port extends EventEmitter<PortEvents> {
-
+    export abstract class Port extends EventEmitter<PortEvents> implements OscSender {
         send(msg: OscMessage, address?: string, port?: number): void;
     }
 

@@ -7,46 +7,32 @@ import {parse} from "path";
 import {Users} from "./session/users";
 import {Entries} from "./excalibur/entries";
 import {Logs} from "./log/logs";
-import {EmptyEpsilonDriver} from './empty-epsilon/driver';
+import {EmptyEpsilonDriver, HttpDriver} from './empty-epsilon/driver';
 import {Server, TerminalSession} from "./terminals";
 import {UDPPort} from 'osc';
-import {Pulser} from "./pulse/pulser";
 import resolve = require("resolve");
+import {Pulser} from "./core/pulser";
+import {initGameMonitor} from "./core/game-monitor";
 
 export type ServerOptions = Partial<Options> & {
     resources: string
 }
 
-function initPulser() {
-    const oscServer = new UDPPort({
-        localAddress: "0.0.0.0",
-        localPort: 57121,
-        remotePort: 57121,
-        remoteAddress: "0.0.0.0"
-    });
-    oscServer.open();
-
-    const p = new Pulser();
-    p.pulse
-        .switchMap(_ => ['/getter1', '/getter2'])
-        .subscribe(i => {
-            console.log(i);
-            oscServer.send({
-                address: '/hello',
-                args: ['world', i]
-            });
-        });
-    p.start();
-}
 
 export async function main(optionsArg: ServerOptions) {
-    initPulser();
     const options: Options = Object.assign({}, DEFAULT_OPTIONS, optionsArg);
+    let eeServerUrl = `http://${options.eeHost}:${options.eePort}`;
 
-    const eeDriver = new EmptyEpsilonDriver(`http://${options.eeHost}:${options.eePort}`);
-    const terminalsServer = new Server(options.terminalsPort);
+    const eeDriver = new HttpDriver(eeServerUrl);
 
-    terminalsServer.start();
+    const p = new Pulser();
+
+    initGameMonitor(p.pulse, ['/getter1', '/getter2'], eeDriver, oscServer)
+
+    oscServer.open();
+    p.start();
+    // const terminalsServer = new Server(options.terminalsPort);
+    // terminalsServer.start();
 
     // FS drivers
     const fs: LocalFileSystem = await new LocalFileSystem(optionsArg.resources).init();
@@ -71,7 +57,7 @@ export async function main(optionsArg: ServerOptions) {
     // bootstrap connector
     await connector.start();
 
-    await demoApplication(terminalsServer, eeDriver);
+    // await demoApplication(terminalsServer, eeServerUrl);
 
     connector.logger.info("started");
 }
@@ -89,7 +75,9 @@ const DEFAULT_OPTIONS: Options = {
 };
 
 
-async function demoApplication(terminalsServer: Server, eeDriver: EmptyEpsilonDriver) {
+async function demoApplication(terminalsServer: Server, eeServerUrl: string) {
+    const eeDriver = new EmptyEpsilonDriver(eeServerUrl);
+
     terminalsServer.on('connected', (terminal: TerminalSession) => {
         terminal.serverState = 1;
         const playerShip = eeDriver.getPlayerShip();

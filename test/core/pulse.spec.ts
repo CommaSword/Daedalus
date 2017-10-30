@@ -1,4 +1,4 @@
-import {Pulser} from "../../src/pulse/pulser";
+import {Pulser} from "../../src/core/pulser";
 import {expect} from 'chai';
 
 

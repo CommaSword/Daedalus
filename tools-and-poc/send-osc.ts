@@ -1,5 +1,5 @@
 import {UDPPort} from "osc";
-import {Pulser} from "../src/pulse/pulser";
+import {Pulser} from "../src/core/pulser";
 
 it('pulse', (_neverDie) => {
 
