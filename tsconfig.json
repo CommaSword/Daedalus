@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es2015",
     "strict": true,
+    "target": "es2015",
     "stripInternal": true,
     "sourceMap": true,
     "outDir": "dist",
+    "importHelpers": true,
     "typeRoots" : ["./node_modules/@types","./custom-typings"]
   },
   "exclude": [

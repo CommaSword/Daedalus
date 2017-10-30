@@ -17,40 +17,39 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:CommaSword/ee-mro.git"
+    "url": "git@github.com:CommaSword/Daedalus.git"
   },
   "keywords": [
     "empty epsilon",
-    "SBS"
+    "SBS",
+    "OSC"
   ],
   "author": "Amir Arad (amira@wix.com)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/CommaSword/ee-mro/issues"
+    "url": "https://github.com/CommaSword/Daedalus/issues"
   },
-  "homepage": "https://github.com/CommaSword/ee-mro#readme",
+  "homepage": "https://github.com/CommaSword/Daedalus#readme",
   "devDependencies": {
     "@fugazi/connector": "^1.0.16",
     "@fugazi/webclient": "^1.0.16",
     "@types/autobahn": "^0.9.37",
     "@types/chai": "~4.0.4",
-    "@types/chai-as-promised": "0.0.29",
     "@types/lodash": "4.14.55",
     "@types/mocha": "~2.2.41",
     "@types/node": "8.0.33",
     "@types/resolve": "^0.0.4",
     "@types/sinon": "~2.3.1",
-    "@types/sinon-chai": "~2.7.28",
     "@types/socket.io-client": "1.4.29",
     "chai": "~4.1.2",
-    "chai-as-promised": "6.0.0",
     "chai-subset": "1.5.0",
     "concurrently": "~3.5.0",
     "mocha": "3.2.0",
+    "nyc": "~11.2.1",
     "rimraf": "~2.6.1",
     "sinon": "~2.3.5",
-    "sinon-chai": "~2.11.0",
-    "source-map-support": "~0.4.15",
+    "source-map-support": "~0.5.0",
+    "ts-node": "^3.3.0",
     "tslib": "~1.7.1",
     "typescript": "2.5.3"
   },
@@ -62,8 +61,8 @@
     "kissfs": "^0.3.0",
     "lodash": "4.17.4",
     "resolve": "^1.4.0",
+    "rxjs": "^5.5.2",
     "socket.io-client": "1.7.3",
-    "socketio-wildcard": "0.4.0",
-    "source-map-support": "0.4.11"
+    "socketio-wildcard": "0.4.0"
   }
 }

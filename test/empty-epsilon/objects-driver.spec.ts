@@ -5,13 +5,13 @@ import {expect} from 'chai';
 import {ESystem} from "../../src/empty-epsilon/objects/space-ship";
 import {PlayerShip} from "../../src/empty-epsilon/objects/player-ship";
 
-describe('HTTP Server Driver', () => {
+describe('EE objects Driver', () => {
     beforeAndAfter(config);
     it('gets and sets the position of a spaceship', async function () {
         let ship = new EmptyEpsilonDriver(config.serverAddress).getPlayerShip();
-        await expect(ship.getPosition()).to.eventually.eql([0, 0]);
+        expect(await ship.getPosition()).to.eql([0, 0]);
         await ship.setPosition(123, 321);
-        await expect(ship.getPosition()).to.eventually.eql([123, 321]);
+        expect(await ship.getPosition()).to.eql([123, 321]);
     });
 
     describe('POC scripts (regression)', () => {
@@ -22,24 +22,24 @@ describe('HTTP Server Driver', () => {
         it(`reads and changes the health of a spaceship's hull`, async function () {
             const originalHull = await ship.getHull();
             await ship.setHull(originalHull * 2);
-            await expect(ship.getHull()).to.eventually.equal(originalHull * 2)
+            expect(await ship.getHull()).to.equal(originalHull * 2)
             await ship.setHull(originalHull)
-            await expect(ship.getHull()).to.eventually.equal(originalHull)
+            expect(await ship.getHull()).to.equal(originalHull)
         });
         for (let system: ESystem = 0; system < ESystem.COUNT; system++) {
             it(`reads and changes health of a spaceship's ${ESystem[system]} system`, async function () {
                 const originalHealth = await  ship.getSystemHealth(system);
                 await ship.setSystemHealth(system, originalHealth * 2);
-                await expect(ship.getSystemHealth(system)).to.eventually.equal(originalHealth * 2);
+                expect(await ship.getSystemHealth(system)).to.equal(originalHealth * 2);
                 await ship.setSystemHealth(system, originalHealth);
-                await expect(ship.getSystemHealth(system)).to.eventually.equal(originalHealth);
+                expect(await ship.getSystemHealth(system)).to.equal(originalHealth);
             });
             it(`reads and changes heat of a spaceship's ${ESystem[system]} system`, async function () {
                 const originalHeat = await ship.getSystemHeat(system);
                 await ship.setSystemHeat(system, originalHeat * 2);
-                await expect(ship.getSystemHeat(system)).to.eventually.equal(originalHeat * 2);
+                expect(await ship.getSystemHeat(system)).to.equal(originalHeat * 2);
                 await ship.setSystemHeat(system, originalHeat);
-                await expect(ship.getSystemHeat(system)).to.eventually.equal(originalHeat);
+                expect(await ship.getSystemHeat(system)).to.equal(originalHeat);
             });
         }
     });
