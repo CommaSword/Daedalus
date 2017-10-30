@@ -1,22 +1,32 @@
 import {expect} from 'chai';
-import {spy} from 'sinon';
-import {OscBridge} from '../../src/osc/bridge';
+import {OscBridge, translateAddressToQuery} from '../../src/osc/bridge';
 
 function sleep(ms = 1000) {
     return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-describe('OSC Bridge', () => {
-    it('querys the driver for the given address and returns the answer every second', async () => {
-        const get = spy();
-        const driver = {
-            get: get
-        };
-        const address = 'ee/playership/1/hull';
-        const bridge = new OscBridge(driver);
-        bridge.cast(address, 50);
-        await sleep(200);
-        expect(get.getCall(0).args[0]).to.equal('getPlayerShip(1):getHull()');
-        expect(get.callCount).to.be.greaterThan(2);
+describe('translateAddressToQuery', () => {
+
+    it('meaningless address returns null', () => {
+        const q = translateAddressToQuery('foo/bar');
+        expect(q).to.eql(null);
+    });
+
+    it('incomplete expression returns null', () => {
+        const q = translateAddressToQuery('ee/playership');
+        expect(q).to.eql(null);
+    });
+
+    it('expression that does not resolve to primitive returns null', () => {
+        const q = translateAddressToQuery('ee/playership/-1');
+        expect(q).to.eql(null);
+    });
+
+    it('ee/playership/-1/hull', () => {
+        const q = translateAddressToQuery('ee/playership/-1/hull');
+        expect(q).to.eql({
+            query: 'getPlayerShip(-1):getHull()',
+            type: 'f',
+        });
     });
 });
