@@ -1,5 +1,5 @@
 import {expect} from 'chai';
-import {OscBridge, translateAddressToQuery} from '../../src/osc/bridge';
+import {translateAddressToQuery} from '../../src/osc/bridge';
 
 function sleep(ms = 1000) {
     return new Promise(resolve => setTimeout(resolve, ms))
