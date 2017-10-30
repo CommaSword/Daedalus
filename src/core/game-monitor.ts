@@ -1,6 +1,5 @@
-import {Observable} from "rxjs/Observable";
+import {Observable} from 'rxjs/Rx';
 import {OscMessage} from "osc";
-
 
 function makeGameQuery(address: string): GameQuery {
     return {
@@ -16,13 +15,12 @@ interface GameQuery {
     type: 'f' | 'i';
 }
 
-
 export interface GameReadDriver {
     getBuffered<T>(getter: string): Promise<T>;
 }
 
 //     pulse.switchMap<any, string>(_ => monitoredAddresses)
-export function addressToGameState(pollRequests: Observable<string>, eeDriver: GameReadDriver): Observable<OscMessage> {
+export function monitorByAddress(pollRequests: Observable<string>, eeDriver: GameReadDriver): Observable<OscMessage> {
     return pollRequests
         .map<string, GameQuery>(makeGameQuery)
         .flatMap<GameQuery, number, OscMessage>(

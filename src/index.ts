@@ -9,10 +9,11 @@ import {Entries} from "./excalibur/entries";
 import {Logs} from "./log/logs";
 import {EmptyEpsilonDriver, HttpDriver} from './empty-epsilon/driver';
 import {Server, TerminalSession} from "./terminals";
-import {UDPPort} from 'osc';
-import resolve = require("resolve");
 import {Pulser} from "./core/pulser";
-import {initGameMonitor} from "./core/game-monitor";
+import {monitorByAddress} from "./core/game-monitor";
+import resolve = require("resolve");
+import {OscDriver} from "./core/osc-driver";
+import {UdpOptions} from "osc";
 
 export type ServerOptions = Partial<Options> & {
     resources: string
@@ -24,13 +25,18 @@ export async function main(optionsArg: ServerOptions) {
     let eeServerUrl = `http://${options.eeHost}:${options.eePort}`;
 
     const eeDriver = new HttpDriver(eeServerUrl);
-
+    const oscDriver = new OscDriver(options.oscOptions);
     const p = new Pulser();
 
-    initGameMonitor(p.pulse, ['/getter1', '/getter2'], eeDriver, oscServer)
+    const monitoredAddresses = ['/getter1', '/getter2'];
+    const pollRequests = p.pulse.switchMap<any, string>(_ => monitoredAddresses);
 
-    oscServer.open();
+    monitorByAddress(pollRequests, eeDriver).subscribe(oscDriver.outbox);
+
+    oscDriver.open();
     p.start();
+
+
     // const terminalsServer = new Server(options.terminalsPort);
     // terminalsServer.start();
 
@@ -67,11 +73,17 @@ export type Options = {
     eeHost: string;
     eePort: number;
     terminalsPort: number;
+    oscOptions: UdpOptions;
 }
 const DEFAULT_OPTIONS: Options = {
     eeHost: 'localhost',
     eePort: 8081,
-    terminalsPort: 8888
+    terminalsPort: 8888,
+    oscOptions : {
+        localAddress: "0.0.0.0",
+        localPort: 57121,
+        remotePort: 57121
+    }
 };
 
 

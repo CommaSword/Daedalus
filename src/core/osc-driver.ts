@@ -1,26 +1,23 @@
-import {OscMessage, UDPPort} from "osc";
-import {Observable} from "rxjs/Observable";
-import {Subject} from "rxjs/Subject";
+import {OscMessage, UdpOptions, UDPPort} from "osc";
+import {Observable, Subject} from 'rxjs/Rx';
 import {NextObserver} from "rxjs/Observer";
 
 
 export class OscDriver {
 
-    // TODO extract configuration to constructor
-    private port = new UDPPort({
-        localAddress: "0.0.0.0",
-        localPort: 57121,
-        remotePort: 57121,
-        remoteAddress: "0.0.0.0",
-        metadata: true,
-    });
-
+    private readonly port: UDPPort;
 
     private readonly subject = new Subject<OscMessage>();
 
     public readonly outbox: NextObserver<OscMessage> = this.subject;
 
-    constructor() {
+    constructor(options: UdpOptions) {
+        this.port = new UDPPort(Object.assign({},
+            options,
+            {
+                remoteAddress: "0.0.0.0",
+                metadata: true
+            }));
         this.subject.groupBy((msg: OscMessage) => msg.address)
             .mergeMap((o: Observable<OscMessage>) => {
                 // o is an observable of all messages of the same address
@@ -29,5 +26,10 @@ export class OscDriver {
                 return o;
             })
             .subscribe(this.port.send.bind(this.port));
+
+    }
+
+    open() {
+        this.port.open();
     }
 }
