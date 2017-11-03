@@ -10,7 +10,7 @@ import {Logs} from "./log/logs";
 import {EmptyEpsilonDriver, HttpDriver} from './empty-epsilon/driver';
 import {Server, TerminalSession} from "./terminals";
 import {Pulser} from "./core/pulser";
-import {monitorByAddress} from "./core/game-monitor";
+import {getMonitoredAddresses, monitorByAddress} from "./core/game-monitor";
 import resolve = require("resolve");
 import {OscDriver} from "./osc/osc-driver";
 import {UdpOptions} from "osc";
@@ -24,11 +24,14 @@ export async function main(optionsArg: ServerOptions) {
     const options: Options = Object.assign({}, DEFAULT_OPTIONS, optionsArg);
     let eeServerUrl = `http://${options.eeHost}:${options.eePort}`;
 
+    // FS drivers
+    const fs: LocalFileSystem = await new LocalFileSystem(optionsArg.resources).init();
+
     const eeDriver = new HttpDriver(eeServerUrl);
     const oscDriver = new OscDriver(options.oscOptions);
     const p = new Pulser();
 
-    const monitoredAddresses = ['/getter1', '/getter2'];
+    const monitoredAddresses = await getMonitoredAddresses(fs);
     const pollRequests = p.pulse.switchMap<any, string>(_ => monitoredAddresses);
 
     monitorByAddress(pollRequests, eeDriver).subscribe(oscDriver.outbox);
@@ -40,8 +43,6 @@ export async function main(optionsArg: ServerOptions) {
     // const terminalsServer = new Server(options.terminalsPort);
     // terminalsServer.start();
 
-    // FS drivers
-    const fs: LocalFileSystem = await new LocalFileSystem(optionsArg.resources).init();
     // application BL modules
     const users = new Users(fs);
     const entries = new Entries(fs);
