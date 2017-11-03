@@ -1,4 +1,4 @@
-interface Query {
+export interface Query {
     query: string;
     type: 'f' | 'i';
 }

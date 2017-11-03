@@ -10,7 +10,7 @@ import {Logs} from "./log/logs";
 import {EmptyEpsilonDriver, HttpDriver} from './empty-epsilon/driver';
 import {Server, TerminalSession} from "./terminals";
 import {Pulser} from "./core/pulser";
-import {getMonitoredAddresses, monitorByAddress} from "./core/game-monitor";
+import {getMonitoredAddresses, monitorByAddress} from "./osc-bridge/game-monitor";
 import resolve = require("resolve");
 import {OscDriver} from "./osc/osc-driver";
 import {UdpOptions} from "osc";

@@ -1,4 +1,4 @@
-import {getMonitoredAddresses, monitorByAddress} from "../../src/core/game-monitor";
+import {getMonitoredAddresses, monitorByAddress} from "../../src/osc-bridge/game-monitor";
 import {Subject} from "rxjs/Subject";
 import {spy, stub} from "sinon";
 import {expect} from "chai";
