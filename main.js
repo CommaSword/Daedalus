@@ -8,7 +8,12 @@ process.on('uncaughtException', function (err) {
 });
 
 require('./dist/src/index').main({
-    resources : path.join(__dirname, 'resources'),
+    resources: path.join(__dirname, 'resources'),
     terminalsPort: 8888,
-    eeHost:'10.0.0.7'
+    eeHost: '10.0.0.7',
+    oscOptions: {
+        localAddress: "0.0.0.0",
+        localPort: 57121,
+        remotePort: 57121
+    }
 });

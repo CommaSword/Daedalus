@@ -1,4 +1,4 @@
-import {Pulser} from "../../src/pulse/pulser";
+import {Pulser} from "../../src/core/pulser";
 import {expect} from 'chai';
 
 
@@ -28,16 +28,16 @@ describe('pulser', () => {
     it('pulses every pulseInterval', async () => {
 
         pulser.start();
-        expect(calls).to.eql([1]);
+        expect(calls).to.eql([0]);
 
         await delay(pulser.pulseInterval);
         expect(calls).to.have.length.gte(2);
-        expect(calls).to.contain.members([1, 2]);
+        expect(calls).to.contain.members([0, 1]);
         const clonedCalls = [...calls];
 
         await delay(pulser.pulseInterval);
-        expect(calls).to.have.length.gte(clonedCalls.length+1);
-        expect(calls).to.contain.members([1, 2, 3]);
+        expect(calls).to.have.length.gte(clonedCalls.length + 1);
+        expect(calls).to.contain.members([0, 1, 2]);
         expect(calls).to.contain.members([...clonedCalls, clonedCalls.length]);
 
     });
