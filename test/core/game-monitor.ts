@@ -8,19 +8,22 @@ function delay(timeout: number) {
 }
 
 describe('monitorByAddress', () => {
-    it('basically works', async () => {
-        const pollRequests = new Subject<string>();
-        const fakeDriver = {
-            getBuffered: stub()
-        };
-        const DRIVER_RESULT = '6';
 
-        fakeDriver.getBuffered.resolves(Promise.resolve(DRIVER_RESULT));
-        const output = spy();
+    const pollRequests = new Subject<string>();
+    const fakeDriver = {
+        getBuffered: stub()
+    };
+    const DRIVER_RESULT = '6';
+    const output = spy();
+
+
+    it('basically works', async () => {
         monitorByAddress(pollRequests, fakeDriver)
             .subscribe(output, console.error.bind(console), console.log.bind(console, 'completed'));
 
         expect(fakeDriver.getBuffered).to.have.callCount(0);
+
+        fakeDriver.getBuffered.resolves(Promise.resolve(DRIVER_RESULT));
 
         pollRequests.next('/foo/bar');
 
@@ -32,7 +35,6 @@ describe('monitorByAddress', () => {
         expect(output).to.have.callCount(1);
         expect(output).to.have.been.calledWith({address: '/foo/bar', args: [{type: 'f', value: DRIVER_RESULT}]});
 
-        pollRequests.complete();
     });
 
 });

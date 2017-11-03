@@ -12,7 +12,7 @@ import {Server, TerminalSession} from "./terminals";
 import {Pulser} from "./core/pulser";
 import {monitorByAddress} from "./core/game-monitor";
 import resolve = require("resolve");
-import {OscDriver} from "./core/osc-driver";
+import {OscDriver} from "./osc/osc-driver";
 import {UdpOptions} from "osc";
 
 export type ServerOptions = Partial<Options> & {

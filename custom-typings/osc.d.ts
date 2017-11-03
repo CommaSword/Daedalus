@@ -50,12 +50,19 @@ declare module "osc" {
     export interface OscBundle {
     }
 
+    export interface SenderInfo {
+        address: string;
+        port: number;
+        size: number;
+        family: 'IPv4' | 'IPv6';
+    }
+
     export interface PortEvents {
         ready: () => void;
-        message: (message: OscMessage, timeTag: number | undefined, info: any) => void;
-        bundle: (bundle: OscBundle, timeTag: number, info: any) => void;
-        osc: (packet: OscBundle | OscMessage, info: any) => void;
-        raw: (data: Uint8Array, info: any) => void;
+        message: (message: OscMessage, timeTag: number | undefined, info: SenderInfo) => void;
+        bundle: (bundle: OscBundle, timeTag: number, info: SenderInfo) => void;
+        osc: (packet: OscBundle | OscMessage, info: SenderInfo) => void;
+        raw: (data: Uint8Array, info: SenderInfo) => void;
         error: (err: Error) => void;
     }
 

@@ -10,6 +10,7 @@ export class OscDriver {
     private readonly subject = new Subject<OscMessage>();
 
     public readonly outbox: NextObserver<OscMessage> = this.subject;
+    public readonly inbox: Observable<OscMessage>;
 
     constructor(options: UdpOptions) {
         this.port = new UDPPort(Object.assign({},
@@ -26,10 +27,14 @@ export class OscDriver {
                 return o;
             })
             .subscribe(this.port.send.bind(this.port));
-
+        this.inbox = Observable.fromEvent(this.port, 'message');
     }
 
     open() {
         this.port.open();
+    }
+
+    close(){
+        this.port.close();
     }
 }
