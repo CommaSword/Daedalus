@@ -16,10 +16,13 @@ export class Entry {
                 public meta: Metadata,
                 public content: string) {
         if (this.meta.status === undefined) {
-            this.meta.status = Status.ENTRY;
+            this.meta.status = Status.DRAFT;
         }
         if (this.meta.securityClass === undefined) {
             this.meta.securityClass = ExcaliburSecClass.CONFIDENTIAL;
+        }
+        if (this.meta.name === undefined) {
+            this.meta.name = "unknown";
         }
     }
 

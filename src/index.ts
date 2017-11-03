@@ -1,6 +1,5 @@
 import * as fugazi from "@fugazi/connector";
 import {LocalFileSystem} from "kissfs";
-import resolve = require("resolve");
 import initExcalibur from "./excalibur/commands";
 import initLogin from "./session/commands";
 import initLog from "./log/commands";
@@ -8,8 +7,13 @@ import {parse} from "path";
 import {Users} from "./session/users";
 import {Entries} from "./excalibur/entries";
 import {Logs} from "./log/logs";
-import {EmptyEpsilonDriver} from './empty-epsilon/driver';
+import {EmptyEpsilonDriver, HttpDriver} from './empty-epsilon/driver';
 import {Server, TerminalSession} from "./terminals";
+import {Pulser} from "./core/pulser";
+import {getMonitoredAddresses, monitorByAddress} from "./core/game-monitor";
+import resolve = require("resolve");
+import {OscDriver} from "./osc/osc-driver";
+import {UdpOptions} from "osc";
 
 export type ServerOptions = Partial<Options> & {
     resources: string
@@ -18,14 +22,27 @@ export type ServerOptions = Partial<Options> & {
 
 export async function main(optionsArg: ServerOptions) {
     const options: Options = Object.assign({}, DEFAULT_OPTIONS, optionsArg);
-
-    const eeDriver = new EmptyEpsilonDriver(`http://${options.eeHost}:${options.eePort}`);
-    const terminalsServer = new Server(options.terminalsPort);
-
-    terminalsServer.start();
+    let eeServerUrl = `http://${options.eeHost}:${options.eePort}`;
 
     // FS drivers
     const fs: LocalFileSystem = await new LocalFileSystem(optionsArg.resources).init();
+
+    const eeDriver = new HttpDriver(eeServerUrl);
+    const oscDriver = new OscDriver(options.oscOptions);
+    const p = new Pulser();
+
+    const monitoredAddresses = await getMonitoredAddresses(fs);
+    const pollRequests = p.pulse.switchMap<any, string>(_ => monitoredAddresses);
+
+    monitorByAddress(pollRequests, eeDriver).subscribe(oscDriver.outbox);
+
+    oscDriver.open();
+    p.start();
+
+
+    // const terminalsServer = new Server(options.terminalsPort);
+    // terminalsServer.start();
+
     // application BL modules
     const users = new Users(fs);
     const entries = new Entries(fs);
@@ -47,7 +64,7 @@ export async function main(optionsArg: ServerOptions) {
     // bootstrap connector
     await connector.start();
 
-    await demoApplication(terminalsServer, eeDriver);
+    // await demoApplication(terminalsServer, eeServerUrl);
 
     connector.logger.info("started");
 }
@@ -57,15 +74,23 @@ export type Options = {
     eeHost: string;
     eePort: number;
     terminalsPort: number;
+    oscOptions: UdpOptions;
 }
 const DEFAULT_OPTIONS: Options = {
     eeHost: 'localhost',
     eePort: 8081,
-    terminalsPort: 8888
+    terminalsPort: 8888,
+    oscOptions : {
+        localAddress: "0.0.0.0",
+        localPort: 57121,
+        remotePort: 57121
+    }
 };
 
 
-async function demoApplication(terminalsServer: Server, eeDriver: EmptyEpsilonDriver) {
+async function demoApplication(terminalsServer: Server, eeServerUrl: string) {
+    const eeDriver = new EmptyEpsilonDriver(eeServerUrl);
+
     terminalsServer.on('connected', (terminal: TerminalSession) => {
         terminal.serverState = 1;
         const playerShip = eeDriver.getPlayerShip();
