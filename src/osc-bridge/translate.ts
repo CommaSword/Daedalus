@@ -1,86 +1,63 @@
-export interface Query {
-    query: string;
+import {
+    isPrimitiveType,
+    PrimitiveType,
+    ProcessedResource,
+    ProcessedType,
+    processGeneratedSchema
+} from "./process-schema";
+import generatedSchema from "./generated-schema";
+
+export interface GameQuery {
+    address: string;
+    expr: string;
     type: 'f' | 'i';
 }
 
-export function translateAddressToQuery(address: string): Query | null {
+const processedGameSchema = processGeneratedSchema(generatedSchema);
+
+function translateType(pt: PrimitiveType): 'f' | 'i' {
+    return pt.charAt(0) as any;
+}
+
+export function translateAddressToGameQuery(address: string): GameQuery | null {
     const vals = address.split('/');
-    if (vals[0] !== 'ee') {
+
+    // assert address begins with '/ee/'
+    if (vals[0] !== '' || vals[1] !== 'ee') {
+        console.error(`ilegal address prefix`, address);
+
         return null;
     }
-    let i = 1;
+
+    let i = 2;
     let commands: string[] = [];
-    let commandType = 'string';
+    let currentType: ProcessedType = processedGameSchema.global;
 
     while (i < vals.length) {
-        if (isMethod(vals[i])) {
-            const method = getMethod(vals[i]);
-            commandType = method.type;
-            commands.push(`${method.name}(${vals.slice(i + 1, i + method.argNum + 1).join(',')})`);
-            i = i + method.argNum + 1;
+        if (isPrimitiveType(currentType)) {
+            console.error(`reached a primitive result ${currentType} before address is finished`, address);
+            return null;
         } else {
-            i++;
-        }
-    }
-    return {
-        query: commands.join(':'),
-        type: commandType as 'f' | 'i'
-    }
-}
-
-function isMethod(name: string) {
-    return !!methods[name];
-}
-
-function getMethod(name: string) {
-    return methods[name];
-}
-
-const methods: any = {
-    playership: {
-        name: 'getPlayerShip',
-        argNum: 1,
-        type: 'ship'
-    },
-    hull: {
-        name: 'getHull',
-        argnum: 0,
-        type: 'f'
-    }
-};
-
-const generatedSchema = {
-    "global": {
-        "methods": {
-            "getPlayerShip": {
-                "argnum": 1,
-                "type": "PlayerSpaceship"
-            }
-        }
-    },
-    "PlayerSpaceship": {
-        "inherits": "SpaceShip"
-    },
-    "SpaceShip": {
-        "inherits": "ShipTemplateBasedObject"
-    },
-    "ShipTemplateBasedObject": {
-        "methods": {
-            "getHull": {
-                "argnum": 0,
-                "type": "float"
+            const symbolName = vals[i];
+            const symbol: ProcessedResource = currentType[symbolName];
+            if (symbol) {
+                currentType = symbol.read.type;
+                const lastArdIdx = i + symbol.read.arguments + 1;
+                commands.push(`${symbol.read.methodName}(${vals.slice(i + 1, lastArdIdx).join(',')})`);
+                i = lastArdIdx;
+            } else {
+                return null;
             }
         }
     }
-};
-
-// Input: ee/playership/-1/hull
-// Output: getPlayerShip(-1):getHull()
-// value = await driver.query('getPlayerShip(-1):getHull()');
-// this.cast({
-//     address: address,
-//     value: value,
-//     type: number //The type is from the last call
-// })
-
-//driver.get('getPlayerShip(-1)','getHull()')
+    if (isPrimitiveType(currentType)) {
+        return {
+            address: address,
+            expr: commands.join(':'),
+            type: translateType(currentType)
+        }
+    } else {
+        console.error(`reached a non-primitive result ${currentType} but address is finished`, address);
+        return null;
+    }
+}

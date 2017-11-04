@@ -1,5 +1,5 @@
 import {getMonitoredAddresses, monitorByAddress} from "../../src/osc-bridge/game-monitor";
-import {Subject} from "rxjs/Subject";
+import {Subject} from "rxjs";
 import {spy, stub} from "sinon";
 import {expect} from "chai";
 import {MemoryFileSystem} from "kissfs";
@@ -56,7 +56,7 @@ describe('monitorByAddress', () => {
 
         fakeDriver.getBuffered.resolves(Promise.resolve(DRIVER_RESULT));
 
-        pollRequests.next('/foo/bar');
+        pollRequests.next('/ee/player-ship/-1/rotation');
 
         expect(fakeDriver.getBuffered).to.have.callCount(1);
         expect(fakeDriver.getBuffered).to.have.been.calledWith(`getPlayerShip(-1):getRotation()`);
@@ -64,7 +64,7 @@ describe('monitorByAddress', () => {
         // "wait" for the driver's result
         await delay(1);
         expect(output).to.have.callCount(1);
-        expect(output).to.have.been.calledWith({address: '/foo/bar', args: [{type: 'f', value: DRIVER_RESULT}]});
+        expect(output).to.have.been.calledWith({address: '/ee/player-ship/-1/rotation', args: [{type: 'f', value: DRIVER_RESULT}]});
 
     });
 

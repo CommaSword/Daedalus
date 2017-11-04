@@ -1,4 +1,4 @@
-import {Observable, Subscriber} from "rxjs/Rx";
+import {Observable, Subscriber} from "rxjs";
 
 export class Pulser {
 

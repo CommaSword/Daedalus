@@ -1,5 +1,5 @@
 import {OscMessage, UdpOptions, UDPPort} from "osc";
-import {Observable, Subject} from 'rxjs/Rx';
+import {Observable, Subject} from 'rxjs';
 import {NextObserver} from "rxjs/Observer";
 
 
