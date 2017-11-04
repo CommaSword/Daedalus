@@ -44,19 +44,16 @@ describe('processGeneratedSchema', () => {
 
 describe('translateAddressToGameQuery', () => {
 
-    it('meaningless address returns null', () => {
-        const q = translateAddressToGameQuery('/foo/bar');
-        expect(q).to.eql(null);
+    it('meaningless address throws', () => {
+        expect(() => translateAddressToGameQuery('/foo/bar')).to.throw(Error);
     });
 
-    it('incomplete expression returns null', () => {
-        const q = translateAddressToGameQuery('/ee/player-ship');
-        expect(q).to.eql(null);
+    it('incomplete expression throws', () => {
+        expect(() => translateAddressToGameQuery('/ee/player-ship')).to.throw(Error);
     });
 
-    it('expression that does not resolve to primitive returns null', () => {
-        const q = translateAddressToGameQuery('/ee/player-ship/-1');
-        expect(q).to.eql(null);
+    it('expression that does not resolve to primitive throws', () => {
+        expect(() => translateAddressToGameQuery('/ee/player-ship/-1')).to.throw(Error);
     });
 
     it('ee/playership/-1/hull', () => {

@@ -19,14 +19,12 @@ function translateType(pt: PrimitiveType): 'f' | 'i' {
     return pt.charAt(0) as any;
 }
 
-export function translateAddressToGameQuery(address: string): GameQuery | null {
+export function translateAddressToGameQuery(address: string): GameQuery {
     const vals = address.split('/');
 
     // assert address begins with '/ee/'
     if (vals[0] !== '' || vals[1] !== 'ee') {
-        console.error(`ilegal address prefix`, address);
-
-        return null;
+        throw new Error(`ilegal address prefix ${ address}`);
     }
 
     let i = 2;
@@ -35,8 +33,7 @@ export function translateAddressToGameQuery(address: string): GameQuery | null {
 
     while (i < vals.length) {
         if (isPrimitiveType(currentType)) {
-            console.error(`reached a primitive result ${currentType} before address is finished`, address);
-            return null;
+            throw new Error(`reached a primitive result ${currentType} before address is finished ${address}`);
         } else {
             const symbolName = vals[i];
             const symbol: ProcessedResource = currentType[symbolName];
@@ -46,7 +43,7 @@ export function translateAddressToGameQuery(address: string): GameQuery | null {
                 commands.push(`${symbol.read.methodName}(${vals.slice(i + 1, lastArdIdx).join(',')})`);
                 i = lastArdIdx;
             } else {
-                return null;
+                throw new Error(`reached an unknown symbol '${symbolName}' in ${address}`);
             }
         }
     }
@@ -57,7 +54,6 @@ export function translateAddressToGameQuery(address: string): GameQuery | null {
             type: translateType(currentType)
         }
     } else {
-        console.error(`reached a non-primitive result ${currentType} but address is finished`, address);
-        return null;
+        throw new Error(`reached a non-primitive result ${currentType} but address is finished ${address}`);
     }
 }

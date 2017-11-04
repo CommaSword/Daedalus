@@ -3,6 +3,7 @@ import {EmptyEpsilonDriver} from "../../src/empty-epsilon/driver";
 import {retry} from "./retry";
 
 const timeout = 10 * 1000;
+const delay = 1 * 1000;
 
 export type Config = {
     runServer: string;
@@ -21,6 +22,7 @@ export class ServerManager {
     }
 
     async init(): Promise<void> {
+        await new Promise(r => setTimeout(r, delay));
         this.serverProcess = exec(this.config.runServer);
         try {
 
