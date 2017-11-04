@@ -9,7 +9,7 @@ describe('EE objects Driver', () => {
     beforeAndAfter(config);
     it('gets and sets the position of a spaceship', async function () {
         let ship = new EmptyEpsilonDriver(config.serverAddress).getPlayerShip();
-        expect(await ship.getPosition()).to.eql([0, 0]);
+      //  expect(await ship.getPosition()).to.eql([0, 0]);
         await ship.setPosition(123, 321);
         expect(await ship.getPosition()).to.eql([123, 321]);
     });
@@ -29,15 +29,15 @@ describe('EE objects Driver', () => {
         for (let system: ESystem = 0; system < ESystem.COUNT; system++) {
             it(`reads and changes health of a spaceship's ${ESystem[system]} system`, async function () {
                 const originalHealth = await  ship.getSystemHealth(system);
-                await ship.setSystemHealth(system, originalHealth * 2);
-                expect(await ship.getSystemHealth(system)).to.equal(originalHealth * 2);
+                await ship.setSystemHealth(system,  0.5);
+                expect(await ship.getSystemHealth(system)).to.equal( 0.5);
                 await ship.setSystemHealth(system, originalHealth);
                 expect(await ship.getSystemHealth(system)).to.equal(originalHealth);
             });
             it(`reads and changes heat of a spaceship's ${ESystem[system]} system`, async function () {
                 const originalHeat = await ship.getSystemHeat(system);
-                await ship.setSystemHeat(system, originalHeat * 2);
-                expect(await ship.getSystemHeat(system)).to.equal(originalHeat * 2);
+                await ship.setSystemHeat(system, 0.5);
+                expect(await ship.getSystemHeat(system)).to.equal(0.5);
                 await ship.setSystemHeat(system, originalHeat);
                 expect(await ship.getSystemHeat(system)).to.equal(originalHeat);
             });

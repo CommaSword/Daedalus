@@ -32,7 +32,7 @@ type GetRequest = {
 type SetToAbsolute = {
     setter: string;
     value: string;
-    resolver: Function
+    resolver: Function;
     promise: Promise<any>;
 }
 
@@ -73,8 +73,8 @@ export class HttpDriver {
 
     async get(contextGetter: string, getter: string) {
         const query: { [k: string]: string } = {};
-        query['result'] = escape(getter);
-        query['_OBJECT_'] = escape(contextGetter);
+        query['result'] = getter;//escape(getter);
+        query['_OBJECT_'] = contextGetter; //escape(contextGetter);
         const res: AxiosResponse = await this.http.request({
             method: 'get',
             url: '/get.lua',
@@ -137,12 +137,11 @@ export class HttpDriver {
      * @returns {Promise<void>}
      */
     private flush = async () => {
+        const buffer = this.getQueue;
+        const setBuffer = this.setMap;
+        this.getQueue = [];
+        this.setMap = {};
         try {
-            const buffer = this.getQueue;
-            const setBuffer = this.setMap;
-            this.getQueue = [];
-            this.setMap = {};
-
             const script =
                 `${Object.keys(setBuffer).map((s: string) => `${setBuffer[s].setter}(${setBuffer[s].value})`).join('\n')}
 ${buffer.map(({getter}, i) => `local l${i} = ${getter}; `).join('\n')}
@@ -157,6 +156,11 @@ return {${buffer.map((_, i) => `l${i} = l${i}`).join(',')}};`;
             });
             buffer.forEach(({resolver}, i) => resolver(res.data[`l${i}`]));
             Object.keys(setBuffer).forEach(s => setBuffer[s].resolver(null));
+        } catch (e) {
+            this.getQueue.push(...buffer);
+            Object.keys(setBuffer).forEach(s => {
+                this.setMap[s] || (this.setMap[s] = setBuffer[s])
+            });
         } finally {
             this.isFlushing = false;
             if (this.getQueue.length || Object.keys(this.setMap).length) {

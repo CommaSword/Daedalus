@@ -13,19 +13,19 @@ export abstract class SpaceShip extends SpaceObject {
     }
 
     getSystemHealth(system: ESystem): Promise<number> {
-        return this.driver.get(`getSystemHealth(${system})`);
+        return this.driver.get(`getSystemHealth("${ESystem[system]}")`);
     }
 
     setSystemHealth(system: ESystem, health: number): Promise<void> {
-        return this.driver.set(`setSystemHealth(${system}, ${health})`);
+        return this.driver.set(`setSystemHealth("${ESystem[system]}", ${health})`);
     }
 
     getSystemHeat(system: ESystem): Promise<number> {
-        return this.driver.get(`getSystemHeat(${system})`);
+        return this.driver.get(`getSystemHeat("${ESystem[system]}")`);
     }
 
     setSystemHeat(system: ESystem, health: number): Promise<void> {
-        return this.driver.set(`setSystemHeat(${system}, ${health})`);
+        return this.driver.set(`setSystemHeat("${ESystem[system]}", ${health})`);
     }
 
     /*

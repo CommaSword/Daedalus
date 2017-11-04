@@ -1,5 +1,5 @@
 import {ChildProcess, exec, execSync} from 'child_process';
-import {EmptyEpsilonDriver} from "../../src/empty-epsilon/driver";
+import {HttpDriver} from "../../src/empty-epsilon/driver";
 import {retry} from "./retry";
 
 const timeout = 10 * 1000;
@@ -13,9 +13,11 @@ export type Config = {
 
 export class ServerManager {
     private serverProcess: ChildProcess;
-    private driver = new EmptyEpsilonDriver(this.config.serverAddress);
+    driver = new HttpDriver(this.config.serverAddress);
     private assertServerIsUp = () => {
-        return this.driver.getPlayerShip().getHull();
+        //         return this.driver.get('getPlayerShip(-1)', 'getHull()');
+
+        return this.driver.getBuffered('getPlayerShip(-1):getHull()');
     };
 
     constructor(private config: Config) {
@@ -26,11 +28,16 @@ export class ServerManager {
         this.serverProcess = exec(this.config.runServer);
         try {
 
-            await retry(this.assertServerIsUp, {interval: 20, timeout: timeout});
+            await retry(this.assertServerIsUp, {interval: 30, timeout: timeout});
         } catch (e) {
             this.destroy();
             throw e;
         }
+    }
+
+    async reset() {
+   //     await this.driver.setToValueBuffered('setScenario', '"scenario_00_basic.lua", "Empty"');
+        await new Promise(r => setTimeout(r, 100));
     }
 
     destroy() {
@@ -49,6 +56,9 @@ export function beforeAndAfter(config: Config) {
         this.timeout(timeout);
         mgr = new ServerManager(config);
         return mgr.init();
+    });
+    beforeEach('reset scenario', () => {
+        return mgr.reset()
     });
     after('destroy managed server', () => {
         mgr.destroy();
