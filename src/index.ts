@@ -26,13 +26,12 @@ export async function main(optionsArg: ServerOptions) {
 
     // FS drivers
     const fs: LocalFileSystem = await new LocalFileSystem(optionsArg.resources).init();
-
-    const eeDriver = new HttpDriver(eeServerUrl);
     const oscDriver = new OscDriver(options.oscOptions);
     const p = new Pulser();
-
     const monitoredAddresses = await getMonitoredAddresses(fs);
     const pollRequests = p.pulse.switchMap<any, string>(_ => monitoredAddresses);
+
+    const eeDriver = new HttpDriver(eeServerUrl);
 
     monitorByAddress(pollRequests, eeDriver).subscribe(oscDriver.outbox);
 
