@@ -12,7 +12,7 @@ describe('processGeneratedSchema', () => {
             "global": {
                 "getPlayerShip": {
                     "arguments": ["integer"],
-                    "type": "PlayerSpaceship"
+                    "type": ["PlayerSpaceship"]
                 }
             },
             "PlayerSpaceship": {
@@ -24,20 +24,30 @@ describe('processGeneratedSchema', () => {
             "ShipTemplateBasedObject": {
                 "getHull": {
                     "arguments": [],
-                    "type": "float"
-                }
+                    "type": ["float"]
+                },
+                "setHull": {
+                    "arguments": ["float"],
+                    "type": []
+                },
             }
         } as GeneratedSchema;
-        const output = processGeneratedSchema(input);
+        const output = processGeneratedSchema(input) as any;
         for (let k in input) {
             expect(output[k], 'output.' + k).to.be.ok;
         }
         expect(output.global['player-ship'].get.type, 'output.global.getPlayerShip.type').to.equal(output.PlayerSpaceship);
-        expect(output.global['player-ship'].get.methodName, 'output.global.getPlayerShip.type').to.equal("getPlayerShip");
-        expect(output.PlayerSpaceship.hull, 'output.PlayerSpaceship.getHull').to.equal(output.ShipTemplateBasedObject.hull);
+        expect(output.global['player-ship'].get.methodName, 'output.global.getPlayerShip.methodName').to.equal("getPlayerShip");
+        expect(output.PlayerSpaceship.hull, 'output.PlayerSpaceship.hull').to.equal(output.ShipTemplateBasedObject.hull);
 
-        expect(output.PlayerSpaceship.hull.get.type, 'output.global.getPlayerShip.type').to.equal('float');
-        expect(output.PlayerSpaceship.hull.get.methodName, 'output.global.getPlayerShip.type').to.equal("getHull");
+        expect(output.PlayerSpaceship.hull.get, 'output.PlayerSpaceship.hull.get').to.be.ok;
+        expect(output.PlayerSpaceship.hull.get.type, 'output.PlayerSpaceship.hull.get.type').to.eql(['float']);
+        expect(output.PlayerSpaceship.hull.get.methodName, 'output.PlayerSpaceship.hull.get.methodName').to.equal("getHull");
+
+
+        expect(output.PlayerSpaceship.hull.set, 'output.PlayerSpaceship.hull.set').to.be.ok;
+        expect(output.PlayerSpaceship.hull.set.arguments, 'output.PlayerSpaceship.hull.set.arguments').to.equal(1);
+        expect(output.PlayerSpaceship.hull.set.methodName, 'output.PlayerSpaceship.hull.set.methodName').to.equal("setHull");
 
     });
 });

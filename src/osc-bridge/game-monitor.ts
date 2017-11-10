@@ -1,11 +1,8 @@
 import {Observable} from 'rxjs';
 import {OscMessage} from "osc";
 import {FileSystem} from "kissfs";
-import {GameQuery, translateAddressToGameQuery} from "./translate";
-
-export interface GameReadDriver {
-    getBuffered<T>(getter: string, numberOfResults: number): Promise<T>;
-}
+import {GameCommand, GameQuery, translateAddressToGameQuery, translateOscMessageToGameCommand} from "./translate";
+import {HttpDriver} from "../empty-epsilon/driver";
 
 const FILE_PATH = 'game-monitor.json';
 
@@ -32,15 +29,20 @@ export async function getMonitoredAddresses(fs: FileSystem): Promise<Array<strin
     return result;
 }
 
-//     pulse.switchMap<any, string>(_ => monitoredAddresses)
-export function monitorByAddress(pollRequests: Observable<any>, eeDriver: GameReadDriver): Observable<OscMessage> {
+export function monitorByAddress(pollRequests: Observable<any>, eeDriver: HttpDriver): Observable<OscMessage> {
     return pollRequests
-        .map<string, GameQuery | null>(translateAddressToGameQuery)
-        .filter<GameQuery | null, GameQuery>((g: GameQuery | null): g is GameQuery => !!g)
+        .map<string, GameQuery>(translateAddressToGameQuery)
         .flatMap<GameQuery, Array<number>, OscMessage>(
             (q: GameQuery) => eeDriver.getBuffered(q.expr, q.type.length),
             (q: GameQuery, values: Array<any>) => ({
                 address: q.address,
-                args: values.map((value:any, i:number) => ({type: q.type.charAt(i) as 'i'|'f', value}))
+                args: values.map((value: any, i: number) => ({type: q.type.charAt(i) as 'i' | 'f', value}))
             }))
+}
+
+
+export function executeDriverCommands(pushRequests: Observable<OscMessage>, eeDriver: HttpDriver): void {
+    pushRequests
+        .map<OscMessage, GameCommand>(translateOscMessageToGameCommand)
+        .subscribe(gc => eeDriver.setToValueBuffered(gc.setter, gc.value));
 }

@@ -3,7 +3,7 @@ import {HttpDriver} from '../../src/empty-epsilon/driver';
 import config from '../test-kit/config';
 import {expect} from 'chai';
 import {Subject} from "rxjs";
-import {monitorByAddress} from "../../src/osc-bridge/game-monitor";
+import {executeDriverCommands, monitorByAddress} from "../../src/osc-bridge/game-monitor";
 import {Observable} from "rxjs/Observable";
 import {MetaArgument, OscMessage} from "osc";
 import {Subscription} from "rxjs/Subscription";
@@ -25,17 +25,18 @@ describe('monitorByAddress e2e', () => {
     beforeAndAfter(config);
     let httpDriver = new HttpDriver(config.serverAddress);
     const pollRequests = new Subject<string>();
-    let output: Observable<OscMessage>;
+    const pushRequests = new Subject<OscMessage>();
+    let pollResults: Observable<OscMessage>;
 
     function pollDriver(address: string): Promise<OscMessage> {
         //setTimeout( () => , 0);
-        const result = next(output);
+        const result = next(pollResults);
         pollRequests.next(address);
         return result;
     }
 
     async function expectPoll(address: string, expected: Array<MetaArgument>) {
-        const msgPromise = next(output);
+        const msgPromise = next(pollResults);
         pollRequests.next(address);
         const oscMsg = await msgPromise;
         expect(oscMsg).to.have.property('address', address);
@@ -51,18 +52,16 @@ describe('monitorByAddress e2e', () => {
         });
     }
 
-    before(() => {
-        output = monitorByAddress(pollRequests, httpDriver);
-        output.subscribe(() => null, console.error.bind(console), console.log.bind(console, 'completed'));
+    before('wire push/ poll requests to driver', () => {
+        executeDriverCommands(pushRequests, httpDriver);
+        pollResults = monitorByAddress(pollRequests, httpDriver);
+        pollResults.subscribe(() => null, console.error.bind(console), console.log.bind(console, 'completed'));
     });
 
     it('gets and sets the hull of a spaceship', async function () {
         await expectPoll('/ee/player-ship/-1/hull', [{type: 'f', value: 250}]);
-        await httpDriver.setToValueBuffered('getPlayerShip(-1):setHull', '123');
-        //   pollRequests.next('/ee/player-ship/-1/hull');
+        pushRequests.next({address : '/ee/player-ship/-1/hull', args: [{type: 'f', value: 123}]});
         await expectPoll('/ee/player-ship/-1/hull', [{type: 'f', value: 123}]);
-        //  await httpDriver.setToValueBuffered('getPlayerShip(-1):setHull', '250');
-
     });
 
     it('gets and sets the position of a spaceship', async function () {
@@ -71,7 +70,7 @@ describe('monitorByAddress e2e', () => {
             //type: 'ii',
             args: [{type: 'f', value: 0}, {type: 'f', value: 0}]
         });
-        await httpDriver.setToValueBuffered('getPlayerShip(-1):setPosition', [123, 321].join(','));
+        pushRequests.next({address : '/ee/player-ship/-1/position', args: [{type: 'f', value: 123}, {type: 'f', value: 321}]});
         expect(await pollDriver('/ee/player-ship/-1/position')).to.eql({
             address: '/ee/player-ship/-1/position',
             // type: 'ii',
@@ -80,21 +79,29 @@ describe('monitorByAddress e2e', () => {
     });
 
     for (let system: ESystem = 0; system < ESystem.COUNT; system++) {
-        it(`read health of a spaceship's ${ESystem[system]} system`, async function () {
-            await expectPoll(`/ee/player-ship/-1/system-health/"${ESystem[system]}"`, [{type: 'f', value: 1}]);
+        it(`get and set health of a spaceship's ${ESystem[system]} system`, async function () {
+            const address = `/ee/player-ship/-1/system-health/"${ESystem[system]}"`;
+            await expectPoll(address, [{type: 'f', value: 1}]);
+            pushRequests.next({address: address, args: [{type: 'f', value: 0.5}]});
+            await expectPoll(address, [{type: 'f', value: 0.5}]);
         });
-        it(`change health of a spaceship's ${ESystem[system]} system`, async function () {
-            await httpDriver.setToValueBuffered('getPlayerShip(-1):setSystemHealth', `"${ESystem[system]}", 0.5`);
-            await expectPoll(`/ee/player-ship/-1/system-health/"${ESystem[system]}"`, [{type: 'f', value: 0.5}]);
-            //        await httpDriver.setToValueBuffered('getPlayerShip(-1):setSystemHealth', `"${ESystem[system]}", 1`);
+        it(`get and set heat of a spaceship's ${ESystem[system]} system`, async function () {
+            const address = `/ee/player-ship/-1/system-heat/"${ESystem[system]}"`;
+            await expectPoll(address, [{type: 'f', value: 0}]);
+            pushRequests.next({address: address, args: [{type: 'f', value: 0.5}]});
+            await expectPoll(address, [{type: 'f', value: 0.5}]);
         });
-        it(`read heat of a spaceship's ${ESystem[system]} system`, async function () {
-            await expectPoll(`/ee/player-ship/-1/system-heat/"${ESystem[system]}"`, [{type: 'f', value: 0}]);
+        it(`get and set power of a spaceship's ${ESystem[system]} system`, async function () {
+            const address = `/ee/player-ship/-1/system-power/"${ESystem[system]}"`;
+            await expectPoll(address, [{type: 'f', value: 1}]);
+            pushRequests.next({address: address, args: [{type: 'f', value: 0.5}]});
+            await expectPoll(address, [{type: 'f', value: 0.5}]);
         });
-        it(`change heat of a spaceship's ${ESystem[system]} system`, async function () {
-            await httpDriver.setToValueBuffered('getPlayerShip(-1):setSystemHeat', `"${ESystem[system]}", 0.5`);
-            await expectPoll(`/ee/player-ship/-1/system-heat/"${ESystem[system]}"`, [{type: 'f', value: 0.5}]);
-            //        await httpDriver.setToValueBuffered('getPlayerShip(-1):setSystemHeat', `"${ESystem[system]}", 0`);
+        it(`get and set coolant of a spaceship's ${ESystem[system]} system`, async function () {
+            const address = `/ee/player-ship/-1/system-coolant/"${ESystem[system]}"`;
+            await expectPoll(address, [{type: 'f', value: 0}]);
+            pushRequests.next({address: address, args: [{type: 'f', value: 0.5}]});
+            await expectPoll(address, [{type: 'f', value: 0.5}]);
         });
     }
 });

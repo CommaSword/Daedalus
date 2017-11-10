@@ -4,7 +4,7 @@ export default {
     "global": {
         "getPlayerShip": {
             "arguments": ["integer"],
-            "type": "PlayerSpaceship"
+            "type": ["PlayerSpaceship"]
         }
     },
     "PlayerSpaceship": {
@@ -14,37 +14,61 @@ export default {
         "$inherits": "ShipTemplateBasedObject",
         "getSystemHealth": {
             "arguments": ["ESystem"],
-            "type": "float"
+            "type": ["float"]
+        },
+        "setSystemHealth": {
+            "arguments": ["ESystem", "float"],
+            "type": []
         },
         "getSystemHeat": {
             "arguments": ["ESystem"],
-            "type": "float"
+            "type": ["float"]
+        },
+        "setSystemHeat": {
+            "arguments": ["ESystem", "float"],
+            "type": []
         },
         "getSystemPower": {
             "arguments": ["ESystem"],
-            "type": "float"
+            "type": ["float"]
+        },
+        "setSystemPower": {
+            "arguments": ["ESystem", "float"],
+            "type": []
         },
         "getSystemCoolant": {
             "arguments": ["ESystem"],
-            "type": "float"
+            "type": ["float"]
+        },
+        "setSystemCoolant": {
+            "arguments": ["ESystem", "float"],
+            "type": []
         },
     },
     "ShipTemplateBasedObject": {
         "getHull": {
             "arguments": [],
-            "type": "float"
+            "type": ["float"]
         },
         "setHull": {
             "arguments": ["float"],
-            "type": "void"
+            "type": []
         },
         "getRotation": {
             "arguments": [],
-            "type": "float"
+            "type": ["float"]
+        },
+        "setRotation": {
+            "arguments": ["float"],
+            "type": []
         },
         "getPosition": {
             "arguments": [],
             "type": ["float", "float"]
+        },
+        "setPosition": {
+            "arguments": ["float", "float"],
+            "type": []
         },
     }
 } as GeneratedSchema;

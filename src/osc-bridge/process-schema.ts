@@ -10,7 +10,7 @@ export interface GeneratedSchema {
 
 export type GameContextName<S extends GeneratedSchema> = keyof S;
 
-export type GameValueType<S extends GeneratedSchema> = GameContextName<S> | PrimitiveType | Array<PrimitiveType>;
+export type GameValueType<S extends GeneratedSchema> = [GameContextName<S>] | PrimitiveType | Array<PrimitiveType>;
 
 export type GameMethod<S extends GeneratedSchema> = {
     arguments: Array<PrimitiveType | EnumType>,
@@ -25,14 +25,20 @@ export type ProcessedSchema = { [k: string]: ProcessedContext };
 
 export type ProcessedType = ProcessedContext | PrimitiveType | Array<PrimitiveType>;
 
-export type ProcessedReadMethod = {
+export type ProcessedGetMethod = {
     methodName: string,
     arguments: number,
     type: ProcessedType
 }
 
+export type ProcessedSetMethod = {
+    methodName: string,
+    arguments: number,
+}
+
 export type ProcessedResource = {
-    get: ProcessedReadMethod,
+    get?: ProcessedGetMethod,
+    set?: ProcessedSetMethod,
 }
 export type ProcessedContext = {
 
@@ -84,15 +90,19 @@ export function processGeneratedSchema<S extends GeneratedSchema>(generatedGameS
                 const methodVerb = parsedMethodName[0].toLowerCase();
 
                 if (methodVerb === 'get') {
-                    const type: ProcessedType = (isPrimitiveOrArrayOfPrimitiveType(generatedMethodMeta.type)) ? generatedMethodMeta.type : processedGameSchema[generatedMethodMeta.type];
-                    const processedMethod: ProcessedReadMethod = {
+                    methodContext[propertyName] = methodContext[propertyName] || {};
+                    const type: ProcessedType = (isPrimitiveOrArrayOfPrimitiveType(generatedMethodMeta.type)) ? generatedMethodMeta.type : processedGameSchema[generatedMethodMeta.type[0]];
+                    methodContext[propertyName].get = {
                         methodName: methodName,
                         arguments: generatedMethodMeta.arguments.length,
                         type: type,
                     };
-                    methodContext[propertyName] = {get: processedMethod};
                 } else  if (methodVerb === 'set') {
-
+                    methodContext[propertyName] = methodContext[propertyName] || {};
+                    methodContext[propertyName].set = {
+                        methodName: methodName,
+                        arguments: generatedMethodMeta.arguments.length,
+                    };
                 }
             }
         }

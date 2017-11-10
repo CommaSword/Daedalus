@@ -42,14 +42,15 @@ describe('monitorByAddress', () => {
 
     const pollRequests = new Subject<string>();
     const fakeDriver = {
-        getBuffered: stub()
-    };
+        getBuffered: stub(),
+      //  setToValueBuffered: stub()
+    } ;
     const DRIVER_RESULT = '6';
     const output = spy();
 
 
     it('basically works', async () => {
-        monitorByAddress(pollRequests, fakeDriver)
+        monitorByAddress(pollRequests, fakeDriver as any)
             .subscribe(output, console.error.bind(console), console.log.bind(console, 'completed'));
 
         expect(fakeDriver.getBuffered).to.have.callCount(0);
