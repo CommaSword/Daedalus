@@ -7,13 +7,12 @@ import {parse} from "path";
 import {Users} from "./session/users";
 import {Entries} from "./excalibur/entries";
 import {Logs} from "./log/logs";
-import {EmptyEpsilonDriver, HttpDriver} from './empty-epsilon/driver';
-import {Server, TerminalSession} from "./terminals";
+import {HttpDriver} from './empty-epsilon/driver';
 import {Pulser} from "./core/pulser";
-import {getMonitoredAddresses, monitorByAddress} from "./core/game-monitor";
-import resolve = require("resolve");
+import {getMonitoredAddresses, monitorByAddress} from "./osc-bridge/game-monitor";
 import {OscDriver} from "./osc/osc-driver";
 import {UdpOptions} from "osc";
+import resolve = require("resolve");
 
 export type ServerOptions = Partial<Options> & {
     resources: string
@@ -26,13 +25,12 @@ export async function main(optionsArg: ServerOptions) {
 
     // FS drivers
     const fs: LocalFileSystem = await new LocalFileSystem(optionsArg.resources).init();
-
-    const eeDriver = new HttpDriver(eeServerUrl);
     const oscDriver = new OscDriver(options.oscOptions);
     const p = new Pulser();
-
     const monitoredAddresses = await getMonitoredAddresses(fs);
     const pollRequests = p.pulse.switchMap<any, string>(_ => monitoredAddresses);
+
+    const eeDriver = new HttpDriver(eeServerUrl);
 
     monitorByAddress(pollRequests, eeDriver).subscribe(oscDriver.outbox);
 
@@ -80,38 +78,38 @@ const DEFAULT_OPTIONS: Options = {
     eeHost: 'localhost',
     eePort: 8081,
     terminalsPort: 8888,
-    oscOptions : {
+    oscOptions: {
         localAddress: "0.0.0.0",
         localPort: 57121,
         remotePort: 57121
     }
 };
 
-
-async function demoApplication(terminalsServer: Server, eeServerUrl: string) {
-    const eeDriver = new EmptyEpsilonDriver(eeServerUrl);
-
-    terminalsServer.on('connected', (terminal: TerminalSession) => {
-        terminal.serverState = 1;
-        const playerShip = eeDriver.getPlayerShip();
-        let damageDealTimer: NodeJS.Timer;
-
-        async function dealDamage() {
-            const hull = await playerShip.getHull();
-            await playerShip.setHull(hull * 0.99);
-            if (terminal.clientState) {
-                damageDealTimer = setTimeout(dealDamage, 150);
-            }
-        }
-
-        terminal.on('stateChange', () => {
-            if (terminal.clientState) {
-                // ship should start taking damage
-                dealDamage();
-            } else {
-                // stop taking damage
-                clearTimeout(damageDealTimer);
-            }
-        });
-    });
-}
+//
+// async function demoApplication(terminalsServer: Server, eeServerUrl: string) {
+//  //   const eeDriver = new EmptyEpsilonDriver(eeServerUrl);
+//
+//     terminalsServer.on('connected', (terminal: TerminalSession) => {
+//         terminal.serverState = 1;
+//         const playerShip = eeDriver.getPlayerShip();
+//         let damageDealTimer: NodeJS.Timer;
+//
+//         async function dealDamage() {
+//             const hull = await playerShip.getHull();
+//             await playerShip.setHull(hull * 0.99);
+//             if (terminal.clientState) {
+//                 damageDealTimer = setTimeout(dealDamage, 150);
+//             }
+//         }
+//
+//         terminal.on('stateChange', () => {
+//             if (terminal.clientState) {
+//                 // ship should start taking damage
+//                 dealDamage();
+//             } else {
+//                 // stop taking damage
+//                 clearTimeout(damageDealTimer);
+//             }
+//         });
+//     });
+// }

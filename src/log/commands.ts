@@ -1,6 +1,6 @@
 import {RootModuleBuilder} from "@fugazi/connector/scripts/bin/components";
 import {Logs} from "./logs";
-import {withUser, Request} from "../session/command-utils";
+import {Request, withUser} from "../session/command-utils";
 import {User} from "../session/users";
 
 export default function init(builder: RootModuleBuilder, logs: Logs) {

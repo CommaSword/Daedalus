@@ -1,24 +1,12 @@
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs';
 import {OscMessage} from "osc";
 import {FileSystem} from "kissfs";
-
-function makeGameQuery(address: string): GameQuery {
-    return {
-        address,
-        expr: `getPlayerShip(-1):getRotation()`, // fake translation till we have a working one
-        type: 'f'
-    };
-}
-
-interface GameQuery {
-    address: string;
-    expr: string;
-    type: 'f' | 'i';
-}
+import {GameQuery, translateAddressToGameQuery} from "./translate";
 
 export interface GameReadDriver {
     getBuffered<T>(getter: string): Promise<T>;
 }
+
 const FILE_PATH = 'game-monitor.json';
 
 export async function getMonitoredAddresses(fs: FileSystem): Promise<Array<string>> {
@@ -29,7 +17,7 @@ export async function getMonitoredAddresses(fs: FileSystem): Promise<Array<strin
         try {
             const addresses: Array<string> = JSON.parse(fileContent);
             result.splice(0, result.length, ...addresses);
-        } catch(e){
+        } catch (e) {
             console.error(`failed parsing ${FILE_PATH} : ${fileContent}`);
         }
     }
@@ -47,7 +35,8 @@ export async function getMonitoredAddresses(fs: FileSystem): Promise<Array<strin
 //     pulse.switchMap<any, string>(_ => monitoredAddresses)
 export function monitorByAddress(pollRequests: Observable<any>, eeDriver: GameReadDriver): Observable<OscMessage> {
     return pollRequests
-        .map<string, GameQuery>(makeGameQuery)
+        .map<string, GameQuery | null>(translateAddressToGameQuery)
+        .filter<GameQuery | null, GameQuery>((g: GameQuery | null): g is GameQuery => !!g)
         .flatMap<GameQuery, number, OscMessage>(
             (q: GameQuery) => eeDriver.getBuffered(q.expr),
             (q: GameQuery, value: any) => ({
