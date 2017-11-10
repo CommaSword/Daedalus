@@ -4,7 +4,7 @@ import {FileSystem} from "kissfs";
 import {GameQuery, translateAddressToGameQuery} from "./translate";
 
 export interface GameReadDriver {
-    getBuffered<T>(getter: string): Promise<T>;
+    getBuffered<T>(getter: string, numberOfResults: number): Promise<T>;
 }
 
 const FILE_PATH = 'game-monitor.json';
@@ -37,10 +37,10 @@ export function monitorByAddress(pollRequests: Observable<any>, eeDriver: GameRe
     return pollRequests
         .map<string, GameQuery | null>(translateAddressToGameQuery)
         .filter<GameQuery | null, GameQuery>((g: GameQuery | null): g is GameQuery => !!g)
-        .flatMap<GameQuery, number, OscMessage>(
-            (q: GameQuery) => eeDriver.getBuffered(q.expr),
-            (q: GameQuery, value: any) => ({
+        .flatMap<GameQuery, Array<number>, OscMessage>(
+            (q: GameQuery) => eeDriver.getBuffered(q.expr, q.type.length),
+            (q: GameQuery, values: Array<any>) => ({
                 address: q.address,
-                args: [{type: q.type, value}]
+                args: values.map((value:any, i:number) => ({type: q.type.charAt(i) as 'i'|'f', value}))
             }))
 }

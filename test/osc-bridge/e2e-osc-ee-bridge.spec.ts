@@ -61,21 +61,21 @@ describe('monitorByAddress e2e', () => {
         await httpDriver.setToValueBuffered('getPlayerShip(-1):setHull', '123');
         //   pollRequests.next('/ee/player-ship/-1/hull');
         await expectPoll('/ee/player-ship/-1/hull', [{type: 'f', value: 123}]);
-        await httpDriver.setToValueBuffered('getPlayerShip(-1):setHull', '250');
+        //  await httpDriver.setToValueBuffered('getPlayerShip(-1):setHull', '250');
 
     });
 
-    xit('gets and sets the position of a spaceship', async function () {
+    it('gets and sets the position of a spaceship', async function () {
         expect(await pollDriver('/ee/player-ship/-1/position')).to.eql({
             address: '/ee/player-ship/-1/position',
             //type: 'ii',
-            args: [0, 0]
+            args: [{type: 'f', value: 0}, {type: 'f', value: 0}]
         });
         await httpDriver.setToValueBuffered('getPlayerShip(-1):setPosition', [123, 321].join(','));
         expect(await pollDriver('/ee/player-ship/-1/position')).to.eql({
             address: '/ee/player-ship/-1/position',
             // type: 'ii',
-            args: [123, 321]
+            args: [{type: 'f', value: 123}, {type: 'f', value: 321}]
         });
     });
 
@@ -86,7 +86,7 @@ describe('monitorByAddress e2e', () => {
         it(`change health of a spaceship's ${ESystem[system]} system`, async function () {
             await httpDriver.setToValueBuffered('getPlayerShip(-1):setSystemHealth', `"${ESystem[system]}", 0.5`);
             await expectPoll(`/ee/player-ship/-1/system-health/"${ESystem[system]}"`, [{type: 'f', value: 0.5}]);
-            await httpDriver.setToValueBuffered('getPlayerShip(-1):setSystemHealth', `"${ESystem[system]}", 1`);
+            //        await httpDriver.setToValueBuffered('getPlayerShip(-1):setSystemHealth', `"${ESystem[system]}", 1`);
         });
         it(`read heat of a spaceship's ${ESystem[system]} system`, async function () {
             await expectPoll(`/ee/player-ship/-1/system-heat/"${ESystem[system]}"`, [{type: 'f', value: 0}]);
@@ -94,7 +94,7 @@ describe('monitorByAddress e2e', () => {
         it(`change heat of a spaceship's ${ESystem[system]} system`, async function () {
             await httpDriver.setToValueBuffered('getPlayerShip(-1):setSystemHeat', `"${ESystem[system]}", 0.5`);
             await expectPoll(`/ee/player-ship/-1/system-heat/"${ESystem[system]}"`, [{type: 'f', value: 0.5}]);
-            await httpDriver.setToValueBuffered('getPlayerShip(-1):setSystemHeat', `"${ESystem[system]}", 0`);
+            //        await httpDriver.setToValueBuffered('getPlayerShip(-1):setSystemHeat', `"${ESystem[system]}", 0`);
         });
     }
 });

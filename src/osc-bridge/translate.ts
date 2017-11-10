@@ -1,5 +1,5 @@
 import {
-    isPrimitiveType,
+    isPrimitiveOrArrayOfPrimitiveType,
     PrimitiveType,
     ProcessedResource,
     ProcessedType,
@@ -10,13 +10,17 @@ import generatedSchema from "./generated-schema";
 export interface GameQuery {
     address: string;
     expr: string;
-    type: 'f' | 'i';
+    type: string;
 }
 
 const processedGameSchema = processGeneratedSchema(generatedSchema);
 
-function translateType(pt: PrimitiveType): 'f' | 'i' {
+function translatePrimitiveType(pt: PrimitiveType): 'f' | 'i' {
     return pt.charAt(0) as any;
+}
+
+function translateType(pt: PrimitiveType | Array<PrimitiveType>): string {
+    return pt instanceof Array ? pt.map(translatePrimitiveType).join('') : translatePrimitiveType(pt);
 }
 
 export function translateAddressToGameQuery(address: string): GameQuery {
@@ -32,7 +36,7 @@ export function translateAddressToGameQuery(address: string): GameQuery {
     let currentType: ProcessedType = processedGameSchema.global;
 
     while (i < vals.length) {
-        if (isPrimitiveType(currentType)) {
+        if (isPrimitiveOrArrayOfPrimitiveType(currentType)) {
             throw new Error(`reached a primitive result ${currentType} before address is finished ${address}`);
         } else {
             const symbolName = vals[i];
@@ -47,7 +51,7 @@ export function translateAddressToGameQuery(address: string): GameQuery {
             }
         }
     }
-    if (isPrimitiveType(currentType)) {
+    if (isPrimitiveOrArrayOfPrimitiveType(currentType)) {
         return {
             address: address,
             expr: commands.join(':'),

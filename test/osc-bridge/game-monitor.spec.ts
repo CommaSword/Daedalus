@@ -54,7 +54,7 @@ describe('monitorByAddress', () => {
 
         expect(fakeDriver.getBuffered).to.have.callCount(0);
 
-        fakeDriver.getBuffered.resolves(Promise.resolve(DRIVER_RESULT));
+        fakeDriver.getBuffered.resolves(Promise.resolve([DRIVER_RESULT]));
 
         pollRequests.next('/ee/player-ship/-1/rotation');
 

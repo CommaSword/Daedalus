@@ -56,12 +56,21 @@ describe('translateAddressToGameQuery', () => {
         expect(() => translateAddressToGameQuery('/ee/player-ship/-1')).to.throw(Error);
     });
 
-    it('ee/playership/-1/hull', () => {
+    it('basic : ee/playership/-1/hull', () => {
         const q = translateAddressToGameQuery('/ee/player-ship/-1/hull');
         expect(q).to.eql({
             "address": "/ee/player-ship/-1/hull",
             "expr": "getPlayerShip(-1):getHull()",
             "type": "f"
+        });
+    });
+
+    it('multiple returns : ee/playership/-1/position', () => {
+        const q = translateAddressToGameQuery('/ee/player-ship/-1/position');
+        expect(q).to.eql({
+            "address": "/ee/player-ship/-1/position",
+            "expr": "getPlayerShip(-1):getPosition()",
+            "type": "ff"
         });
     });
 });

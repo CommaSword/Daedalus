@@ -1,15 +1,21 @@
 import {AxiosInstance, AxiosResponse, default as Axios} from "axios";
 
-type GetRequest = {
-    resolver: Function;
-    getter: string;
-}
-
 type SetToAbsolute = {
     setter: string;
     value: string;
     resolver: Function;
     promise: Promise<any>;
+}
+
+class GetRequest {
+    public symbols: string[];
+
+    constructor(private numberOfResults: number,
+                public resolver: Function,
+                public getter: string,
+                uniqueId: string) {
+        this.symbols = this.numberOfResults > 1 ? Array.from(Array(this.numberOfResults)).map((_, i) => uniqueId + '_' + i) : [uniqueId];
+    }
 }
 
 /**
@@ -22,6 +28,11 @@ export class HttpDriver {
     private getQueue: GetRequest[] = [];
     private setMap: { [setter: string]: SetToAbsolute } = {};
     private isFlushing = false;
+
+    constructor(baseURL: string) {
+        this.http = Axios.create({baseURL});
+    }
+
     /**
      * flush all commands to the game server
      * at most, only a single flush is active at each point in time
@@ -29,15 +40,17 @@ export class HttpDriver {
      * @returns {Promise<void>}
      */
     private flush = async () => {
-        const buffer = this.getQueue;
-        const setBuffer = this.setMap;
+        const getQueue = this.getQueue;
+        const setMap = this.setMap;
         this.getQueue = [];
         this.setMap = {};
         try {
             const script =
-                `${Object.keys(setBuffer).map((s: string) => `${setBuffer[s].setter}(${setBuffer[s].value})`).join('\n')}
-${buffer.map(({getter}, i) => `local l${i} = ${getter}; `).join('\n')}
-return {${buffer.map((_, i) => `l${i} = l${i}`).join(',')}};`;
+                `${Object.keys(setMap).map((s: string) => `${setMap[s].setter}(${setMap[s].value})`).join('\n')}
+${getQueue.map((req, i) => {
+                    return `local ${req.symbols.join(',')} = ${req.getter}; `;
+                }).join('\n')}
+return {${getQueue.map((req, i) => req.symbols.map(s => `${s} = ${s}`).join(',')).join(',')}};`;
 
             const res: AxiosResponse = await this.http.request({
                 // timeout ?
@@ -46,12 +59,12 @@ return {${buffer.map((_, i) => `l${i} = l${i}`).join(',')}};`;
                 data: script,
                 transformResponse: JSON.parse
             });
-            buffer.forEach(({resolver}, i) => resolver(res.data[`l${i}`]));
-            Object.keys(setBuffer).forEach(s => setBuffer[s].resolver(null));
+            getQueue.forEach((req, i) => req.resolver(req.symbols.map(s => res.data[s])));
+            Object.keys(setMap).forEach(s => setMap[s].resolver(null));
         } catch (e) {
-            this.getQueue.push(...buffer);
-            Object.keys(setBuffer).forEach(s => {
-                this.setMap[s] || (this.setMap[s] = setBuffer[s])
+            this.getQueue.push(...getQueue);
+            Object.keys(setMap).forEach(s => {
+                this.setMap[s] || (this.setMap[s] = setMap[s])
             });
         } finally {
             this.isFlushing = false;
@@ -61,34 +74,20 @@ return {${buffer.map((_, i) => `l${i} = l${i}`).join(',')}};`;
         }
     };
 
-    constructor(baseURL: string) {
-        this.http = Axios.create({baseURL});
-    }
-
     /**
-     * legacy code (still working) for getting multiple values from a function
+     * simple getter for a single value
+     * @param {string} getter
+     * @returns {Promise<T>}
      */
-    async getMultiple(contextGetter: string, getter: string, numberOfResults: number) {
-        const locals: string[] = [];
-        while (numberOfResults--) {
-            locals.push('l' + numberOfResults);
-        }
-        const query = `local ${locals.join(',')} = ${contextGetter}:${getter}; return {${locals.map(e => e + '=' + e).join(',')}}`;
-        const res: AxiosResponse = await this.http.request({
-            method: 'post',
-            url: '/exec.lua',
-            data: query,
-            transformResponse: JSON.parse
-        });
-        if (res.data['error']) {
-            throw new Error('server returned error:' + res.data['error']);
-        } else if (res.data['ERROR']) {
-            throw new Error('server returned error:' + res.data['ERROR']);
-        }
-        return locals.map(e => res.data[e]);
-    }
-
-    getBuffered<T>(getter: string): Promise<T> {
+    getBuffered<T>(getter: string): Promise<T>;
+    /**
+     * getter for any number of values. result will always be an array
+     * @param {string} getter
+     * @param {number} numberOfResults
+     * @returns {Promise<T extends Array<any>>}
+     */
+    getBuffered<T extends Array<any>>(getter: string, numberOfResults: number): Promise<T>;
+    getBuffered<T>(getter: string, numberOfResults?: number): Promise<T> {
         const pendingQuery = this.pendingGetResults[getter];
         if (pendingQuery) {
             return pendingQuery;
@@ -101,8 +100,11 @@ return {${buffer.map((_, i) => `l${i} = l${i}`).join(',')}};`;
                     }
                     return result;
                 });
+            // if numberOfResults is a number (even if it's 1) return an array
+            const resultHandler = (typeof numberOfResults === 'number') ? resolver : (resArr: Array<T>) => resolver(resArr[0]);
+
             this.requestFlush();
-            const req: GetRequest = {resolver, getter};
+            const req: GetRequest = new GetRequest(numberOfResults || 1, resultHandler, getter, 'r' + this.getQueue.length);
             this.getQueue.push(req);
             return resultPromise;
         }

@@ -1,3 +1,5 @@
+import {GeneratedSchema} from "./process-schema";
+
 export default {
     "global": {
         "getPlayerShip": {
@@ -36,5 +38,9 @@ export default {
             "arguments": 0,
             "type": "float"
         },
+        "getPosition": {
+            "arguments": 0,
+            "type": ["float", "float"]
+        },
     }
-};
+} as GeneratedSchema;

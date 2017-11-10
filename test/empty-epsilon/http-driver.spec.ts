@@ -21,11 +21,17 @@ describe('EE HTTP Driver', () => {
         await hull
     }
 
-    it('gets rotation and heading ', async function () {
+    it('gets rotation and heading', async function () {
         let httpDriver = new HttpDriver(config.serverAddress);
         await expectShipState(httpDriver, 0, 250);
         await setShipState(httpDriver, '0', '122');
         // await ship.setHull(50);
         await expectShipState(httpDriver, 0, 122);
+    });
+
+    it('gets multiple values', async function () {
+        let httpDriver = new HttpDriver(config.serverAddress);
+        let pos = httpDriver.getBuffered('getPlayerShip(-1):getPosition()', 2);
+        expect(await pos, 'position').to.eql([0,0]);
     });
 });

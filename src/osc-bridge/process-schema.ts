@@ -8,7 +8,7 @@ export interface GeneratedSchema {
 
 export type GameContextName<S extends GeneratedSchema> = keyof S;
 
-export type GameValueType<S extends GeneratedSchema> = GameContextName<S> | PrimitiveType;
+export type GameValueType<S extends GeneratedSchema> = GameContextName<S> | PrimitiveType | Array<PrimitiveType>;
 
 export type GameMethod<S extends GeneratedSchema> = {
     arguments: number,
@@ -21,7 +21,7 @@ export type GameContext<S extends GeneratedSchema> = {
 
 export type ProcessedSchema = { [k: string]: ProcessedContext };
 
-export type ProcessedType = ProcessedContext | PrimitiveType;
+export type ProcessedType = ProcessedContext | PrimitiveType | Array<PrimitiveType>;
 
 export type ProcessedReadMethod = {
     methodName: string,
@@ -42,8 +42,12 @@ export function isPrimitiveType(t: any): t is PrimitiveType {
     return t === 'float' || t === 'integer';
 }
 
+export function isPrimitiveOrArrayOfPrimitiveType(t: any): t is (PrimitiveType | Array<PrimitiveType>) {
+    return t instanceof Array ? t.every(t1 => isPrimitiveType(t1)) : isPrimitiveType(t);
+}
+
 function isGameMethod(t: any): t is GameMethod<any> {
-    return typeof t === 'object' && t && t.arguments !== undefined && typeof t.type === 'string';
+    return typeof t === 'object' && t && t.arguments !== undefined && typeof t.type !== 'undefined';
 }
 
 function initContextNode<S extends GeneratedSchema>(ctxName: keyof S, generatedGameSchema: S, processedGameSchema: ProcessedSchema) {
@@ -73,7 +77,7 @@ export function processGeneratedSchema<S extends GeneratedSchema>(generatedGameS
         for (let methodName of Object.keys(ctx).filter(k => !k.startsWith('$'))) {
             const generatedMethodMeta = ctx[methodName];
             if (isGameMethod(generatedMethodMeta)) {
-                const type: ProcessedType = (isPrimitiveType(generatedMethodMeta.type)) ? generatedMethodMeta.type : processedGameSchema[generatedMethodMeta.type];
+                const type: ProcessedType = (isPrimitiveOrArrayOfPrimitiveType(generatedMethodMeta.type)) ? generatedMethodMeta.type : processedGameSchema[generatedMethodMeta.type];
                 const processedMethod: ProcessedReadMethod = {
                     methodName: methodName,
                     arguments: generatedMethodMeta.arguments,
