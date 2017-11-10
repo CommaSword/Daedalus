@@ -10,19 +10,19 @@ export default {
     },
     "SpaceShip": {
         "$inherits": "ShipTemplateBasedObject",
-        "getSystemHealth" : {
+        "getSystemHealth": {
             "arguments": 1,
             "type": "float"
         },
-        "getSystemHeat" : {
+        "getSystemHeat": {
             "arguments": 1,
             "type": "float"
         },
-        "getSystemPower" : {
+        "getSystemPower": {
             "arguments": 1,
             "type": "float"
         },
-        "getSystemCoolant" : {
+        "getSystemCoolant": {
             "arguments": 1,
             "type": "float"
         },

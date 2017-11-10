@@ -6,6 +6,7 @@ import {expect} from "chai";
 function delay(timeout: number) {
     return new Promise(r => setTimeout(r, timeout));
 }
+
 const NETWORK_GRACE = 30;
 
 describe('osc driver', () => {

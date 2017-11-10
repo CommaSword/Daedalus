@@ -32,7 +32,7 @@ async function makeEntriesWithPreExistingFile(fileContent: string) {
     await fs.ensureDirectory('queries');
     await fs.saveFile('entries/zagzag.md', fileContent);
     const entries = new Entries(fs);
-    after(()=>entries.destroy());
+    after(() => entries.destroy());
     await entries.init();
     return entries;
 }
@@ -42,7 +42,7 @@ async function makeEntrieandFileSystem(): Promise<{ fs: MemoryFileSystem; entrie
     await fs.ensureDirectory('entries');
     await fs.ensureDirectory('queries');
     const entries = new Entries(fs);
-    after(()=>entries.destroy());
+    after(() => entries.destroy());
     await entries.init();
     return {fs, entries};
 }

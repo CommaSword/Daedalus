@@ -64,7 +64,10 @@ describe('monitorByAddress', () => {
         // "wait" for the driver's result
         await delay(1);
         expect(output).to.have.callCount(1);
-        expect(output).to.have.been.calledWith({address: '/ee/player-ship/-1/rotation', args: [{type: 'f', value: DRIVER_RESULT}]});
+        expect(output).to.have.been.calledWith({
+            address: '/ee/player-ship/-1/rotation',
+            args: [{type: 'f', value: DRIVER_RESULT}]
+        });
 
     });
 

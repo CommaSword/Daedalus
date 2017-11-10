@@ -6,6 +6,7 @@ import {GameQuery, translateAddressToGameQuery} from "./translate";
 export interface GameReadDriver {
     getBuffered<T>(getter: string): Promise<T>;
 }
+
 const FILE_PATH = 'game-monitor.json';
 
 export async function getMonitoredAddresses(fs: FileSystem): Promise<Array<string>> {
@@ -16,7 +17,7 @@ export async function getMonitoredAddresses(fs: FileSystem): Promise<Array<strin
         try {
             const addresses: Array<string> = JSON.parse(fileContent);
             result.splice(0, result.length, ...addresses);
-        } catch(e){
+        } catch (e) {
             console.error(`failed parsing ${FILE_PATH} : ${fileContent}`);
         }
     }

@@ -2,12 +2,12 @@ import {beforeAndAfter} from '../test-kit/empty-epsylon-server-manager'
 import {HttpDriver} from '../../src/empty-epsilon/driver';
 import config from '../test-kit/config';
 import {expect} from 'chai';
-import {ESystem} from "../../src/empty-epsilon/objects/space-ship";
 import {Subject} from "rxjs";
 import {monitorByAddress} from "../../src/osc-bridge/game-monitor";
 import {Observable} from "rxjs/Observable";
 import {MetaArgument, OscMessage} from "osc";
 import {Subscription} from "rxjs/Subscription";
+import {ESystem} from "../../src/empty-epsilon/model";
 
 
 function next<T>(o: Observable<T>): Promise<T> {

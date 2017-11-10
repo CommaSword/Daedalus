@@ -5,12 +5,10 @@ import {NextObserver} from "rxjs/Observer";
 
 export class OscDriver {
 
-    private readonly port: UDPPort;
-
-    private readonly subject = new Subject<OscMessage>();
-
     public readonly outbox: NextObserver<OscMessage> = this.subject;
     public readonly inbox: Observable<OscMessage>;
+    private readonly port: UDPPort;
+    private readonly subject = new Subject<OscMessage>();
 
     constructor(options: UdpOptions) {
         this.port = new UDPPort(Object.assign({},
@@ -34,7 +32,7 @@ export class OscDriver {
         this.port.open();
     }
 
-    close(){
+    close() {
         this.port.close();
     }
 }

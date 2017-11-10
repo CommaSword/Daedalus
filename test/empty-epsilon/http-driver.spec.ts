@@ -6,7 +6,7 @@ import {expect} from 'chai';
 describe('EE HTTP Driver', () => {
     beforeAndAfter(config);
 
-    async function expectShipState(httpDriver: HttpDriver, eRotation: number, eHull:number) {
+    async function expectShipState(httpDriver: HttpDriver, eRotation: number, eHull: number) {
         let rotation = httpDriver.getBuffered('getPlayerShip(-1):getRotation()');
         let hull = httpDriver.getBuffered('getPlayerShip(-1):getHull()');
         expect(await rotation, 'rotation').to.eql(eRotation);

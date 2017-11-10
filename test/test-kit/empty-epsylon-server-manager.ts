@@ -12,8 +12,8 @@ export type Config = {
 }
 
 export class ServerManager {
-    private serverProcess: ChildProcess;
     driver = new HttpDriver(this.config.serverAddress);
+    private serverProcess: ChildProcess;
     private assertServerIsUp = () => {
         return this.driver.getBuffered('getPlayerShip(-1):getHull()');
     };
