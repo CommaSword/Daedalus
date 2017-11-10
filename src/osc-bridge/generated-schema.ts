@@ -3,7 +3,7 @@ import {GeneratedSchema} from "./process-schema";
 export default {
     "global": {
         "getPlayerShip": {
-            "arguments": 1,
+            "arguments": ["integer"],
             "type": "PlayerSpaceship"
         }
     },
@@ -13,33 +13,37 @@ export default {
     "SpaceShip": {
         "$inherits": "ShipTemplateBasedObject",
         "getSystemHealth": {
-            "arguments": 1,
+            "arguments": ["ESystem"],
             "type": "float"
         },
         "getSystemHeat": {
-            "arguments": 1,
+            "arguments": ["ESystem"],
             "type": "float"
         },
         "getSystemPower": {
-            "arguments": 1,
+            "arguments": ["ESystem"],
             "type": "float"
         },
         "getSystemCoolant": {
-            "arguments": 1,
+            "arguments": ["ESystem"],
             "type": "float"
         },
     },
     "ShipTemplateBasedObject": {
         "getHull": {
-            "arguments": 0,
+            "arguments": [],
             "type": "float"
         },
+        "setHull": {
+            "arguments": ["float"],
+            "type": "void"
+        },
         "getRotation": {
-            "arguments": 0,
+            "arguments": [],
             "type": "float"
         },
         "getPosition": {
-            "arguments": 0,
+            "arguments": [],
             "type": ["float", "float"]
         },
     }

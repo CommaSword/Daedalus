@@ -2,6 +2,8 @@ import naming = require('naming');
 
 export type PrimitiveType = 'float' | 'integer';
 
+export type EnumType = "ESystem";
+
 export interface GeneratedSchema {
     [k: string]: GameContext<this>;
 }
@@ -11,7 +13,7 @@ export type GameContextName<S extends GeneratedSchema> = keyof S;
 export type GameValueType<S extends GeneratedSchema> = GameContextName<S> | PrimitiveType | Array<PrimitiveType>;
 
 export type GameMethod<S extends GeneratedSchema> = {
-    arguments: number,
+    arguments: Array<PrimitiveType | EnumType>,
     type: GameValueType<S>
 };
 
@@ -30,7 +32,7 @@ export type ProcessedReadMethod = {
 }
 
 export type ProcessedResource = {
-    read: ProcessedReadMethod,
+    get: ProcessedReadMethod,
 }
 export type ProcessedContext = {
 
@@ -77,13 +79,21 @@ export function processGeneratedSchema<S extends GeneratedSchema>(generatedGameS
         for (let methodName of Object.keys(ctx).filter(k => !k.startsWith('$'))) {
             const generatedMethodMeta = ctx[methodName];
             if (isGameMethod(generatedMethodMeta)) {
-                const type: ProcessedType = (isPrimitiveOrArrayOfPrimitiveType(generatedMethodMeta.type)) ? generatedMethodMeta.type : processedGameSchema[generatedMethodMeta.type];
-                const processedMethod: ProcessedReadMethod = {
-                    methodName: methodName,
-                    arguments: generatedMethodMeta.arguments,
-                    type: type,
-                };
-                methodContext[naming.disperse(methodName).slice(1).join('-')] = {read: processedMethod};
+                const parsedMethodName = naming.disperse(methodName);
+                const propertyName = parsedMethodName.slice(1).join('-');
+                const methodVerb = parsedMethodName[0].toLowerCase();
+
+                if (methodVerb === 'get') {
+                    const type: ProcessedType = (isPrimitiveOrArrayOfPrimitiveType(generatedMethodMeta.type)) ? generatedMethodMeta.type : processedGameSchema[generatedMethodMeta.type];
+                    const processedMethod: ProcessedReadMethod = {
+                        methodName: methodName,
+                        arguments: generatedMethodMeta.arguments.length,
+                        type: type,
+                    };
+                    methodContext[propertyName] = {get: processedMethod};
+                } else  if (methodVerb === 'set') {
+
+                }
             }
         }
     }

@@ -42,9 +42,9 @@ export function translateAddressToGameQuery(address: string): GameQuery {
             const symbolName = vals[i];
             const symbol: ProcessedResource = currentType[symbolName];
             if (symbol) {
-                currentType = symbol.read.type;
-                const lastArdIdx = i + symbol.read.arguments + 1;
-                commands.push(`${symbol.read.methodName}(${vals.slice(i + 1, lastArdIdx).join(',')})`);
+                currentType = symbol.get.type;
+                const lastArdIdx = i + symbol.get.arguments + 1;
+                commands.push(`${symbol.get.methodName}(${vals.slice(i + 1, lastArdIdx).join(',')})`);
                 i = lastArdIdx;
             } else {
                 throw new Error(`reached an unknown symbol '${symbolName}' in ${address}`);
