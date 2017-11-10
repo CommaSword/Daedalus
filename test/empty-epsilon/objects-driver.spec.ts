@@ -22,8 +22,8 @@ describe('EE objects Driver', () => {
         it(`reads and changes the health of a spaceship's hull`, async function () {
             const originalHull = await ship.getHull();
             await ship.setHull(originalHull * 2);
-            expect(await ship.getHull()).to.equal(originalHull * 2)
-            await ship.setHull(originalHull)
+            expect(await ship.getHull()).to.equal(originalHull * 2);
+            await ship.setHull(originalHull);
             expect(await ship.getHull()).to.equal(originalHull)
         });
         for (let system: ESystem = 0; system < ESystem.COUNT; system++) {

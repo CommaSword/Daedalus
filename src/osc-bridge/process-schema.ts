@@ -6,16 +6,16 @@ export interface GeneratedSchema {
     [k: string]: GameContext<this>;
 }
 
-type GameContextName<S extends GeneratedSchema> = keyof S;
+export type GameContextName<S extends GeneratedSchema> = keyof S;
 
-type GameValueType<S extends GeneratedSchema> = GameContextName<S> | PrimitiveType;
+export type GameValueType<S extends GeneratedSchema> = GameContextName<S> | PrimitiveType;
 
-type GameMethod<S extends GeneratedSchema> = {
+export type GameMethod<S extends GeneratedSchema> = {
     arguments: number,
     type: GameValueType<S>
 };
 
-type GameContext<S extends GeneratedSchema> = {
+export type GameContext<S extends GeneratedSchema> = {
     [k: string]: GameContextName<S> | GameMethod<S>;
 }
 
