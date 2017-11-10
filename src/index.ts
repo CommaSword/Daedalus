@@ -9,7 +9,7 @@ import {Entries} from "./excalibur/entries";
 import {Logs} from "./log/logs";
 import {HttpDriver} from './empty-epsilon/driver';
 import {Pulser} from "./core/pulser";
-import {getMonitoredAddresses, monitorByAddress} from "./osc-bridge/game-monitor";
+import {executeDriverCommands, getMonitoredAddresses, monitorByAddress} from "./osc-bridge/game-monitor";
 import {OscDriver} from "./osc/osc-driver";
 import {UdpOptions} from "osc";
 import resolve = require("resolve");
@@ -27,12 +27,14 @@ export async function main(optionsArg: ServerOptions) {
     const fs: LocalFileSystem = await new LocalFileSystem(optionsArg.resources).init();
     const oscDriver = new OscDriver(options.oscOptions);
     const p = new Pulser();
-    const monitoredAddresses = await getMonitoredAddresses(fs);
-    const pollRequests = p.pulse.switchMap<any, string>(_ => monitoredAddresses);
-
     const eeDriver = new HttpDriver(eeServerUrl);
 
+    // wire game state to OSC
+    const monitoredAddresses = await getMonitoredAddresses(fs);
+    const pollRequests = p.pulse.switchMap<any, string>(_ => monitoredAddresses);
     monitorByAddress(pollRequests, eeDriver).subscribe(oscDriver.outbox);
+    executeDriverCommands(oscDriver.inbox, eeDriver);
+
 
     oscDriver.open();
     p.start();

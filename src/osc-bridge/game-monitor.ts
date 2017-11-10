@@ -43,6 +43,7 @@ export function monitorByAddress(pollRequests: Observable<any>, eeDriver: HttpDr
 
 export function executeDriverCommands(pushRequests: Observable<OscMessage>, eeDriver: HttpDriver): void {
     pushRequests
+        .filter(m => m.address.startsWith('/ee/'))
         .map<OscMessage, GameCommand>(translateOscMessageToGameCommand)
         .subscribe(gc => eeDriver.setToValueBuffered(gc.setter, gc.value));
 }
