@@ -18,8 +18,8 @@ export interface GameQuery {
 }
 
 export interface GameCommand {
-    setter: string;
-    value: string;
+    template: string;
+    values: Array<string>;
 }
 
 const processedGameSchema = processGeneratedSchema(generatedSchema);
@@ -63,7 +63,7 @@ export function translateOscMessageToGameCommand(message: OscMessage): GameComma
     const addressArr = message.address.split('/');
     const oscArgs: Array<any> = message.args instanceof Array ? message.args : [message.args];
     const vals = addressArr.concat(oscArgs.map<string>(arg => '' + (arg.value == undefined ? arg : arg.value)));
-    console.info(`handling command: ${vals.join('/')}`);
+  //  console.info(`handling command: ${vals.join('/')}`);
 
     // assert address begins with '/ee/'
     if (addressArr[0] !== '' || addressArr[1] !== 'ee') {
@@ -90,9 +90,12 @@ export function translateOscMessageToGameCommand(message: OscMessage): GameComma
                 } else if (symbol && symbol.set && i < vals.length - symbol.set.arguments.length) { // last one is a setter, its arguments are taken from the vals array
                     const lastArdIdx = i + symbol.set.arguments.length + 1;
                     path.push(symbol.set.methodName);
+                    const setter = path.join(':');
+                    const values = addressArrToArguments(vals.slice(i + 1, lastArdIdx), symbol.set.arguments);
+                    const numOfStaticValues =  addressArr.length - i - 1;
                     return {
-                        setter: path.join(':'),
-                        value: addressArrToArguments(vals.slice(i + 1, lastArdIdx), symbol.set.arguments).join(',')
+                        template: `${setter}(${values.map((v, idx) => idx >= numOfStaticValues? `{${idx}}` : v).join(', ')})`,
+                        values: values
                     }
                 } else {
                     throw new Error(`reached a symbol with no matching methods '${symbolName}' in ${vals}`);

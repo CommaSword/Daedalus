@@ -45,5 +45,5 @@ export function executeDriverCommands(pushRequests: Observable<OscMessage>, eeDr
     pushRequests
         .filter(m => m.address.startsWith('/ee/'))
         .map<OscMessage, GameCommand>(translateOscMessageToGameCommand)
-        .subscribe(gc => eeDriver.execute(gc.setter, gc.value));
+        .subscribe(gc => eeDriver.command(gc.template, gc.values));
 }

@@ -11,7 +11,7 @@ require('./dist/src/index').main({
 //require('./src/index').main({
     resources: path.join(__dirname, 'resources'),
     terminalsPort: 8888,
-    eeHost: '10.0.0.7',
+    eeHost: 'localhost',
     oscOptions: {
         localAddress: "0.0.0.0",
         localPort: 57121,

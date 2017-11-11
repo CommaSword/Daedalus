@@ -1,5 +1,5 @@
 import {expect} from 'chai';
-import {translateAddressToGameQuery} from "../../src/osc-bridge/translate";
+import {translateAddressToGameQuery, translateOscMessageToGameCommand} from "../../src/osc-bridge/translate";
 import {GeneratedSchema, processGeneratedSchema} from "../../src/osc-bridge/process-schema";
 
 function sleep(ms = 1000) {
@@ -83,4 +83,37 @@ describe('translateAddressToGameQuery', () => {
             "type": "ff"
         });
     });
+});
+
+
+describe('translateOscMessageToGameCommand', () => {
+
+    it('meaningless address throws', () => {
+        expect(() => translateOscMessageToGameCommand({address: '/foo/bar', args: []})).to.throw(Error);
+    });
+
+    it('incomplete expression throws', () => {
+        expect(() => translateOscMessageToGameCommand({address: '/ee/player-ship', args: []})).to.throw(Error);
+    });
+
+    it('expression that does not resolve to primitive throws', () => {
+        expect(() => translateOscMessageToGameCommand({address: '/ee/player-ship/-1', args: []})).to.throw(Error);
+    });
+
+    it('basic : ee/playership/-1/hull', () => {
+        const q = translateOscMessageToGameCommand({address: '/ee/player-ship/-1/hull', args: [0.5]});
+        expect(q).to.eql({
+            "template": "getPlayerShip(-1):setHull({0})",
+            "values": ["0.50"]
+        });
+    });
+
+    it('with a method argument in the address', () => {
+        const q = translateOscMessageToGameCommand({address: '/ee/player-ship/-1/system-health/reactor', args: [0.5]});
+        expect(q).to.eql({
+            "template": 'getPlayerShip(-1):setSystemHealth("Reactor", {1})',
+            "values": ['"Reactor"', "0.50"]
+        });
+    });
+
 });

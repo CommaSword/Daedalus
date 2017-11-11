@@ -15,8 +15,8 @@ describe('EE HTTP Driver', () => {
     }
 
     async function setShipState(httpDriver: HttpDriver, sRotation: string, sHull: string) {
-        let rotation = httpDriver.execute('getPlayerShip(-1):setRotation', sRotation);
-        let hull = httpDriver.execute('getPlayerShip(-1):setHull', sHull);
+        let rotation = httpDriver.command('getPlayerShip(-1):setRotation({0})', [sRotation]);
+        let hull = httpDriver.command('getPlayerShip(-1):setHull({0})', [sHull]);
         await rotation;
         await hull
     }

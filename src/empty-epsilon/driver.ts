@@ -1,14 +1,18 @@
 import {AxiosInstance, AxiosResponse, default as Axios} from "axios";
+import format = require("string-template");
 
 class Command {
 
-    constructor(public setter: string,
-                public value: string,
+    constructor(private template: string,
+                private values: Array<string>,
                 public resolver: Function,
                 public promise: Promise<any>) {
     }
+    setValues(newValues: Array<string>){
+        this.values = newValues;
+    }
     get luaCommand(){
-        return `${this.setter}(${this.value});`;
+        return format(this.template, this.values);
     }
 }
 
@@ -36,7 +40,8 @@ let id = 0;
  * internal object for any http communication with game server
  */
 export class HttpDriver {
-    private static readonly minTimeBetweenFlushes = 50;
+    private static readonly minTimeBetweenFlushes = 10;
+    private static readonly maxNumberOfResults = 15; // at around 25-29 the game server kills sockets
     private http: AxiosInstance;
     private pendingQueries: { [getter: string]: Query } = {};
     private pendingCommands: { [setter: string]: Command } = {};
@@ -65,9 +70,6 @@ export class HttpDriver {
 ${setQueue.map(cmd => cmd.luaCommand).join('\n')}
 ${getQueue.map(req => req.luaQuery).join('\n')}
 return {${getQueue.map(req => req.luaJSONFields).join(',')}};`;
-            if (Object.keys(setMap).length) {
-                console.log(`executing ${Object.keys(setMap).length} commands`);
-            }
             const res: AxiosResponse = await this.http.request({
                 timeout: 3 * 1000,
                 method: 'post',
@@ -82,6 +84,7 @@ return {${getQueue.map(req => req.luaJSONFields).join(',')}};`;
                 Object.keys(setMap).forEach(s => setMap[s].resolver(null));
             }
         } catch (e) {
+            console.error('error communicating with game server: ' + e.message);
             Object.keys(getMap).forEach(s => {
                 this.pendingQueries[s] ? this.pendingQueries[s].promise.then(getMap[s].resolver as any) : (this.pendingQueries[s] = getMap[s])
             });
@@ -120,28 +123,28 @@ return {${getQueue.map(req => req.luaJSONFields).join(',')}};`;
             const resultHandler = (typeof numberOfResults === 'number') ? resolver : (resArr: Array<T>) => resolver(resArr[0]);
 
             this.requestFlush();
-            const req: Query = new Query(numberOfResults || 1, resultHandler, getter, 'r' + (id++), resultPromise);
-            this.pendingQueries[getter] = req;
+            this.pendingQueries[getter] = new Query(numberOfResults || 1, resultHandler, getter, 'r' + (id++), resultPromise);
             return resultPromise;
         }
     }
 
-    execute(setter: string, value: string): Promise<null> {
-        let existingSet = this.pendingCommands[setter];
-        if (existingSet) {
-            existingSet.value = value;
-            return existingSet.promise;
+
+    command(commandTemplate: string, values: Array<string>): Promise<null> {
+        let existingCommand = this.pendingCommands[commandTemplate];
+        if (existingCommand) {
+            existingCommand.setValues(values);
+            return existingCommand.promise;
         } else {
             let resolver: Function = null as any;
             const promise = new Promise<null>(resolve => resolver = resolve);
-            this.pendingCommands[setter] = new Command(setter, value, resolver, promise);
+            this.pendingCommands[commandTemplate] = new Command(commandTemplate, values, resolver, promise);
             this.requestFlush();
             return promise;
         }
     }
 
     private requestFlush() {
-        if (Object.keys(this.pendingQueries).length + Object.keys(this.pendingCommands).length > 3) {
+        if (Object.keys(this.pendingQueries).length >= HttpDriver.maxNumberOfResults) {
             this.flush();
         } else if (!this.isFlushing) {
             setTimeout(this.flush, HttpDriver.minTimeBetweenFlushes);
