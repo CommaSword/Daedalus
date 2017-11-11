@@ -70,29 +70,29 @@ export function translateOscMessageToGameCommand(message: OscMessage): GameComma
         throw new Error(`ilegal address prefix ${ message.address}`);
     }
 
-    let i = 2;
+    let addrIdx = 2;
     let path: string[] = [];
     let currentType: ProcessedType = processedGameSchema.global;
 
-    while (i < addressArr.length) {
+    while (addrIdx < addressArr.length) {
         if (isPrimitiveOrArrayOfPrimitiveType(currentType)) {
             throw new Error(`reached a primitive result ${currentType} before address is finished ${message.address}`);
         } else {
-            const symbolName = addressArr[i];
+            const symbolName = addressArr[addrIdx++];
             const symbol: ProcessedResource = currentType[symbolName];
             if (symbol) {
                 // the +1 makes us not use getters that exhaust the entire address. the last part needs to be a setter.
-                if (symbol && symbol.get && i + 1 < addressArr.length - symbol.get.arguments.length) {
+                if (symbol && symbol.get && addrIdx < addressArr.length - symbol.get.arguments.length) {
                     currentType = symbol.get.type;
-                    const lastArdIdx = i + symbol.get.arguments.length + 1;
-                    path.push(`${symbol.get.methodName}(${addressArrToArguments(addressArr.slice(i + 1, lastArdIdx), symbol.get.arguments).join(',')})`);
-                    i = lastArdIdx;
-                } else if (symbol && symbol.set && i < vals.length - symbol.set.arguments.length) { // last one is a setter, its arguments are taken from the vals array
-                    const lastArdIdx = i + symbol.set.arguments.length + 1;
+                    const lastArdIdx = addrIdx + symbol.get.arguments.length;
+                    path.push(`${symbol.get.methodName}(${addressArrToArguments(addressArr.slice(addrIdx, lastArdIdx), symbol.get.arguments).join(',')})`);
+                    addrIdx = lastArdIdx;
+                } else if (symbol && symbol.set && addrIdx <= vals.length - symbol.set.arguments.length) { // last one is a setter, its arguments are taken from the vals array
+                    const lastArdIdx = addrIdx + symbol.set.arguments.length;
                     path.push(symbol.set.methodName);
                     const setter = path.join(':');
-                    const values = addressArrToArguments(vals.slice(i + 1, lastArdIdx), symbol.set.arguments);
-                    const numOfStaticValues =  addressArr.length - i - 1;
+                    const values = addressArrToArguments(vals.slice(addrIdx, lastArdIdx), symbol.set.arguments);
+                    const numOfStaticValues =  addressArr.length - addrIdx;
                     return {
                         template: `${setter}(${values.map((v, idx) => idx >= numOfStaticValues? `{${idx}}` : v).join(', ')})`,
                         values: values
@@ -117,21 +117,21 @@ export function translateAddressToGameQuery(address: string): GameQuery {
         throw new Error(`ilegal address prefix ${ address}`);
     }
 
-    let i = 2;
+    let addrIdx = 2;
     let path: string[] = [];
     let currentType: ProcessedType = processedGameSchema.global;
 
-    while (i < addressArr.length) {
+    while (addrIdx < addressArr.length) {
         if (isPrimitiveOrArrayOfPrimitiveType(currentType)) {
             throw new Error(`reached a primitive result ${currentType} before address is finished ${address}`);
         } else {
-            const symbolName = addressArr[i];
+            const symbolName = addressArr[addrIdx++];
             const symbol: ProcessedResource = currentType[symbolName];
-            if (symbol && symbol.get && i < addressArr.length - symbol.get.arguments.length) {
+            if (symbol && symbol.get && addrIdx <= addressArr.length - symbol.get.arguments.length) {
                 currentType = symbol.get.type;
-                const lastArdIdx = i + symbol.get.arguments.length + 1;
-                path.push(`${symbol.get.methodName}(${addressArrToArguments(addressArr.slice(i + 1, lastArdIdx), symbol.get.arguments).join(',')})`);
-                i = lastArdIdx;
+                const lastArdIdx = addrIdx + symbol.get.arguments.length;
+                path.push(`${symbol.get.methodName}(${addressArrToArguments(addressArr.slice(addrIdx, lastArdIdx), symbol.get.arguments).join(',')})`);
+                addrIdx = lastArdIdx;
             } else {
                 throw new Error(`reached an unknown symbol '${symbolName}' in ${address}`);
             }
