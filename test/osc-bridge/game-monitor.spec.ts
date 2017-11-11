@@ -43,7 +43,7 @@ describe('monitorByAddress', () => {
     const pollRequests = new Subject<string>();
     const fakeDriver = {
         getBuffered: stub(),
-      //  setToValueBuffered: stub()
+      //  execute: stub()
     } ;
     const DRIVER_RESULT = '6';
     const output = spy();

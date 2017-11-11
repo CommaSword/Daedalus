@@ -33,7 +33,7 @@ export function monitorByAddress(pollRequests: Observable<any>, eeDriver: HttpDr
     return pollRequests
         .map<string, GameQuery>(translateAddressToGameQuery)
         .flatMap<GameQuery, Array<number>, OscMessage>(
-            (q: GameQuery) => eeDriver.getBuffered(q.expr, q.type.length),
+            (q: GameQuery) => eeDriver.query(q.expr, q.type.length),
             (q: GameQuery, values: Array<any>) => ({
                 address: q.address,
                 args: values.map((value: any, i: number) => ({type: q.type.charAt(i) as 'i' | 'f', value}))
@@ -45,5 +45,5 @@ export function executeDriverCommands(pushRequests: Observable<OscMessage>, eeDr
     pushRequests
         .filter(m => m.address.startsWith('/ee/'))
         .map<OscMessage, GameCommand>(translateOscMessageToGameCommand)
-        .subscribe(gc => eeDriver.setToValueBuffered(gc.setter, gc.value));
+        .subscribe(gc => eeDriver.execute(gc.setter, gc.value));
 }

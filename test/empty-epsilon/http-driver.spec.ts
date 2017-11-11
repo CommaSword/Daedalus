@@ -7,16 +7,16 @@ describe('EE HTTP Driver', () => {
     beforeAndAfter(config);
 
     async function expectShipState(httpDriver: HttpDriver, eRotation: number, eHull: number) {
-        let rotation = httpDriver.getBuffered('getPlayerShip(-1):getRotation()');
-        let hull = httpDriver.getBuffered('getPlayerShip(-1):getHull()');
+        let rotation = httpDriver.query('getPlayerShip(-1):getRotation()');
+        let hull = httpDriver.query('getPlayerShip(-1):getHull()');
         expect(await rotation, 'rotation').to.eql(eRotation);
         expect(await hull, 'hull').to.eql(eHull);
         return {rotation, hull};
     }
 
     async function setShipState(httpDriver: HttpDriver, sRotation: string, sHull: string) {
-        let rotation = httpDriver.setToValueBuffered('getPlayerShip(-1):setRotation', sRotation);
-        let hull = httpDriver.setToValueBuffered('getPlayerShip(-1):setHull', sHull);
+        let rotation = httpDriver.execute('getPlayerShip(-1):setRotation', sRotation);
+        let hull = httpDriver.execute('getPlayerShip(-1):setHull', sHull);
         await rotation;
         await hull
     }
@@ -31,7 +31,7 @@ describe('EE HTTP Driver', () => {
 
     it('gets multiple values', async function () {
         let httpDriver = new HttpDriver(config.serverAddress);
-        let pos = httpDriver.getBuffered('getPlayerShip(-1):getPosition()', 2);
+        let pos = httpDriver.query('getPlayerShip(-1):getPosition()', 2);
         expect(await pos, 'position').to.eql([0,0]);
     });
 });

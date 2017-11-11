@@ -15,7 +15,7 @@ export class ServerManager {
     driver = new HttpDriver(this.config.serverAddress);
     private serverProcess: ChildProcess;
     private assertServerIsUp = () => {
-        return this.driver.getBuffered('getPlayerShip(-1):getHull()');
+        return this.driver.query('getPlayerShip(-1):getHull()');
     };
 
     constructor(private config: Config) {
@@ -33,7 +33,7 @@ export class ServerManager {
     }
 
     async reset() {
-        await this.driver.setToValueBuffered('setScenario', '"scenario_00_basic.lua", "Empty"');
+        await this.driver.execute('setScenario', '"scenario_00_basic.lua", "Empty"');
         await retry(this.assertServerIsUp, {interval: 30, timeout: timeout});
     }
 
