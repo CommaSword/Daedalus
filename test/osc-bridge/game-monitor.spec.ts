@@ -42,24 +42,24 @@ describe('monitorByAddress', () => {
 
     const pollRequests = new Subject<string>();
     const fakeDriver = {
-        getBuffered: stub()
-    };
+        query: stub(),
+    } ;
     const DRIVER_RESULT = '6';
     const output = spy();
 
 
     it('basically works', async () => {
-        monitorByAddress(pollRequests, fakeDriver)
+        monitorByAddress(pollRequests, fakeDriver as any)
             .subscribe(output, console.error.bind(console), console.log.bind(console, 'completed'));
 
-        expect(fakeDriver.getBuffered).to.have.callCount(0);
+        expect(fakeDriver.query).to.have.callCount(0);
 
-        fakeDriver.getBuffered.resolves(Promise.resolve([DRIVER_RESULT]));
+        fakeDriver.query.resolves(Promise.resolve([DRIVER_RESULT]));
 
         pollRequests.next('/ee/player-ship/-1/rotation');
 
-        expect(fakeDriver.getBuffered).to.have.callCount(1);
-        expect(fakeDriver.getBuffered).to.have.been.calledWith(`getPlayerShip(-1):getRotation()`);
+        expect(fakeDriver.query).to.have.callCount(1);
+        expect(fakeDriver.query).to.have.been.calledWith(`getPlayerShip(-1):getRotation()`);
 
         // "wait" for the driver's result
         await delay(1);

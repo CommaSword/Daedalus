@@ -11,12 +11,13 @@ export class OscDriver {
     public readonly outbox: NextObserver<OscMessage> = this.subject;
 
     constructor(options: UdpOptions) {
-        this.port = new UDPPort(Object.assign({},
+        options = Object.assign({},
             options,
             {
                 remoteAddress: "0.0.0.0",
                 metadata: true
-            }));
+            });
+        this.port = new UDPPort(options);
         this.subject.groupBy((msg: OscMessage) => msg.address)
             .mergeMap((o: Observable<OscMessage>) => {
                 // o is an observable of all messages of the same address
@@ -26,6 +27,7 @@ export class OscDriver {
             })
             .subscribe(this.port.send.bind(this.port));
         this.inbox = Observable.fromEvent(this.port, 'message');
+        console.info(`OSC server listening on ${options.localAddress}:${options.localPort}, sending to ${options.remoteAddress}:${options.remotePort}`)
     }
 
     open() {

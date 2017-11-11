@@ -3,8 +3,8 @@ import {GeneratedSchema} from "./process-schema";
 export default {
     "global": {
         "getPlayerShip": {
-            "arguments": 1,
-            "type": "PlayerSpaceship"
+            "arguments": ["integer"],
+            "type": ["PlayerSpaceship"]
         }
     },
     "PlayerSpaceship": {
@@ -13,34 +13,62 @@ export default {
     "SpaceShip": {
         "$inherits": "ShipTemplateBasedObject",
         "getSystemHealth": {
-            "arguments": 1,
-            "type": "float"
+            "arguments": ["ESystem"],
+            "type": ["float"]
+        },
+        "setSystemHealth": {
+            "arguments": ["ESystem", "float"],
+            "type": []
         },
         "getSystemHeat": {
-            "arguments": 1,
-            "type": "float"
+            "arguments": ["ESystem"],
+            "type": ["float"]
+        },
+        "setSystemHeat": {
+            "arguments": ["ESystem", "float"],
+            "type": []
         },
         "getSystemPower": {
-            "arguments": 1,
-            "type": "float"
+            "arguments": ["ESystem"],
+            "type": ["float"]
+        },
+        "setSystemPower": {
+            "arguments": ["ESystem", "float"],
+            "type": []
         },
         "getSystemCoolant": {
-            "arguments": 1,
-            "type": "float"
+            "arguments": ["ESystem"],
+            "type": ["float"]
+        },
+        "setSystemCoolant": {
+            "arguments": ["ESystem", "float"],
+            "type": []
         },
     },
     "ShipTemplateBasedObject": {
         "getHull": {
-            "arguments": 0,
-            "type": "float"
+            "arguments": [],
+            "type": ["float"]
+        },
+        "setHull": {
+            "arguments": ["float"],
+            "type": []
         },
         "getRotation": {
-            "arguments": 0,
-            "type": "float"
+            "arguments": [],
+            "type": ["float"]
+        },
+        "setRotation": {
+            "arguments": ["float"],
+            "type": []
         },
         "getPosition": {
-            "arguments": 0,
+            "arguments": [],
             "type": ["float", "float"]
+        },
+        "setPosition": {
+            "arguments": ["float", "float"],
+            "type": []
         },
     }
 } as GeneratedSchema;

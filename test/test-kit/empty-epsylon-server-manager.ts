@@ -15,13 +15,14 @@ export class ServerManager {
     driver = new HttpDriver(this.config.serverAddress);
     private serverProcess: ChildProcess;
     private assertServerIsUp = () => {
-        return this.driver.getBuffered('getPlayerShip(-1):getHull()');
+        return this.driver.query('getPlayerShip(-1):getHull()');
     };
 
     constructor(private config: Config) {
     }
 
     async init(): Promise<void> {
+        this.destroy();
         await new Promise(r => setTimeout(r, delay));
         this.serverProcess = exec(this.config.runServer);
         try {
@@ -33,7 +34,7 @@ export class ServerManager {
     }
 
     async reset() {
-        await this.driver.setToValueBuffered('setScenario', '"scenario_00_basic.lua", "Empty"');
+        await this.driver.command('setScenario({0}, {1})', ['"scenario_00_basic.lua"', '"Empty"']);
         await retry(this.assertServerIsUp, {interval: 30, timeout: timeout});
     }
 

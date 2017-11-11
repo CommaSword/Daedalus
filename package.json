@@ -42,6 +42,7 @@
     "@types/sinon": "~2.3.1",
     "@types/sinon-chai": "^2.7.29",
     "@types/socket.io-client": "1.4.29",
+    "@types/string-template": "^1.0.2",
     "chai": "~4.1.2",
     "chai-subset": "1.5.0",
     "concurrently": "~3.5.0",
@@ -67,6 +68,7 @@
     "resolve": "^1.4.0",
     "rxjs": "^5.5.2",
     "socket.io-client": "1.7.3",
-    "socketio-wildcard": "0.4.0"
+    "socketio-wildcard": "0.4.0",
+    "string-template": "^1.0.0"
   }
 }
