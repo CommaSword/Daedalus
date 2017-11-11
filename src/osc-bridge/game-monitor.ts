@@ -12,7 +12,7 @@ export async function getMonitoredAddresses(fs: FileSystem): Promise<Array<strin
 
     function handleFileContent(fileContent: string) {
         try {
-            const addresses: Array<string> = JSON.parse(fileContent);
+            const addresses: Array<string> = JSON.parse(fileContent.toLowerCase());
             result.splice(0, result.length, ...addresses);
         } catch (e) {
             console.error(`failed parsing ${FILE_PATH} : ${fileContent}`);

@@ -1,21 +1,32 @@
 import {AxiosInstance, AxiosResponse, default as Axios} from "axios";
 
-type SetToAbsolute = {
-    setter: string;
-    value: string;
-    resolver: Function;
-    promise: Promise<any>;
+class Command {
+
+    constructor(public setter: string,
+                public value: string,
+                public resolver: Function,
+                public promise: Promise<any>) {
+    }
+    get luaCommand(){
+        return `${this.setter}(${this.value});`;
+    }
 }
 
-class GetRequest {
+class Query {
     public symbols: string[];
+    public luaQuery: string;
+    public luaJSONFields: string;
 
     constructor(private numberOfResults: number,
                 public resolver: Function,
                 public getter: string,
-                uniqueId: string) {
+                uniqueId: string,
+                public promise: Promise<any>) {
         this.symbols = this.numberOfResults > 1 ? Array.from(Array(this.numberOfResults)).map((_, i) => uniqueId + '_' + i) : [uniqueId];
+        this.luaQuery = `local ${this.symbols.join(',')} = ${this.getter}; `;
+        this.luaJSONFields = this.symbols.map(s => `${s} = ${s}`).join(',');
     }
+
 }
 
 /**
@@ -24,9 +35,8 @@ class GetRequest {
 export class HttpDriver {
     private static readonly minTimeBetweenFlushes = 50;
     private http: AxiosInstance;
-    private pendingGetResults: { [q: string]: Promise<any> } = {};
-    private getQueue: GetRequest[] = [];
-    private setMap: { [setter: string]: SetToAbsolute } = {};
+    private getMap: { [getter: string]: Query } = {};
+    private setMap: { [setter: string]: Command } = {};
     private isFlushing = false;
 
     constructor(baseURL: string) {
@@ -40,35 +50,44 @@ export class HttpDriver {
      * @returns {Promise<void>}
      */
     private flush = async () => {
-        const getQueue = this.getQueue;
+        const getMap = this.getMap;
         const setMap = this.setMap;
-        this.getQueue = [];
+        this.getMap = {};
         this.setMap = {};
+        id = 0;
+        const getQueue = Object.keys(getMap).map(q => getMap[q]);
+        const setQueue = Object.keys(setMap).map(q => setMap[q]);
         try {
-            const script =
-                `${Object.keys(setMap).map((s: string) => `${setMap[s].setter}(${setMap[s].value})`).join('\n')}
-${getQueue.map((req, i) => {
-                    return `local ${req.symbols.join(',')} = ${req.getter}; `;
-                }).join('\n')}
-return {${getQueue.map((req, i) => req.symbols.map(s => `${s} = ${s}`).join(',')).join(',')}};`;
-
+            const script = `
+${setQueue.map(cmd => cmd.luaCommand).join('\n')}
+${getQueue.map(req => req.luaQuery).join('\n')}
+return {${getQueue.map(req => req.luaJSONFields).join(',')}};`;
+            if (Object.keys(setMap).length) {
+                console.log(`executing ${Object.keys(setMap).length} commands`);
+            }
             const res: AxiosResponse = await this.http.request({
-                // timeout ?
+                timeout: 3 * 1000,
                 method: 'post',
                 url: '/exec.lua',
                 data: script,
                 transformResponse: JSON.parse
             });
-            getQueue.forEach((req, i) => req.resolver(req.symbols.map(s => res.data[s])));
-            Object.keys(setMap).forEach(s => setMap[s].resolver(null));
+            if (res.data.ERROR) {
+                console.error('error from game server: ' + res.data.ERROR);
+            } else {
+                getQueue.forEach((req, i) => req.resolver(req.symbols.map(s => res.data[s])));
+                Object.keys(setMap).forEach(s => setMap[s].resolver(null));
+            }
         } catch (e) {
-            this.getQueue.push(...getQueue);
+            Object.keys(getMap).forEach(s => {
+                this.getMap[s] ? this.getMap[s].promise.then(getMap[s].resolver as any) : (this.getMap[s] = getMap[s])
+            });
             Object.keys(setMap).forEach(s => {
                 this.setMap[s] || (this.setMap[s] = setMap[s])
             });
         } finally {
             this.isFlushing = false;
-            if (this.getQueue.length || Object.keys(this.setMap).length) {
+            if (Object.keys(this.getMap).length || Object.keys(this.setMap).length) {
                 this.requestFlush();
             }
         }
@@ -88,24 +107,18 @@ return {${getQueue.map((req, i) => req.symbols.map(s => `${s} = ${s}`).join(',')
      */
     getBuffered<T extends Array<any>>(getter: string, numberOfResults: number): Promise<T>;
     getBuffered<T>(getter: string, numberOfResults?: number): Promise<T> {
-        const pendingQuery = this.pendingGetResults[getter];
+        const pendingQuery = this.getMap[getter];
         if (pendingQuery) {
-            return pendingQuery;
+            return pendingQuery.promise;
         } else {
             let resolver: Function = null as any;
-            const resultPromise = this.pendingGetResults[getter] = new Promise<T>(resolve => resolver = resolve)
-                .then((result: T) => {
-                    if (this.pendingGetResults[getter] === resultPromise) {
-                        delete this.pendingGetResults[getter];
-                    }
-                    return result;
-                });
+            const resultPromise = new Promise<T>(resolve => resolver = resolve)
             // if numberOfResults is a number (even if it's 1) return an array
             const resultHandler = (typeof numberOfResults === 'number') ? resolver : (resArr: Array<T>) => resolver(resArr[0]);
 
             this.requestFlush();
-            const req: GetRequest = new GetRequest(numberOfResults || 1, resultHandler, getter, 'r' + this.getQueue.length);
-            this.getQueue.push(req);
+            const req: Query = new Query(numberOfResults || 1, resultHandler, getter, 'r' + (id++), resultPromise);
+            this.getMap[getter] = req;
             return resultPromise;
         }
     }
@@ -118,17 +131,20 @@ return {${getQueue.map((req, i) => req.symbols.map(s => `${s} = ${s}`).join(',')
         } else {
             let resolver: Function = null as any;
             const promise = new Promise<null>(resolve => resolver = resolve);
-            this.setMap[setter] = {setter, value, resolver, promise};
+            this.setMap[setter] = new Command(setter, value, resolver, promise);
             this.requestFlush();
             return promise;
         }
     }
 
     private requestFlush() {
-        if (!this.isFlushing) {
+        if (Object.keys(this.getMap).length + Object.keys(this.setMap).length > 3) {
+            this.flush();
+        } else if (!this.isFlushing) {
             setTimeout(this.flush, HttpDriver.minTimeBetweenFlushes);
             this.isFlushing = true;
         }
     }
 }
 
+let id = 0;

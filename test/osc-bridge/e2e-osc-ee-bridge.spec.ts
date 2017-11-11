@@ -45,7 +45,7 @@ describe('monitorByAddress e2e', () => {
         expected.forEach((e, i) => {
             if (typeof e.value === 'number') {
                 expect(args[i]).to.have.property('type', e.type);
-                expect(args[i].value).to.be.approximately(e.value, e.value * .05);
+                expect(args[i].value, 'value of '+address).to.be.approximately(e.value, e.value * .05);
             } else {
                 expect(args[i]).to.eql(e);
             }
@@ -80,28 +80,44 @@ describe('monitorByAddress e2e', () => {
 
     for (let system: ESystem = 0; system < ESystem.COUNT; system++) {
         it(`get and set health of a spaceship's ${ESystem[system]} system`, async function () {
-            const address = `/ee/player-ship/-1/system-health/"${ESystem[system]}"`;
+            const address = `/ee/player-ship/-1/system-health/${ESystem[system]}`;
             await expectPoll(address, [{type: 'f', value: 1}]);
             pushRequests.next({address: address, args: [{type: 'f', value: 0.5}]});
             await expectPoll(address, [{type: 'f', value: 0.5}]);
         });
         it(`get and set heat of a spaceship's ${ESystem[system]} system`, async function () {
-            const address = `/ee/player-ship/-1/system-heat/"${ESystem[system]}"`;
+            const address = `/ee/player-ship/-1/system-heat/${ESystem[system]}`;
             await expectPoll(address, [{type: 'f', value: 0}]);
             pushRequests.next({address: address, args: [{type: 'f', value: 0.5}]});
             await expectPoll(address, [{type: 'f', value: 0.5}]);
         });
         it(`get and set power of a spaceship's ${ESystem[system]} system`, async function () {
-            const address = `/ee/player-ship/-1/system-power/"${ESystem[system]}"`;
+            const address = `/ee/player-ship/-1/system-power/${ESystem[system]}`;
             await expectPoll(address, [{type: 'f', value: 1}]);
             pushRequests.next({address: address, args: [{type: 'f', value: 0.5}]});
             await expectPoll(address, [{type: 'f', value: 0.5}]);
         });
         it(`get and set coolant of a spaceship's ${ESystem[system]} system`, async function () {
-            const address = `/ee/player-ship/-1/system-coolant/"${ESystem[system]}"`;
+            const address = `/ee/player-ship/-1/system-coolant/${ESystem[system]}`;
             await expectPoll(address, [{type: 'f', value: 0}]);
             pushRequests.next({address: address, args: [{type: 'f', value: 0.5}]});
             await expectPoll(address, [{type: 'f', value: 0.5}]);
         });
     }
+    it(`get and set health of all spaceship's systems (stress)`, async function () {
+        let system: ESystem = ESystem.Reactor;
+
+        for (let system: ESystem = 0; system < ESystem.MissileSystem; system++) {
+            const address = `/ee/player-ship/-1/system-health/${ESystem[system]}`;
+         //   pollRequests.next(address);
+            pushRequests.next({address: address, args: [{type: 'f', value: 0.5}]});
+        }
+        // a dirty way to wait for driver flush
+       // await  pushRequests.next({address : '/ee/player-ship/-1/hull', args: [{type: 'f', value: 123}]});
+
+     //   for (let system: ESystem = 0; system < ESystem.COUNT; system++) {
+           const address = `/ee/player-ship/-1/system-health/${ESystem[system]}`;
+            await expectPoll(address, [{type: 'f', value: 0.5}]);
+       // }
+    });
 });

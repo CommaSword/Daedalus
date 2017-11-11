@@ -10,7 +10,7 @@ export interface GeneratedSchema {
 
 export type GameContextName<S extends GeneratedSchema> = keyof S;
 
-export type GameValueType<S extends GeneratedSchema> = [GameContextName<S>] | PrimitiveType | Array<PrimitiveType>;
+export type GameValueType<S extends GeneratedSchema> = [GameContextName<S>] | Array<PrimitiveType>;
 
 export type GameMethod<S extends GeneratedSchema> = {
     arguments: Array<PrimitiveType | EnumType>,
@@ -23,17 +23,17 @@ export type GameContext<S extends GeneratedSchema> = {
 
 export type ProcessedSchema = { [k: string]: ProcessedContext };
 
-export type ProcessedType = ProcessedContext | PrimitiveType | Array<PrimitiveType>;
+export type ProcessedType = ProcessedContext | Array<PrimitiveType>;
 
 export type ProcessedGetMethod = {
     methodName: string,
-    arguments: number,
+    arguments: Array<PrimitiveType | EnumType>,
     type: ProcessedType
 }
 
 export type ProcessedSetMethod = {
     methodName: string,
-    arguments: number,
+    arguments: Array<PrimitiveType | EnumType>,
 }
 
 export type ProcessedResource = {
@@ -94,14 +94,14 @@ export function processGeneratedSchema<S extends GeneratedSchema>(generatedGameS
                     const type: ProcessedType = (isPrimitiveOrArrayOfPrimitiveType(generatedMethodMeta.type)) ? generatedMethodMeta.type : processedGameSchema[generatedMethodMeta.type[0]];
                     methodContext[propertyName].get = {
                         methodName: methodName,
-                        arguments: generatedMethodMeta.arguments.length,
+                        arguments: generatedMethodMeta.arguments,
                         type: type,
                     };
                 } else  if (methodVerb === 'set') {
                     methodContext[propertyName] = methodContext[propertyName] || {};
                     methodContext[propertyName].set = {
                         methodName: methodName,
-                        arguments: generatedMethodMeta.arguments.length,
+                        arguments: generatedMethodMeta.arguments,
                     };
                 }
             }

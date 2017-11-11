@@ -46,7 +46,7 @@ describe('processGeneratedSchema', () => {
 
 
         expect(output.PlayerSpaceship.hull.set, 'output.PlayerSpaceship.hull.set').to.be.ok;
-        expect(output.PlayerSpaceship.hull.set.arguments, 'output.PlayerSpaceship.hull.set.arguments').to.equal(1);
+        expect(output.PlayerSpaceship.hull.set.arguments, 'output.PlayerSpaceship.hull.set.arguments').to.eql(["float"]);
         expect(output.PlayerSpaceship.hull.set.methodName, 'output.PlayerSpaceship.hull.set.methodName').to.equal("setHull");
 
     });

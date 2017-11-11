@@ -1,5 +1,5 @@
 {
-  "runServer" : "/Applications/EmptyEpsilon.app/Contents/MacOS/EmptyEpsilon headless=scenario_00_basic.lua headless_name=Federation httpserver=8081",
+  "runServer" : "/Applications/EmptyEpsilon.app/Contents/MacOS/EmptyEpsilon httpserver=8081 headless=scenario_00_basic.lua headless_name=Federation",
   "runServer_" : ":",
   "killServer" : "killall EmptyEpsilon & echo EE server killed",
   "killServer_" : ":",

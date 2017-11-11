@@ -1,4 +1,5 @@
 import {
+    EnumType,
     isPrimitiveOrArrayOfPrimitiveType,
     PrimitiveType,
     ProcessedResource,
@@ -7,6 +8,8 @@ import {
 } from "./process-schema";
 import generatedSchema from "./generated-schema";
 import {Argument, MetaArgument, OscMessage} from "osc";
+import naming = require('naming');
+import {ESystem} from "../empty-epsilon/model";
 
 export interface GameQuery {
     address: string;
@@ -33,12 +36,34 @@ function isMetaArgument(arg: Argument | MetaArgument): arg is MetaArgument {
     return typeof arg === 'object';
 }
 
+function addressItemToArgument(addressItem: string, argumentSchema: PrimitiveType | EnumType){
+    switch(argumentSchema){
+        case "float" :
+            return Number.parseFloat(addressItem).toFixed(2);
+        case "integer" :
+            return addressItem;
+        case "ESystem":
+            const name = naming(addressItem, 'pascal');
+            let f = ESystem as any;
+            if (typeof f[name] === 'undefined'){
+                throw new Error(`bad ESystem name ${name}`);
+            }
+            return '"'+name+'"';
+        default:
+            throw new Error(`unknown type: ${argumentSchema}`);
+    }
+}
+
+function addressArrToArguments(addressParts : Array<string>, argumentsSchema: Array<PrimitiveType | EnumType>){
+    return argumentsSchema.map((t, i)=> addressItemToArgument(addressParts[i], t))
+}
 
 // export function translateOscMessageToGameCommand(address: string, oscArgs: Array<MetaArgument> | Array<Argument>): GameCommand {
 export function translateOscMessageToGameCommand(message: OscMessage): GameCommand {
     const addressArr = message.address.split('/');
     const oscArgs: Array<any> = message.args instanceof Array ? message.args : [message.args];
     const vals = addressArr.concat(oscArgs.map<string>(arg => '' + (arg.value == undefined ? arg : arg.value)));
+    console.info(`handling command: ${vals.join('/')}`);
 
     // assert address begins with '/ee/'
     if (addressArr[0] !== '' || addressArr[1] !== 'ee') {
@@ -55,18 +80,22 @@ export function translateOscMessageToGameCommand(message: OscMessage): GameComma
         } else {
             const symbolName = addressArr[i];
             const symbol: ProcessedResource = currentType[symbolName];
-            // the +1 makes us not use getters that exhaust the entire address. the last part needs to be a setter.
-            if (symbol && symbol.get && i + 1 < addressArr.length - symbol.get.arguments) {
-                currentType = symbol.get.type;
-                const lastArdIdx = i + symbol.get.arguments + 1;
-                path.push(`${symbol.get.methodName}(${addressArr.slice(i + 1, lastArdIdx).join(',')})`);
-                i = lastArdIdx;
-            } else if (symbol && symbol.set && i < vals.length - symbol.set.arguments) { // last one is a setter, its arguments are taken from the vals array
-                const lastArdIdx = i + symbol.set.arguments + 1;
-                path.push(symbol.set.methodName);
-                return {
-                    setter: path.join(':'),
-                    value: vals.slice(i + 1, lastArdIdx).join(',')
+            if (symbol) {
+                // the +1 makes us not use getters that exhaust the entire address. the last part needs to be a setter.
+                if (symbol && symbol.get && i + 1 < addressArr.length - symbol.get.arguments.length) {
+                    currentType = symbol.get.type;
+                    const lastArdIdx = i + symbol.get.arguments.length + 1;
+                    path.push(`${symbol.get.methodName}(${addressArrToArguments(addressArr.slice(i + 1, lastArdIdx), symbol.get.arguments).join(',')})`);
+                    i = lastArdIdx;
+                } else if (symbol && symbol.set && i < vals.length - symbol.set.arguments.length) { // last one is a setter, its arguments are taken from the vals array
+                    const lastArdIdx = i + symbol.set.arguments.length + 1;
+                    path.push(symbol.set.methodName);
+                    return {
+                        setter: path.join(':'),
+                        value: addressArrToArguments(vals.slice(i + 1, lastArdIdx), symbol.set.arguments).join(',')
+                    }
+                } else {
+                    throw new Error(`reached a symbol with no matching methods '${symbolName}' in ${vals}`);
                 }
             } else {
                 throw new Error(`reached an unknown symbol '${symbolName}' in ${message.address}`);
@@ -95,10 +124,10 @@ export function translateAddressToGameQuery(address: string): GameQuery {
         } else {
             const symbolName = addressArr[i];
             const symbol: ProcessedResource = currentType[symbolName];
-            if (symbol && symbol.get && i < addressArr.length - symbol.get.arguments) {
+            if (symbol && symbol.get && i < addressArr.length - symbol.get.arguments.length) {
                 currentType = symbol.get.type;
-                const lastArdIdx = i + symbol.get.arguments + 1;
-                path.push(`${symbol.get.methodName}(${addressArr.slice(i + 1, lastArdIdx).join(',')})`);
+                const lastArdIdx = i + symbol.get.arguments.length + 1;
+                path.push(`${symbol.get.methodName}(${addressArrToArguments(addressArr.slice(i + 1, lastArdIdx), symbol.get.arguments).join(',')})`);
                 i = lastArdIdx;
             } else {
                 throw new Error(`reached an unknown symbol '${symbolName}' in ${address}`);
