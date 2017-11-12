@@ -44,6 +44,41 @@ export default {
             "arguments": ["ESystem", "float"],
             "type": []
         },
+        "setCombatManeuver": {
+            "arguments": ["float"/* boost */, "float" /* strafe */],
+            "type": []
+        },
+        "getWeaponStorage": {
+            "arguments": ["EMissileWeapons"],
+            "type": ["integer"]
+        },
+        "setWeaponStorage": {
+            "arguments": ["EMissileWeapons", "integer"],
+            "type": []
+        }, "getWeaponStorageMax": {
+            "arguments": ["EMissileWeapons"],
+            "type": ["integer"]
+        },
+        "setWeaponStorageMax": {
+            "arguments": ["EMissileWeapons", "integer"],
+            "type": []
+        },
+        "getEnergy": {
+            "arguments": [],
+            "type": ["float"]
+        },
+        "setEnergy": {
+            "arguments": ["float"],
+            "type": []
+        },
+        "getMaxEnergy": {
+            "arguments": [],
+            "type": ["float"]
+        },
+        "setMaxEnergy": {
+            "arguments": ["float"],
+            "type": []
+        },
     },
     "ShipTemplateBasedObject": {
         "getHull": {
@@ -51,6 +86,14 @@ export default {
             "type": ["float"]
         },
         "setHull": {
+            "arguments": ["float"],
+            "type": []
+        },
+        "getHullMax": {
+            "arguments": [],
+            "type": ["float"]
+        },
+        "setHullMax": {
             "arguments": ["float"],
             "type": []
         },
@@ -68,6 +111,14 @@ export default {
         },
         "setPosition": {
             "arguments": ["float", "float"],
+            "type": []
+        },
+        "getCanBeDestroyed": {
+            "arguments": [],
+            "type": ["bool"]
+        },
+        "setCanBeDestroyed": {
+            "arguments": ["bool"],
             "type": []
         },
     }

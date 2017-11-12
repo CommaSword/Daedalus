@@ -9,7 +9,7 @@ import {
 import generatedSchema from "./generated-schema";
 import {Argument, MetaArgument, OscMessage} from "osc";
 import naming = require('naming');
-import {ESystem} from "../empty-epsilon/model";
+import {EMissileWeapons, ESystem} from "../empty-epsilon/model";
 
 export interface GameQuery {
     address: string;
@@ -36,19 +36,25 @@ function isMetaArgument(arg: Argument | MetaArgument): arg is MetaArgument {
     return typeof arg === 'object';
 }
 
-function addressItemToArgument(addressItem: string, argumentSchema: PrimitiveType | EnumType){
+function enumAddresItemToArgument(addressItem : string, enumObj: any, enumName: string){
+    const name = naming(addressItem, 'pascal');
+    if (typeof enumObj[name] === 'undefined'){
+        throw new Error(`bad ${enumName} name ${name}`);
+    }
+    return '"'+name+'"';
+}
+
+function addressItemToArgument(addressItem: string, argumentSchema: PrimitiveType | EnumType): string{
     switch(argumentSchema){
         case "float" :
             return Number.parseFloat(addressItem).toFixed(2);
         case "integer" :
+        case "bool" :
             return addressItem;
         case "ESystem":
-            const name = naming(addressItem, 'pascal');
-            let f = ESystem as any;
-            if (typeof f[name] === 'undefined'){
-                throw new Error(`bad ESystem name ${name}`);
-            }
-            return '"'+name+'"';
+            return enumAddresItemToArgument(addressItem, ESystem, "ESystem");
+        case "EMissileWeapons":
+            return enumAddresItemToArgument(addressItem, EMissileWeapons, "EMissileWeapons");
         default:
             throw new Error(`unknown type: ${argumentSchema}`);
     }

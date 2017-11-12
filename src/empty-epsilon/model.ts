@@ -11,3 +11,12 @@ export enum ESystem {
     RearShield,
     COUNT
 }
+export enum EMissileWeapons {
+    None = -1,
+    Homing = 0,
+    Nuke,
+    Mine,
+    EMP,
+    HVLI,
+    COUNT
+}

@@ -1,8 +1,8 @@
 import naming = require('naming');
 
-export type PrimitiveType = 'float' | 'integer';
+export type PrimitiveType = 'float' | 'integer' | 'bool';
 
-export type EnumType = "ESystem";
+export type EnumType = "ESystem" | "EMissileWeapons";
 
 export interface GeneratedSchema {
     [k: string]: GameContext<this>;
