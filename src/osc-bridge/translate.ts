@@ -94,8 +94,8 @@ export function translateOscMessageToGameCommand(message: OscMessage): GameComma
                     const values = addressArrToArguments(vals.slice(addrIdx, lastArdIdx), symbol.set.arguments);
                     const numOfStaticValues =  addressArr.length - addrIdx;
                     return {
-                        template: `${setter}(${values.map((v, idx) => idx >= numOfStaticValues? `{${idx}}` : v).join(', ')})`,
-                        values: values
+                        template: `${setter}(${values.map((v, idx) => idx >= numOfStaticValues? `{${idx - numOfStaticValues}}` : v).join(', ')})`,
+                        values: values.slice(numOfStaticValues)
                     }
                 } else {
                     throw new Error(`reached a symbol with no matching methods '${symbolName}' in ${vals}`);

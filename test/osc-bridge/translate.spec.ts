@@ -108,11 +108,11 @@ describe('translateOscMessageToGameCommand', () => {
         });
     });
 
-    it('with a method argument in the address', () => {
+    it('with a method argument in the address (set it as part of the template, not a variable)', () => {
         const q = translateOscMessageToGameCommand({address: '/ee/player-ship/-1/system-health/reactor', args: [0.5]});
         expect(q).to.eql({
-            "template": 'getPlayerShip(-1):setSystemHealth("Reactor", {1})',
-            "values": ['"Reactor"', "0.50"]
+            "template": 'getPlayerShip(-1):setSystemHealth("Reactor", {0})',
+            "values": ["0.50"]
         });
     });
 
