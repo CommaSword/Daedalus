@@ -1,65 +1,74 @@
 export class System1 {
     public name: string;
     public health: number;
-    public temperature: number;
+    public heat_level: number;
     public coolant: number;
+    public static readonly maxHealth = 1.0;
 
-    private energy: number = 0;
-    private maxEnergy: number;
+    private _power: number = 0;
+    private maxPower: number;
     private repairRate: number;
-    private static readonly tickTime = 1000;
-    private static readonly unsupportedMaxEnergy = 100;
-    private static readonly absoluteMaxEnergy = 200;
+    private static readonly baseRepairRate = 0.01;
+    private static readonly unsupportedMaxPower = 1.0;
+    private static readonly absoluteMaxPower = 3.0;
     private supportingSystems: Array<any>;
 
-    constructor(name: string, health: number, temperature: number, energy: number,
+    constructor(name: string, health: number, temperature: number, initPower: number,
                 coolant: number, supportingSystems: Array<any>) {
         this.name = name;
         this.health = health;
-        this.temperature = temperature;
+        this.heat_level = temperature;
         this.supportingSystems = supportingSystems;
-        this.setMaxEnergy();
-        this.setEnergy(energy);
+        this.setMaxPower();
+        this.power = initPower;
         this.setRepairRate();
         this.coolant = coolant;
     }
 
     setRepairRate() {
         if (this.supportingSystems.length && this.supportingSystems.filter(sys => sys.error).length) {
-            this.repairRate = 0.5;
+            this.repairRate = 0.5 * System1.baseRepairRate;
         } else {
-            this.repairRate = 1.0;
+            this.repairRate = System1.baseRepairRate;
         }
     }
 
-    setMaxEnergy() {
-        if (this.supportingSystems.length) {
-            this.maxEnergy = 100 * this.supportingSystems.filter(sys => sys.isOnline).length /
-                this.supportingSystems.length;
-            if (this.maxEnergy === 100) {
-                this.maxEnergy = System1.absoluteMaxEnergy;
-            }
+    getRepairRate(): number {
+        return this.repairRate;
+    }
+
+
+    setMaxPower() {
+        let onlineSystems = this.supportingSystems.filter(sys => sys.isOnline).length;
+        if (onlineSystems === this.supportingSystems.length) {
+            this.maxPower = System1.absoluteMaxPower;
         } else {
-            this.maxEnergy = System1.absoluteMaxEnergy;
+            this.maxPower = onlineSystems / this.supportingSystems.length;
         }
-        if (this.energy > this.maxEnergy) {
-            this.setEnergy(this.maxEnergy);
+
+        if (this.power > this.maxPower) {
+            this.power = this.maxPower;
         }
     }
 
-    setEnergy(energy: number) {
-        if (energy > this.maxEnergy) {
-            energy = this.maxEnergy;
+    get power(): number {
+        return this._power;
+    }
+
+
+    set power(newPower: number) {
+        if (newPower > this.maxPower) {
+            newPower = this.maxPower;
         }
-        this.energy = energy;
-        if (this.energy > System1.unsupportedMaxEnergy) {
-            this.startCorruptionTicker(this.energy - System1.unsupportedMaxEnergy);
+        this._power = newPower;
+        if (this._power > System1.unsupportedMaxPower) {
+            this.corruptSubSystems(this._power - System1.unsupportedMaxPower);
         }
     }
 
-    startCorruptionTicker(step: number) {
+    corruptSubSystems(step: number) {
         for (let sys of this.supportingSystems) {
-            sys.corruptSystem(step);
+            sys.startCorruptionTicker(step);
         }
     }
 }
@@ -71,12 +80,17 @@ export class System2 {
     public isOnline: boolean;
 
     private corruption: number = 0;
-    private readonly corruptionThreshold: number;
+    private corruptionRate: number;
+    private corruptionThreshold: number;
+    private corruptionTicker: number;
     private supportedSystems: System1[];
 
-    constructor(name: string, supportedSystems: System1[]) {
+    private static readonly tickTime = 1000;
+    private static readonly baseCorruption = 0.001;
+
+    constructor(name: string, supportedSystems: System1[] = []) {
         this.name = name;
-        this.corruptionThreshold = Math.floor(Math.random() * 101);
+        this.corruptionThreshold = Math.random() * 0.5 + 0.5;
         this.supportedSystems = supportedSystems;
         this.error = false;
         this.isOnline = false;
@@ -89,12 +103,52 @@ export class System2 {
         if (!state) {
             this.corruption = 0;
         }
-        this.isOnline = !state;
+        this.setOnline(!state);
         this.error = state;
         for (let sys of this.supportedSystems) {
-            sys.setMaxEnergy();
             sys.setRepairRate();
         }
     }
 
+    setOnline(state: boolean) {
+        if (!state) {
+            this.corruptionThreshold = Math.random();
+            if (!this.error) {
+                this.corruption = 0;
+            }
+            this.isOnline = state;
+        } else {
+            if (!this.error) {
+                this.isOnline = state;
+            }
+        }
+
+        for (let sys of this.supportedSystems) {
+            sys.setMaxPower();
+        }
+    }
+
+    corruptSystem(rate: number) {
+        this.corruption += rate * System2.baseCorruption;
+        if (this.corruption >= this.corruptionThreshold) {
+            if (this.corruptionTicker) {
+                clearInterval(this.corruptionTicker);
+            }
+            this.setError(true);
+        }
+    }
+
+    startCorruptionTicker(rate: number) {
+        if (this.corruptionTicker) {
+            clearInterval(this.corruptionTicker);
+        }
+        this.corruptionTicker = setInterval(this.corruptSystem(rate), System2.tickTime);
+    }
+
+    stopCorruption() {
+        if (this.corruptionTicker) {
+            clearInterval(this.corruptionTicker);
+        }
+
+    }
 }
