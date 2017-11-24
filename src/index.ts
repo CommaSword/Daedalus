@@ -18,7 +18,6 @@ export type ServerOptions = Partial<Options> & {
     resources: string
 }
 
-
 export async function main(optionsArg: ServerOptions) {
     const options: Options = Object.assign({}, DEFAULT_OPTIONS, optionsArg);
     let eeServerUrl = `http://${options.eeHost}:${options.eePort}`;
@@ -38,7 +37,6 @@ export async function main(optionsArg: ServerOptions) {
 
     oscDriver.open();
     p.start();
-
 
     // const terminalsServer = new Server(options.terminalsPort);
     // terminalsServer.start();

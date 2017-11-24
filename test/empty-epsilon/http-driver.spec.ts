@@ -32,6 +32,51 @@ describe('EE HTTP Driver', () => {
     it('gets multiple values', async function () {
         let httpDriver = new HttpDriver(config.serverAddress);
         let pos = httpDriver.query('getPlayerShip(-1):getPosition()', 2);
-        expect(await pos, 'position').to.eql([0,0]);
+        expect(await pos, 'position').to.eql([0, 0]);
+    });
+
+    //
+    // it('cap value', async function () {
+    //     let httpDriver = new HttpDriver(config.serverAddress);
+    //     // meh. just hard code the daedalus custom logic (use _G for state) and that's it.
+    //    // await  httpDriver.addToLoop('getPlayerShip(-1):getRotation() > {0}', 'getPlayerShip(-1):setRotation({0})', ['42']);
+    //     await  httpDriver.command(`_G.rotationCap = {0}`, ['42']);
+    //     //   await new Promise(res => setTimeout(res, 100));
+    //     await setShipState(httpDriver, '0', '122');
+    //     await expectShipState(httpDriver, 0, 42);
+    // });
+
+    it('run script', async function () {
+        let httpDriver = new HttpDriver(config.serverAddress);
+        await  httpDriver.command(`
+_G.d = Script()
+_G.d:setVariable("arg_1", 42)
+_G.d:run("_daedalus_test_1.lua")
+`, []);
+        //   await new Promise(res => setTimeout(res, 100));
+        await expectShipState(httpDriver, 0, 42);
+    });
+
+    it('run script2', async function () {
+        let httpDriver = new HttpDriver(config.serverAddress);
+        const startTime = Date.now();
+        await  httpDriver.command(`
+_G.counter = 0
+_G.d = Script()
+_G.d:setVariable("arg_1", 42)
+_G.d:run("_daedalus_test_1.lua")
+_G.hooks.foo = function (delta)
+    _G.counter = _G.counter + delta
+end
+`, []);
+        const execTime = Date.now();
+
+        await new Promise(res => setTimeout(res, 100));
+        const endtTime = Date.now();
+
+
+        let counter = await httpDriver.query('_G.counter * 1000');
+        expect(counter).to.lt(execTime - startTime + endtTime - startTime);
+        expect(counter).to.gt(100);
     });
 });

@@ -151,5 +151,26 @@ return {${getQueue.map(req => req.luaJSONFields).join(',')}};`;
             this.isFlushing = true;
         }
     }
+
+//     private ifnDefScript() {
+//         return this.command(`
+// if not _G.d then
+//     _G.d = Script()
+//     _G.d:run("_daedalus_1.lua")
+// end
+// `, []);
+//     }
+//
+//     capValue(conditionTemplate: string, setterTemplate: string, values: Array<string>): Promise<null> {
+//         const hookKey = JSON.stringify('cap_' + format(conditionTemplate, ['_']).replace('"', '_'));
+//         this.ifnDefScript();
+//         return this.command(`
+//  _G.hooks[${hookKey}] = function (delta)
+//     if ${conditionTemplate} then
+//         ${setterTemplate}
+//     end
+//  end
+//         `, values);
+//     }
 }
 
