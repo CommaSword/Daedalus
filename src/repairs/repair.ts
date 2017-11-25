@@ -1,7 +1,7 @@
 import {System1, System1Status, System2, System2Status} from "./systems";
 import {ESystem} from "../empty-epsilon/model";
 import {setTimedInterval} from "../core/timing";
-import Timer = NodeJS.Timer;
+import {Observable} from "rxjs/Observable";
 
 export enum InfraSystem {
     None = -1,
@@ -20,6 +20,8 @@ export interface SideEffects {
     setHeatRate(system: ESystem, repairRate: number): void;
 
     setMaxPower(system: ESystem, maxPower: number): void;
+
+    powerUpdates: Observable<{ system: ESystem, power: number }>;
 }
 
 
@@ -37,7 +39,8 @@ export class RepairModule {
 
     private readonly systems1: { [systemName: number]: System1 } = {};
     private readonly systems2: { [systemName: number]: System2 } = {};
-    private _ticker: Timer;
+    private disposer: Function;
+    private _repairing: ESystem | null = null;
 
     constructor(private sideEffects: SideEffects) {
         for (let s1 = 0; s1 < ESystem.COUNT; s1++) {
@@ -58,16 +61,22 @@ export class RepairModule {
         }
     }
 
-    private _repairing: ESystem | null = null;
 
     get repairing(): ESystem | null {
         return this._repairing;
     }
 
     init() {
-        if (this._ticker === undefined) {
+        if (this.disposer === undefined) {
             // initiate game loop
-            this._ticker = setTimedInterval(this.tick.bind(this), RepairModule.tickInterval);
+            const ticker = setTimedInterval(this.tick.bind(this), RepairModule.tickInterval);
+            // register for power updates
+            const subscription = this.sideEffects.powerUpdates.subscribe(msg => this.systems1[msg.system].power = msg.power);
+
+            this.disposer = () => {
+                clearInterval(ticker);
+                subscription.unsubscribe();
+            };
         }
     }
 
@@ -86,9 +95,9 @@ export class RepairModule {
     }
 
     destroy() {
-        if (this._ticker !== undefined) {
-            clearInterval(this._ticker);
-            delete this._ticker;
+        if (this.disposer !== undefined) {
+            this.disposer();
+            delete this.disposer;
         }
     }
 
@@ -130,10 +139,6 @@ export class RepairModule {
         this.systems2[id].supportedSystems.forEach(sys1 => {
             this.updateMaxPower(sys1.id);
         });
-    }
-
-    setSystem1Power(id: ESystem, power: number) {
-        this.systems1[id].power = power;
     }
 
     startRepairingSystem1(id: ESystem) {
