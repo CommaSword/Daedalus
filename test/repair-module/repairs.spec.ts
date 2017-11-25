@@ -1,9 +1,9 @@
 import {expect} from 'chai';
-import {InfraSystem, RepairModule} from "../src/repairs/repair";
-import {ESystem} from "../src/empty-epsilon/model";
-import {match, spy} from 'sinon';
-import {System1} from "../src/repairs/systems";
-
+import {InfraSystem, RepairModule} from "../../src/repairs/repair";
+import {ESystem} from "../../src/empty-epsilon/model";
+import {spy} from 'sinon';
+import {System1, System2, System2Status} from "../../src/repairs/systems";
+import {approx, getLinearCorruptionDeriviation, graceFactor, timePerTest} from "./drivers";
 
 describe('repair module', () => {
 
@@ -17,9 +17,11 @@ describe('repair module', () => {
 
     beforeEach('init module', () => {
         repair = new RepairModule(sideEffects);
+        repair.init();
     });
 
     afterEach(`reset sideEffects`, () => {
+        repair.destroy();
         sideEffects.setRepairRate.reset();
         sideEffects.setHeatRate.reset();
         sideEffects.setMaxPower.reset();
@@ -35,32 +37,32 @@ describe('repair module', () => {
         }
     });
 
-    it('.startRepairing(x), .stopRepairing() affect side effects repair rate and the value of .repairing', () => {
-        repair.startRepairing(ESystem.JumpDrive);
+    it('.startRepairingSystem1(x), .stopRepairingSystem1() affect side effects repair rate and the value of .repairing', () => {
+        repair.startRepairingSystem1(ESystem.JumpDrive);
         expect(sideEffects.setRepairRate).to.have.been.calledWith(ESystem.JumpDrive, approx(System1.repairRate));
         expect(repair.repairing).to.eql(ESystem.JumpDrive);
-        repair.stopRepairing();
+        repair.stopRepairingSystem1();
         expect(sideEffects.setRepairRate).to.have.been.calledWith(ESystem.JumpDrive, 0);
         expect(repair.repairing).to.eql(null);
     });
 
     it('requires to stop repairing a system before repairing another one', () => {
-        repair.startRepairing(ESystem.JumpDrive);
-        expect(() => repair.startRepairing(ESystem.RearShield)).to.throw(Error);
+        repair.startRepairingSystem1(ESystem.JumpDrive);
+        expect(() => repair.startRepairingSystem1(ESystem.RearShield)).to.throw(Error);
     });
 
     it('does not throw on repair command for currently repairing system', () => {
-        repair.startRepairing(ESystem.JumpDrive);
-        expect(() => repair.startRepairing(ESystem.JumpDrive)).not.to.throw(Error);
+        repair.startRepairingSystem1(ESystem.JumpDrive);
+        expect(() => repair.startRepairingSystem1(ESystem.JumpDrive)).not.to.throw(Error);
     });
 
     it('A system1 can only be over-powered (more than 100% energy) when all of its supporting system2s are online', () => {
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, 0);
         sideEffects.setMaxPower.reset();
-        repair.startup(InfraSystem.dilithiumParticleGenerator);
-        repair.startup(InfraSystem.polaronLimiter);
+        repair.startupSystem2(InfraSystem.dilithiumParticleGenerator);
+        repair.startupSystem2(InfraSystem.polaronLimiter);
         expect(sideEffects.setMaxPower).to.have.not.been.calledWith(ESystem.Impulse, System1.maxOverPower);
-        repair.startup(InfraSystem.activeCollector);
+        repair.startupSystem2(InfraSystem.activeCollector);
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, System1.maxOverPower);
     });
 
@@ -68,111 +70,84 @@ describe('repair module', () => {
         '100%  * number of online supporting systems/ number of supporting systems', () => {
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, 0);
         sideEffects.setMaxPower.reset();
-        repair.startup(InfraSystem.dilithiumParticleGenerator);
+        repair.startupSystem2(InfraSystem.dilithiumParticleGenerator);
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, System1.maxSupportedPower / 3);
         sideEffects.setMaxPower.reset();
-        repair.startup(InfraSystem.polaronLimiter);
+        repair.startupSystem2(InfraSystem.polaronLimiter);
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, approx(System1.maxSupportedPower * 2 / 3));
         sideEffects.setMaxPower.reset();
-        repair.startup(InfraSystem.activeCollector);
+        repair.startupSystem2(InfraSystem.activeCollector);
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, System1.maxOverPower);
         sideEffects.setMaxPower.reset();
-        repair.shutdown(InfraSystem.activeCollector);
+        repair.shutdownSystem2(InfraSystem.activeCollector);
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, approx(System1.maxSupportedPower * 2 / 3));
         sideEffects.setMaxPower.reset();
-        repair.shutdown(InfraSystem.polaronLimiter);
+        repair.shutdownSystem2(InfraSystem.polaronLimiter);
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, System1.maxSupportedPower / 3);
         sideEffects.setMaxPower.reset();
-        repair.shutdown(InfraSystem.dilithiumParticleGenerator);
+        repair.shutdownSystem2(InfraSystem.dilithiumParticleGenerator);
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, 0);
     });
 
-    describe('When one or more supporting system2 is in error state', () => {
-
-        it('all of its supporting system2s accumulate corruption', () => {
-            repair.startup(InfraSystem.activeCollector);
-            repair.startup(InfraSystem.polaronLimiter);
-            repair.setSystem1Power(ESystem.Impulse, System1.maxSupportedPower);
-            // nothing happens
-            repair.setSystem1Power(ESystem.Impulse, System1.maxSupportedPower * 2);
-            // InfraSystem.activeCollector and InfraSystem.polaronLimiter start gaining corruption
-
+    describe('When a system1 is over-powered', () => {
+        let activeCollectorStatus: System2Status;
+        beforeEach(() => {
+            for (let s2 = 0; s2 < InfraSystem.COUNT; s2++) {
+                repair.startupSystem2(s2);
+            }
+            activeCollectorStatus = repair.getSystem2Status(InfraSystem.activeCollector);
         });
+
+        it('its supporting system2s accumulate corruption', async () => {
+            repair.setSystem1Power(ESystem.Impulse, System1.maxSupportedPower);
+            expect(await getLinearCorruptionDeriviation(activeCollectorStatus)).to.eql(0);
+            repair.setSystem1Power(ESystem.Impulse, System1.maxSupportedPower * 2);
+            expect(await getLinearCorruptionDeriviation(activeCollectorStatus)).to.be.gt(0);
+        }).timeout(timePerTest * 2 + 2000);
 
         it('The corruption rate is linear to the level of extra energy', async () => {
-            repair.startup(InfraSystem.activeCollector);
-            repair.startup(InfraSystem.polaronLimiter);
             repair.setSystem1Power(ESystem.Impulse, System1.maxSupportedPower * 1.5);
-            const baseCorruptionGain = await getLinearCorruptionGain(repair, InfraSystem.activeCollector);
-            expect(baseCorruptionGain).to.be.gt(0);
+            expect(await getLinearCorruptionDeriviation(activeCollectorStatus), '1.5 power').to.be.approximately(System2.corruptionPerMillisecond * 0.5, System2.corruptionPerMillisecond * graceFactor);
             repair.setSystem1Power(ESystem.Impulse, System1.maxSupportedPower * 2);
-            expect(await getLinearCorruptionGain(repair, InfraSystem.activeCollector)).to.be.approximately(baseCorruptionGain * 2, baseCorruptionGain * 0.01);
+            await Promise.resolve();
+            expect(await getLinearCorruptionDeriviation(activeCollectorStatus), '2 power').to.be.approximately(System2.corruptionPerMillisecond, System2.corruptionPerMillisecond * graceFactor);
             repair.setSystem1Power(ESystem.Impulse, System1.maxSupportedPower * 2.5);
-            expect(await getLinearCorruptionGain(repair, InfraSystem.activeCollector)).to.be.approximately(baseCorruptionGain * 3, baseCorruptionGain * 0.01);
+            expect(await getLinearCorruptionDeriviation(activeCollectorStatus), '2.5 power').to.be.approximately(System2.corruptionPerMillisecond * 1.5, System2.corruptionPerMillisecond * graceFactor);
             repair.setSystem1Power(ESystem.Impulse, System1.maxSupportedPower * 3);
-            expect(await getLinearCorruptionGain(repair, InfraSystem.activeCollector)).to.be.approximately(baseCorruptionGain * 4, baseCorruptionGain * 0.01);
-        });
+            expect(await getLinearCorruptionDeriviation(activeCollectorStatus), '3 power').to.be.approximately(System2.corruptionPerMillisecond * 2, System2.corruptionPerMillisecond * graceFactor);
+        }).timeout(timePerTest * 4 + 2000);
     });
 
     describe('When one or more supporting system2 is in error state', () => {
+        beforeEach(() => {
+            for (let s2 = 0; s2 < InfraSystem.COUNT; s2++) {
+                repair.startupSystem2(s2);
+            }
+        });
+
         it('the supported system1 begins accumulating heat (the rate does not change according to the amount of systems in error)', () => {
-            repair.startup(InfraSystem.activeCollector);
-            repair.startup(InfraSystem.polaronLimiter);
             repair.setError(InfraSystem.activeCollector);
             expect(sideEffects.setHeatRate).to.have.been.calledWith(ESystem.Impulse, approx(System1.heatOnErrorRate));
             sideEffects.setRepairRate.reset();
             repair.setError(InfraSystem.polaronLimiter);
             expect(sideEffects.setHeatRate).to.have.been.calledWith(ESystem.Impulse, approx(System1.heatOnErrorRate));
             sideEffects.setRepairRate.reset();
-            repair.shutdown(InfraSystem.activeCollector);
-            repair.shutdown(InfraSystem.polaronLimiter);
+            repair.shutdownSystem2(InfraSystem.activeCollector);
+            repair.shutdownSystem2(InfraSystem.polaronLimiter);
             expect(sideEffects.setHeatRate).to.have.been.calledWith(ESystem.Impulse, 0);
         });
 
         it('the repair rate of supported system1 is 50% the normal rate', () => {
-            repair.startRepairing(ESystem.JumpDrive);
-            expect(sideEffects.setRepairRate, `after startRepairing`).to.have.been.calledWith(ESystem.JumpDrive, approx(System1.repairRate));
-            sideEffects.setRepairRate.reset();
-            repair.startup(InfraSystem.dilithiumParticleGenerator);
-            repair.startup(InfraSystem.polaronLimiter);
+            repair.startRepairingSystem1(ESystem.JumpDrive);
             repair.setError(InfraSystem.dilithiumParticleGenerator);
             expect(sideEffects.setRepairRate, `after 1st error`).to.have.been.calledWith(ESystem.JumpDrive, approx(System1.repairRate * 0.5));
             sideEffects.setRepairRate.reset();
             repair.setError(InfraSystem.polaronLimiter);
             expect(sideEffects.setRepairRate, `after 2nd error`).to.have.been.calledWith(ESystem.JumpDrive, approx(System1.repairRate * 0.5));
             sideEffects.setRepairRate.reset();
-            repair.shutdown(InfraSystem.dilithiumParticleGenerator);
-            repair.shutdown(InfraSystem.polaronLimiter);
+            repair.shutdownSystem2(InfraSystem.dilithiumParticleGenerator);
+            repair.shutdownSystem2(InfraSystem.polaronLimiter);
             expect(sideEffects.setRepairRate, `after shutdowns`).to.have.been.calledWith(ESystem.JumpDrive, approx(System1.repairRate));
         });
     });
 });
-
-async function getLinearCorruptionGain(repair: RepairModule, sys2: InfraSystem) {
-    const status = repair.getSystem2Status(sys2);
-    const measurements: number[] = [];
-    const start = Date.now();
-    let startCorruption = status.corruption;
-    for (let i = 10; i < 100; i += 10) {
-        setTimeout(() => {
-            measurements.push((status.corruption - startCorruption) / (Date.now() - start));
-        }, i);
-    }
-    await new Promise(res => setTimeout(res, 110));
-
-    return measurements.reduce((avg, curr) => {
-        expect(curr).to.be.approximately(avg, avg * 0.01);
-        return avg;
-    })
-}
-
-/**
- * match floating point number up to 0.1% deviation
- */
-function approx(val: number) {
-    return match(
-        (v: any) => {
-            return (v < val * 1.001) && (v > val * 0.999);
-        }, `approx. ${val.toFixed(2)}`);
-}
-

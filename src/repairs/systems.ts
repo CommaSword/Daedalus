@@ -1,20 +1,22 @@
-import Timer = NodeJS.Timer;
 import {ESystem} from "../empty-epsilon/model";
 import {InfraSystem} from "./repair";
 
-export class System1 {
-    public static readonly maxHealth = 1.0;
+export interface System1Status {
+
+    readonly id: ESystem;
+}
+
+
+export class System1 implements System1Status {
     public static readonly maxOverPower = 3.0;
     public static readonly maxSupportedPower = 1.0;
     public static readonly heatOnErrorRate = 1.0;
     public static readonly repairRate = 1.0;
 
-    private _power: number = 0;
+    public power: number = 0;
+    public supportingSystems: System2[] = [];
 
-    constructor(public id: ESystem, public health: number = System1.maxHealth, public heat_level: number = 0,
-                public initPower: number = System1.maxSupportedPower, public coolant: number = 0,
-                public supportingSystems: Array<any> = []) {
-        //   this.power = initPower;
+    constructor(public id: ESystem) {
     }
 
     get repairRate() {
@@ -42,53 +44,50 @@ export class System1 {
         }
     }
 
-    get power(): number {
-        return this._power;
+    /**
+     * between 0 and 2,  the factor of over-power
+     */
+    get normalizedOverPower() {
+        return Math.max(0, (this.power - System1.maxSupportedPower) / System1.maxSupportedPower);
     }
-
-    // set power(newPower: number) {
-    //     if (newPower > this.maxPower) {
-    //         newPower = this.maxPower;
-    //     }
-    //     this._power = newPower;
-    //     if (this._power > System1.maxSupportedPower) {
-    //         for (let sys of this.supportingSystems) {
-    //             sys.startCorruptionTicker(this._power - System1.maxSupportedPower);
-    //         }
-    //     } else {
-    //         for (let sys of this.supportingSystems) {
-    //             sys.stopCorruption();
-    //         }
-    //     }
-    // }
-
 }
 
 
-export class System2 {
-    public name: string;
+export interface System2Status {
+
+    readonly id: InfraSystem;
+    readonly corruption: number;
+}
+
+export class System2 implements System2Status {
+
+    public static readonly corruptionPerMillisecond = 0.01;
+    public static readonly maxCorruption = 1;
+
+    public readonly name: string;
+    public readonly supportedSystems: System1[] = []
     public error: boolean;
     public isOnline: boolean;
+    public corruption: number;
+    private corruptionErrorThreshold: number;
 
-    public corruption: number = 0;
-    private corruptionRate: number;
-    private corruptionThreshold: number;
-    private corruptionTicker: Timer;
-
-
-    private static readonly tickTime = 1000;
-    private static readonly baseCorruption = 0.001;
-
-    constructor(public id: InfraSystem, public supportedSystems: System1[] = []) {
+    constructor(public id: InfraSystem) {
         this.name = InfraSystem[id];
         this.shutdown();
     }
 
+    addCorruption(delta: number) {
+        this.corruption = this.corruption + delta;
+        if (this.corruption > this.corruptionErrorThreshold) {
+            this.setError();
+        }
+    }
+
     shutdown() {
-        this.corruption = 0;
-        this.corruptionThreshold = (Math.random() * 100) + 1;
-        this.error = false;
         this.isOnline = false;
+        this.error = false;
+        this.corruption = 0;
+        this.corruptionErrorThreshold = Math.max(Math.random() * System2.maxCorruption, System2.corruptionPerMillisecond);
     }
 
     startup() {
@@ -99,59 +98,5 @@ export class System2 {
         if (this.isOnline) {
             this.error = true;
         }
-    }
-
-    _setError(state: boolean) {
-        if (!this.isOnline && state) {
-            return;
-        }
-        if (!state) {
-            this.corruption = 0;
-        }
-        this.setOnline(!state);
-        this.error = state;
-        for (let sys of this.supportedSystems) {
-            //     sys.setRepairRate();
-        }
-    }
-
-    setOnline(state: boolean) {
-        if (!state) {
-            this.corruptionThreshold = Math.random();
-            if (!this.error) {
-                this.corruption = 0;
-            }
-            this.isOnline = state;
-        } else {
-            if (!this.error) {
-                this.isOnline = state;
-            }
-        }
-
-    }
-
-    private corruptSystem = () => {
-        this.corruption += this.corruptionRate * System2.baseCorruption;
-        if (this.corruption >= this.corruptionThreshold) {
-            if (this.corruptionTicker) {
-                clearInterval(this.corruptionTicker);
-            }
-            //  this.setError(true);
-        }
-    };
-
-    startCorruptionTicker(rate: number) {
-        if (this.corruptionTicker) {
-            clearInterval(this.corruptionTicker);
-        }
-        this.corruptionRate = rate;
-        this.corruptionTicker = setInterval(this.corruptSystem, System2.tickTime);
-    }
-
-    stopCorruption() {
-        if (this.corruptionTicker) {
-            clearInterval(this.corruptionTicker);
-        }
-
     }
 }

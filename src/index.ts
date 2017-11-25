@@ -8,7 +8,7 @@ import {Users} from "./session/users";
 import {Entries} from "./excalibur/entries";
 import {Logs} from "./log/logs";
 import {HttpDriver} from './empty-epsilon/driver';
-import {Pulser} from "./core/pulser";
+import {Pulser} from "./core/timing";
 import {executeDriverCommands, getMonitoredAddresses, monitorByAddress} from "./osc-bridge/game-monitor";
 import {OscDriver} from "./osc/osc-driver";
 import {UdpOptions} from "osc";

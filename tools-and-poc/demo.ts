@@ -1,6 +1,6 @@
 import {LocalFileSystem} from "kissfs";
 import {HttpDriver} from '../src/empty-epsilon/driver';
-import {Pulser} from "../src/core/pulser";
+import {Pulser} from "../src/core/timing";
 import {executeDriverCommands, getMonitoredAddresses, monitorByAddress} from "../src/osc-bridge/game-monitor";
 import {OscDriver} from "../src/osc/osc-driver";
 import {UdpOptions} from "osc";
