@@ -115,6 +115,15 @@ describe('repair module', () => {
         }).timeout(timePerTest * 4 + 2000);
     });
 
+    it('When a system2’s corruption level reaches its corruption threshold, it goes into error state', () => {
+        const system2 = repair.getSystem2Status(InfraSystem.coaxialPlasmaCapacitor) as System2;
+        expect(system2.error).to.eql(false);
+        repair.addCorruptionToSystem2(InfraSystem.coaxialPlasmaCapacitor, system2.corruptionErrorThreshold);
+        expect(system2.error).to.eql(false);
+        repair.addCorruptionToSystem2(InfraSystem.coaxialPlasmaCapacitor, 0.00001);
+        expect(system2.error).to.eql(true);
+    });
+
     describe('When one or more supporting system2 is in error state', () => {
 
         it('the supported system1 begins accumulating heat (the rate does not change according to the amount of systems in error)', () => {

@@ -80,7 +80,7 @@ export class RepairModule {
             const system1 = this.systems1[s1];
             const overPowerFactor = system1.normalizedOverPower;
             if (overPowerFactor) {
-                system1.supportingSystems.forEach(sys2 => sys2.addCorruption(delta * System2.corruptionPerMillisecond * overPowerFactor))
+                system1.supportingSystems.forEach(system2 => this.addCorruptionToSystem2(system2.id, delta * System2.corruptionPerMillisecond * overPowerFactor))
             }
         }
     }
@@ -89,6 +89,14 @@ export class RepairModule {
         if (this._ticker !== undefined) {
             clearInterval(this._ticker);
             delete this._ticker;
+        }
+    }
+
+    addCorruptionToSystem2(id: InfraSystem, corruption: number) {
+        const system2 = this.systems2[id]
+        system2.addCorruption(corruption);
+        if (system2.corruption > system2.corruptionErrorThreshold) {
+            this.setError(system2.id);
         }
     }
 

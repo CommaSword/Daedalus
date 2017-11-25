@@ -69,7 +69,7 @@ export class System2 implements System2Status {
     public error: boolean;
     public isOnline: boolean;
     public corruption: number;
-    private corruptionErrorThreshold: number;
+    public corruptionErrorThreshold: number;
 
     constructor(public id: InfraSystem) {
         this.name = InfraSystem[id];
@@ -79,9 +79,6 @@ export class System2 implements System2Status {
     addCorruption(delta: number) {
         if (this.isOnline) {
             this.corruption = this.corruption + delta;
-            if (this.corruption > this.corruptionErrorThreshold) {
-                this.setError();
-            }
         }
     }
 
