@@ -1,7 +1,7 @@
 import {expect} from 'chai';
 import {InfraSystem, RepairModule} from "../../src/repairs/repair";
 import {ESystem} from "../../src/empty-epsilon/model";
-import {spy} from 'sinon';
+import {match, spy} from 'sinon';
 import {System1, System2, System2Status} from "../../src/repairs/systems";
 import {approx, getLinearCorruptionDeriviation, graceFactor, timePerTest} from "./drivers";
 
@@ -18,6 +18,9 @@ describe('repair module', () => {
     beforeEach('init module', () => {
         repair = new RepairModule(sideEffects);
         repair.init();
+        for (let s2 = 0; s2 < InfraSystem.COUNT; s2++) {
+            repair.startupSystem2(s2);
+        }
     });
 
     afterEach(`reset sideEffects`, () => {
@@ -57,27 +60,15 @@ describe('repair module', () => {
     });
 
     it('A system1 can only be over-powered (more than 100% energy) when all of its supporting system2s are online', () => {
-        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, 0);
-        sideEffects.setMaxPower.reset();
-        repair.startupSystem2(InfraSystem.dilithiumParticleGenerator);
-        repair.startupSystem2(InfraSystem.polaronLimiter);
-        expect(sideEffects.setMaxPower).to.have.not.been.calledWith(ESystem.Impulse, System1.maxOverPower);
-        repair.startupSystem2(InfraSystem.activeCollector);
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, System1.maxOverPower);
+        sideEffects.setMaxPower.reset();
+        repair.shutdownSystem2(InfraSystem.dilithiumParticleGenerator);
+        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, match.number.and(match((n: number) => n <= System1.maxSupportedPower)));
+        expect(sideEffects.setMaxPower).to.have.not.been.calledWith(ESystem.Impulse, System1.maxOverPower);
     });
 
     it('When a supporting system2 is offline, the maximum level of a system1’s power will be at most: ' +
         '100%  * number of online supporting systems/ number of supporting systems', () => {
-        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, 0);
-        sideEffects.setMaxPower.reset();
-        repair.startupSystem2(InfraSystem.dilithiumParticleGenerator);
-        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, System1.maxSupportedPower / 3);
-        sideEffects.setMaxPower.reset();
-        repair.startupSystem2(InfraSystem.polaronLimiter);
-        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, approx(System1.maxSupportedPower * 2 / 3));
-        sideEffects.setMaxPower.reset();
-        repair.startupSystem2(InfraSystem.activeCollector);
-        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, System1.maxOverPower);
         sideEffects.setMaxPower.reset();
         repair.shutdownSystem2(InfraSystem.activeCollector);
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, approx(System1.maxSupportedPower * 2 / 3));
@@ -87,14 +78,20 @@ describe('repair module', () => {
         sideEffects.setMaxPower.reset();
         repair.shutdownSystem2(InfraSystem.dilithiumParticleGenerator);
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, 0);
+        sideEffects.setMaxPower.reset();
+        repair.startupSystem2(InfraSystem.dilithiumParticleGenerator);
+        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, System1.maxSupportedPower / 3);
+        sideEffects.setMaxPower.reset();
+        repair.startupSystem2(InfraSystem.polaronLimiter);
+        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, approx(System1.maxSupportedPower * 2 / 3));
+        sideEffects.setMaxPower.reset();
+        repair.startupSystem2(InfraSystem.activeCollector);
+        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, System1.maxOverPower);
     });
 
     describe('When a system1 is over-powered', () => {
         let activeCollectorStatus: System2Status;
         beforeEach(() => {
-            for (let s2 = 0; s2 < InfraSystem.COUNT; s2++) {
-                repair.startupSystem2(s2);
-            }
             activeCollectorStatus = repair.getSystem2Status(InfraSystem.activeCollector);
         });
 
@@ -119,11 +116,6 @@ describe('repair module', () => {
     });
 
     describe('When one or more supporting system2 is in error state', () => {
-        beforeEach(() => {
-            for (let s2 = 0; s2 < InfraSystem.COUNT; s2++) {
-                repair.startupSystem2(s2);
-            }
-        });
 
         it('the supported system1 begins accumulating heat (the rate does not change according to the amount of systems in error)', () => {
             repair.setError(InfraSystem.activeCollector);

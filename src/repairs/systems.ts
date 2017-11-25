@@ -77,9 +77,11 @@ export class System2 implements System2Status {
     }
 
     addCorruption(delta: number) {
-        this.corruption = this.corruption + delta;
-        if (this.corruption > this.corruptionErrorThreshold) {
-            this.setError();
+        if (this.isOnline) {
+            this.corruption = this.corruption + delta;
+            if (this.corruption > this.corruptionErrorThreshold) {
+                this.setError();
+            }
         }
     }
 
