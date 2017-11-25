@@ -64,6 +64,7 @@ const addresses = [
 
 describe('monitorByAddress e2e', () => {
     beforeAndAfter(config);
+    beforeEach('grace delay',()=>new Promise(res => setTimeout(res, 50)));
     let httpDriver = new HttpDriver(config.serverAddress);
     const pollRequests = new Subject<string>();
     const pushRequests = new Subject<OscMessage>();
