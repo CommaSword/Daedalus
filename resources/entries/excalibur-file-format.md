@@ -22,7 +22,7 @@ Fiat Utterance Gateway Application (zero interface).
 Star-fleet's universal low level command system, acting as the default interface for numerous ship systems.
 ```
 
-Display (what the players will see):
+Display (what the users will see):
 
 > # F.U.G.A.Z.I
 >
