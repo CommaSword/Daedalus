@@ -3,10 +3,11 @@ import {InfraSystem, RepairModule} from "../../src/repair-module/repair";
 import {ESystem} from "../../src/empty-epsilon/model";
 import {match, spy} from 'sinon';
 import {System1, System2, System2Status} from "../../src/repair-module/systems";
-import {approx, getLinearCorruptionDeriviation, graceFactor, timePerTest} from "./test-kit";
+import {approx, getLinearCorruptionDeriviation} from "./test-kit";
 import {Subscriber} from "rxjs/Subscriber";
 import {Observable} from "rxjs/Observable";
 
+const graceFactor = 0.1;
 describe('repair module', () => {
 
     const sideEffects = {
@@ -103,22 +104,22 @@ describe('repair module', () => {
 
         it('its supporting system2s accumulate corruption', async () => {
             sideEffects.powerInput.next({system: ESystem.Impulse, power: System1.maxSupportedPower});
-            expect(await getLinearCorruptionDeriviation(activeCollectorStatus)).to.eql(0);
+            expect(await getLinearCorruptionDeriviation(activeCollectorStatus, graceFactor)).to.eql(0);
             sideEffects.powerInput.next({system: ESystem.Impulse, power: System1.maxSupportedPower * 2});
-            expect(await getLinearCorruptionDeriviation(activeCollectorStatus)).to.be.gt(0);
-        }).timeout(timePerTest * 2 + 2000);
+            expect(await getLinearCorruptionDeriviation(activeCollectorStatus, graceFactor)).to.be.gt(0);
+        }).timeout(10 * 1000);
 
         it('The corruption rate is linear to the level of extra energy', async () => {
             sideEffects.powerInput.next({system: ESystem.Impulse, power: System1.maxSupportedPower * 1.5});
-            expect(await getLinearCorruptionDeriviation(activeCollectorStatus), '1.5 power').to.be.approximately(System2.corruptionPerMillisecond * 0.5, System2.corruptionPerMillisecond * graceFactor);
+            expect(await getLinearCorruptionDeriviation(activeCollectorStatus, graceFactor), '1.5 power').to.be.approximately(System2.corruptionPerMillisecond * 0.5, System2.corruptionPerMillisecond * graceFactor);
             sideEffects.powerInput.next({system: ESystem.Impulse, power: System1.maxSupportedPower * 2});
             await Promise.resolve();
-            expect(await getLinearCorruptionDeriviation(activeCollectorStatus), '2 power').to.be.approximately(System2.corruptionPerMillisecond, System2.corruptionPerMillisecond * graceFactor);
+            expect(await getLinearCorruptionDeriviation(activeCollectorStatus, graceFactor), '2 power').to.be.approximately(System2.corruptionPerMillisecond, System2.corruptionPerMillisecond * graceFactor);
             sideEffects.powerInput.next({system: ESystem.Impulse, power: System1.maxSupportedPower * 2.5});
-            expect(await getLinearCorruptionDeriviation(activeCollectorStatus), '2.5 power').to.be.approximately(System2.corruptionPerMillisecond * 1.5, System2.corruptionPerMillisecond * graceFactor);
+            expect(await getLinearCorruptionDeriviation(activeCollectorStatus, graceFactor), '2.5 power').to.be.approximately(System2.corruptionPerMillisecond * 1.5, System2.corruptionPerMillisecond * graceFactor);
             sideEffects.powerInput.next({system: ESystem.Impulse, power: System1.maxSupportedPower * 3});
-            expect(await getLinearCorruptionDeriviation(activeCollectorStatus), '3 power').to.be.approximately(System2.corruptionPerMillisecond * 2, System2.corruptionPerMillisecond * graceFactor);
-        }).timeout(timePerTest * 4 + 2000);
+            expect(await getLinearCorruptionDeriviation(activeCollectorStatus, graceFactor), '3 power').to.be.approximately(System2.corruptionPerMillisecond * 2, System2.corruptionPerMillisecond * graceFactor);
+        }).timeout(20 * 1000);
     });
 
     it('When a system2’s corruption level reaches its corruption threshold, it goes into error state', () => {

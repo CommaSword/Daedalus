@@ -1,4 +1,4 @@
-import {makeRepairDriver} from "../../src/repair-module/loader";
+import {makeRepairDriver, RepairPerMilli} from "../../src/repair-module/loader";
 import {Subscriber} from "rxjs/Subscriber";
 import {Observable} from "rxjs/Observable";
 import {ESystem} from "../../src/empty-epsilon/model";
@@ -9,6 +9,7 @@ import {expect} from 'chai';
 import {Driver} from "../../src/repair-module/repair";
 import {retry} from "../test-kit/retry";
 import {System1} from "../../src/repair-module/systems";
+import {getLinearDeriviation} from "./test-kit";
 
 
 describe('repair-module loader', () => {
@@ -58,5 +59,42 @@ describe('repair-module loader', () => {
             }));
             expect(updates).to.eql(expected);
         });
+
+        it('setRepairRate', async () => {
+            const graceFactor = 0.5;
+
+            const SYSTEM = ESystem.MissileSystem;
+            await httpDriver.command(`getPlayerShip(-1):setSystemHealth('${ESystem[SYSTEM]}', {0})`, ['0.1']);
+
+            const scale = 10000;
+            const repairRate = 0.5;
+            await repairDriver.setRepairRate(SYSTEM, repairRate);
+
+            expect(await getLinearDeriviation(() => httpDriver.query<number>(`getPlayerShip(-1):getSystemHealth('${ESystem[SYSTEM]}') * ${scale}`), {
+                iterations: 4,
+                graceFactor,
+                tickInterval: 10
+            })).to.be.approximately(scale * repairRate * RepairPerMilli, scale * repairRate * RepairPerMilli * graceFactor);
+
+        }).timeout(40 * 1000);
+
+
+        it('setHeatRate', async () => {
+            const graceFactor = 0.5;
+
+            const SYSTEM = ESystem.MissileSystem;
+
+            const scale = 10000;
+            const heatRate = 0.5;
+            await repairDriver.setHeatRate(SYSTEM, heatRate);
+
+            expect(await getLinearDeriviation(() => httpDriver.query<number>(`getPlayerShip(-1):getSystemHeat('${ESystem[SYSTEM]}') * ${scale}`), {
+                iterations: 4,
+                graceFactor,
+                tickInterval: 10
+            })).to.be.approximately(scale * heatRate * RepairPerMilli, scale * heatRate * RepairPerMilli * graceFactor);
+
+        }).timeout(40 * 1000);
+
     });
 });

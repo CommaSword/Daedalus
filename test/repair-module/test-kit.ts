@@ -3,26 +3,33 @@ import {System2Status} from "../../src/repair-module/systems";
 import {expect} from 'chai';
 import {match} from "sinon";
 
-const iterations = 3;
-export const graceFactor = 0.1;
-const sampleInterval = RepairModule.tickInterval * 2 / graceFactor;
-export const timePerTest = iterations * sampleInterval;
 
-export async function getLinearCorruptionDeriviation(status: System2Status) {
+type Options = {
+    iterations : number,
+    graceFactor : number,
+    tickInterval : number,
+}
+
+export async function getLinearDeriviation(sample: ()=>Promise<number>, {iterations, graceFactor, tickInterval}: Options) {
+    const sampleInterval = tickInterval * 2 / graceFactor;
     const measurements: number[] = [];
+    let startValue = await sample();
     const start = Date.now();
-    let startCorruption = status.corruption;
     for (let i = sampleInterval; i < sampleInterval * iterations; i += sampleInterval) {
-        setTimeout(() => {
-            measurements.push((status.corruption - startCorruption) / (Date.now() - start));
+        setTimeout(async () => {
+            measurements.push((await sample() - startValue) / (Date.now() - start));
         }, i);
     }
     await new Promise(res => setTimeout(res, sampleInterval * (iterations + 1)));
-    // assert the deriviation is livear and average it
+    // assert the deriviation is linear and average it
     return measurements.reduce((avg, curr, i) => {
         expect(curr).to.be.approximately(avg, avg * graceFactor);
         return (i * avg + curr) / (i + 1);
     });
+}
+
+export async function getLinearCorruptionDeriviation(status: System2Status, graceFactor : number) {
+    return await getLinearDeriviation(async () => status.corruption, {iterations:3, graceFactor, tickInterval: RepairModule.tickInterval});
 }
 
 /**
