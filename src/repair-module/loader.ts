@@ -14,45 +14,44 @@ export async function makeRepairDriver(eeDriver: EEDriver, pulse: Observable<any
             .mergeMap(msg => Observable.fromPromise(msg));
     }
 
+    // TODO modve hooks mechanism (init and `table.insert(_G._daedalus_hooks, hook)` ) to EEDriver
     // language=Lua
     await eeDriver.exec(`
-        if not _G._daedalus_repair_lib then
-            _G._daedalus_hooks_lib = Script()
-            _G._daedalus_hooks_lib:run("_daedalus_hooks_lib.lua")
-        end
-        return 3
-    `);
+_G._daedalus_hooks_lib = Script()
+_G._daedalus_hooks_lib:run("_daedalus_hooks_lib.lua")
+`);
 
     // language=Lua
     await eeDriver.exec(`
-local ship = getPlayerShip(-1)
-function ship:setSystemMaxPower(system, maxPower)
-    self[system .. '_max_power'] = maxPower;
-end
-
-function enforceMaxPower(system, maxPower)
-    if maxPower then
-        local power = ship:getSystemPower(system)
-        if power > maxPower then
-            ship:setSystemPower(system, maxPower)
+local ship = ${shipGetter}
+if not ship.setSystemMaxPower then
+    function ship:setSystemMaxPower(system, maxPower)
+        self[system .. '_max_power'] = maxPower;
+    end
+    
+    function enforceMaxPower(system, maxPower)
+        if maxPower then
+            local power = ship:getSystemPower(system)
+            if power > maxPower then
+                ship:setSystemPower(system, maxPower)
+            end
         end
     end
+    function enforce(delta)
+        enforceMaxPower('Reactor', ship['Reactor_max_power'])
+        enforceMaxPower('BeamWeapons', ship['BeamWeapons_max_power'])
+        enforceMaxPower('MissileSystem', ship['MissileSystem_max_power'])
+        enforceMaxPower('Maneuver', ship['Maneuver_max_power'])
+        enforceMaxPower('Warp', ship['Warp_max_power'])
+        enforceMaxPower('JumpDrive', ship['JumpDrive_max_power'])
+        enforceMaxPower('Reactor', ship['Reactor_max_power'])
+        enforceMaxPower('Reactor', ship['Reactor_max_power'])
+        enforceMaxPower('Reactor', ship['Reactor_max_power'])
+    
+    end
+    
+    table.insert(_G._daedalus_hooks, enforce)
 end
-function enforce(delta)
-    enforceMaxPower('Reactor', ship['Reactor_max_power'])
-    enforceMaxPower('BeamWeapons', ship['BeamWeapons_max_power'])
-    enforceMaxPower('MissileSystem', ship['MissileSystem_max_power'])
-    enforceMaxPower('Maneuver', ship['Maneuver_max_power'])
-    enforceMaxPower('Warp', ship['Warp_max_power'])
-    enforceMaxPower('JumpDrive', ship['JumpDrive_max_power'])
-    enforceMaxPower('Reactor', ship['Reactor_max_power'])
-    enforceMaxPower('Reactor', ship['Reactor_max_power'])
-    enforceMaxPower('Reactor', ship['Reactor_max_power'])
-
-end
-
-table.insert(_G._daedalus_hooks, enforce)
-return 3
 `);
     return {
         setRepairRate(system: ESystem, repairRate: number): Promise<null> {

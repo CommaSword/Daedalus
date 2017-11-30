@@ -167,7 +167,7 @@ return {${getQueue.map(req => req.luaJSONFields).join(',')}};`;
             timeout: 3 * 1000,
             method: 'post',
             url: '/exec.lua',
-            data: script,
+            data: script + '\n\nreturn 0',
             transformResponse: JSON.parse
         });
         if (res.data.ERROR) {
