@@ -5,6 +5,10 @@ import {expect} from 'chai';
 
 describe('EE HTTP Driver', () => {
     beforeAndAfter(config);
+    let httpDriver: HttpDriver;
+    beforeEach(() => {
+        httpDriver = new HttpDriver(config.serverAddress);
+    });
 
     async function expectShipState(httpDriver: HttpDriver, eRotation: number, eHull: number) {
         let rotation = httpDriver.query('getPlayerShip(-1):getRotation()');
@@ -22,7 +26,6 @@ describe('EE HTTP Driver', () => {
     }
 
     it('gets rotation and heading', async function () {
-        let httpDriver = new HttpDriver(config.serverAddress);
         await expectShipState(httpDriver, 0, 250);
         await setShipState(httpDriver, '0', '122');
         // await ship.setHull(50);
@@ -30,24 +33,11 @@ describe('EE HTTP Driver', () => {
     });
 
     it('gets multiple values', async function () {
-        let httpDriver = new HttpDriver(config.serverAddress);
         let pos = httpDriver.query('getPlayerShip(-1):getPosition()', 2);
         expect(await pos, 'position').to.eql([0, 0]);
     });
 
-    //
-    // it('cap value', async function () {
-    //     let httpDriver = new HttpDriver(config.serverAddress);
-    //     // meh. just hard code the daedalus custom logic (use _G for state) and that's it.
-    //    // await  httpDriver.addToLoop('getPlayerShip(-1):getRotation() > {0}', 'getPlayerShip(-1):setRotation({0})', ['42']);
-    //     await  httpDriver.command(`_G.rotationCap = {0}`, ['42']);
-    //     //   await new Promise(res => setTimeout(res, 100));
-    //     await setShipState(httpDriver, '0', '122');
-    //     await expectShipState(httpDriver, 0, 42);
-    // });
-
     it('run script', async function () {
-        let httpDriver = new HttpDriver(config.serverAddress);
         await  httpDriver.command(`
 _G.d = Script()
 _G.d:setVariable("arg_1", 42)
@@ -58,7 +48,6 @@ _G.d:run("_daedalus_test_1.lua")
     });
 
     it('run script2', async function () {
-        let httpDriver = new HttpDriver(config.serverAddress);
         const startTime = Date.now();
         await  httpDriver.command(`
 _G.counter = 0

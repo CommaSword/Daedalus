@@ -1,5 +1,5 @@
-import {RepairModule} from "../../src/repairs/repair";
-import {System2Status} from "../../src/repairs/systems";
+import {RepairModule} from "../../src/repair-module/repair";
+import {System2Status} from "../../src/repair-module/systems";
 import {expect} from 'chai';
 import {match} from "sinon";
 

@@ -1,9 +1,9 @@
 import {expect} from 'chai';
 
-import {InfraSystem, RepairModule} from "../../src/repairs/repair";
-import {System2} from "../../src/repairs/systems";
+import {InfraSystem, RepairModule} from "../../src/repair-module/repair";
+import {System2} from "../../src/repair-module/systems";
 import {setTimedInterval} from "../../src/core/timing";
-import {getLinearCorruptionDeriviation, graceFactor} from "./drivers";
+import {getLinearCorruptionDeriviation, graceFactor} from "./test-kit";
 
 // just some number. any number should do
 const GAIN_PER_MILLISECOND = 0.123;

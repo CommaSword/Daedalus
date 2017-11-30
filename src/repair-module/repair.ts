@@ -14,12 +14,12 @@ export enum InfraSystem {
     COUNT
 }
 
-export interface SideEffects {
-    setRepairRate(system: ESystem, repairRate: number): void;
+export interface Driver {
+    setRepairRate(system: ESystem, repairRate: number): Promise<null>;
 
-    setHeatRate(system: ESystem, repairRate: number): void;
+    setHeatRate(system: ESystem, repairRate: number): Promise<null>;
 
-    setMaxPower(system: ESystem, maxPower: number): void;
+    setMaxPower(system: ESystem, maxPower: number): Promise<null>;
 
     powerUpdates: Observable<{ system: ESystem, power: number }>;
 }
@@ -42,7 +42,7 @@ export class RepairModule {
     private disposer: Function;
     private _repairing: ESystem | null = null;
 
-    constructor(private sideEffects: SideEffects) {
+    constructor(private driver: Driver) {
         for (let s1 = 0; s1 < ESystem.COUNT; s1++) {
             this.systems1[s1] = new System1(s1);
         }
@@ -71,7 +71,7 @@ export class RepairModule {
             // initiate game loop
             const ticker = setTimedInterval(this.tick.bind(this), RepairModule.tickInterval);
             // register for power updates
-            const subscription = this.sideEffects.powerUpdates.subscribe(msg => this.systems1[msg.system].power = msg.power);
+            const subscription = this.driver.powerUpdates.subscribe(msg => this.systems1[msg.system].power = msg.power);
 
             this.disposer = () => {
                 clearInterval(ticker);
@@ -152,22 +152,22 @@ export class RepairModule {
 
     stopRepairingSystem1() {
         if (this._repairing !== null) {
-            this.sideEffects.setRepairRate(this._repairing, 0);
+            this.driver.setRepairRate(this._repairing, 0);
             this._repairing = null;
         }
     }
 
     private updateHeatRate(id: ESystem) {
-        this.sideEffects.setHeatRate(id, this.systems1[id].heatRate);
+        this.driver.setHeatRate(id, this.systems1[id].heatRate);
     }
 
     private updateMaxPower(id: ESystem) {
-        this.sideEffects.setMaxPower(id, this.systems1[id].maxPower);
+        this.driver.setMaxPower(id, this.systems1[id].maxPower);
     }
 
     private updateRepairRate(id: ESystem) {
         if (this._repairing === id) {
-            this.sideEffects.setRepairRate(id, this.systems1[id].repairRate);
+            this.driver.setRepairRate(id, this.systems1[id].repairRate);
         }
     }
 

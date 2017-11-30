@@ -36,6 +36,10 @@ export default {
             "arguments": ["ESystem", "float"],
             "type": []
         },
+        "setSystemMaxPower": { // this is an addition to the game's API
+            "arguments": ["ESystem", "float"],
+            "type": []
+        },
         "getSystemCoolant": {
             "arguments": ["ESystem"],
             "type": ["float"]

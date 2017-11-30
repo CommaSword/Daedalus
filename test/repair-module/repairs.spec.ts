@@ -1,9 +1,9 @@
 import {expect} from 'chai';
-import {InfraSystem, RepairModule} from "../../src/repairs/repair";
+import {InfraSystem, RepairModule} from "../../src/repair-module/repair";
 import {ESystem} from "../../src/empty-epsilon/model";
 import {match, spy} from 'sinon';
-import {System1, System2, System2Status} from "../../src/repairs/systems";
-import {approx, getLinearCorruptionDeriviation, graceFactor, timePerTest} from "./drivers";
+import {System1, System2, System2Status} from "../../src/repair-module/systems";
+import {approx, getLinearCorruptionDeriviation, graceFactor, timePerTest} from "./test-kit";
 import {Subscriber} from "rxjs/Subscriber";
 import {Observable} from "rxjs/Observable";
 

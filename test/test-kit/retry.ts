@@ -3,7 +3,7 @@ export interface RetryPromiseOptions {
     timeout: number;
 }
 
-export async function retry<T>(promiseProvider: () => Promise<T>, {interval, timeout}: RetryPromiseOptions): Promise<T> {
+export async function retry<T>(promiseProvider: () => (Promise<T> | T), {interval, timeout}: RetryPromiseOptions): Promise<T> {
     let aborted = false;
     let lastError: Error;
     return new Promise<T>(async (resolve, reject) => {

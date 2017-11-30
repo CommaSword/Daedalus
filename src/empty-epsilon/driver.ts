@@ -36,10 +36,30 @@ class Query {
 
 let id = 0;
 
+export interface EEDriver {
+
+    /**
+     * simple getter for a single value
+     * @param {string} getter
+     * @returns {Promise<T>}
+     */
+    query<T>(getter: string): Promise<T>;
+    /**
+     * getter for any number of values. result will always be an array
+     * @param {string} getter
+     * @param {number} numberOfResults
+     * @returns {Promise<T extends Array<any>>}
+     */
+    query<T extends Array<any>>(getter: string, numberOfResults: number): Promise<T>;
+
+    command(commandTemplate: string, values: Array<string>): Promise<null>;
+
+    exec<T>(script:string): Promise<T>;
+}
 /**
  * internal object for any http communication with game server
  */
-export class HttpDriver {
+export class HttpDriver implements EEDriver{
     private static readonly minTimeBetweenFlushes = 10;
     private static readonly maxNumberOfResults = 15; // at around 25-29 the game server kills sockets
     private http: AxiosInstance;
@@ -141,6 +161,19 @@ return {${getQueue.map(req => req.luaJSONFields).join(',')}};`;
             this.requestFlush();
             return promise;
         }
+    }
+    async exec<T>(script:string): Promise<T>{
+        const res: AxiosResponse = await this.http.request({
+            timeout: 3 * 1000,
+            method: 'post',
+            url: '/exec.lua',
+            data: script,
+            transformResponse: JSON.parse
+        });
+        if (res.data.ERROR) {
+            console.error('error from game server: ' + res.data.ERROR);
+        }
+        return res.data;
     }
 
     private requestFlush() {
