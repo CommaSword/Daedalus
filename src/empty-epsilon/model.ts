@@ -11,6 +11,8 @@ export enum ESystem {
     RearShield,
     COUNT
 }
+
+export const ESystemNames : ReadonlyArray<string> = Array.from(Array(ESystem.COUNT)).map((_, i) => ESystem[i]);
 export enum EMissileWeapons {
     None = -1,
     Homing = 0,

@@ -3,7 +3,8 @@ import {HttpDriver} from "../../src/empty-epsilon/driver";
 import {retry} from "./retry";
 
 const timeout = 30 * 1000;
-const delay = 1 * 1000;
+const killGrace = 1 * 1000;
+const resetGrace = 100;
 
 export type Config = {
     runServer: string;
@@ -23,7 +24,7 @@ export class ServerManager {
 
     async init(): Promise<void> {
         this.destroy();
-        await new Promise(r => setTimeout(r, delay));
+        await new Promise(r => setTimeout(r, killGrace));
         this.serverProcess = exec(this.config.runServer);
         try {
             await retry(this.assertServerIsUp, {interval: 30, timeout: timeout});
@@ -36,6 +37,7 @@ export class ServerManager {
     async reset() {
         await this.driver.command('setScenario({0}, {1})', ['"scenario_00_basic.lua"', '"Empty"']);
         await retry(this.assertServerIsUp, {interval: 30, timeout: timeout});
+        await new Promise(res => setTimeout(res, resetGrace));
     }
 
     destroy() {

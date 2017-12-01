@@ -1,4 +1,5 @@
 import {AxiosInstance, AxiosResponse, default as Axios} from "axios";
+import {ESystemNames} from "./model";
 import format = require("string-template");
 
 class Command {
@@ -8,10 +9,12 @@ class Command {
                 public resolver: Function,
                 public promise: Promise<any>) {
     }
-    setValues(newValues: Array<string>){
+
+    setValues(newValues: Array<string>) {
         this.values = newValues;
     }
-    get luaCommand(){
+
+    get luaCommand() {
         return format(this.template, this.values);
     }
 }
@@ -36,10 +39,43 @@ class Query {
 
 let id = 0;
 
+export interface EEDriver {
+
+    /**
+     * simple getter for a single value
+     * @param {string} getter
+     * @returns {Promise<T>}
+     */
+    query<T>(getter: string): Promise<T>;
+
+    /**
+     * getter for any number of values. result will always be an array
+     * @param {string} getter
+     * @param {number} numberOfResults
+     * @returns {Promise<T extends Array<any>>}
+     */
+    query<T extends Array<any>>(getter: string, numberOfResults: number): Promise<T>;
+
+    command(commandTemplate: string, values: Array<string>): Promise<null>;
+
+    exec<T>(script: string): Promise<T>;
+}
+
+export interface EEDriverWithHooks extends EEDriver{
+    /**
+     * add a feature to the ship's systems.
+     * it will be exported as  ship:setSystemX and ship:getSystemX where X is the name of the feature
+     * @param {string} featureName name of the feature
+     * @param {string} updateLogic the effect of the feature in the game loop. will be called with the following variables in the context: ship, system, value, delta
+     * @returns {Promise<null>}
+     */
+    addSystemFeature(featureName: string, updateLogic: string): Promise<null>;
+}
+
 /**
  * internal object for any http communication with game server
  */
-export class HttpDriver {
+export class HttpDriver implements EEDriverWithHooks {
     private static readonly minTimeBetweenFlushes = 10;
     private static readonly maxNumberOfResults = 15; // at around 25-29 the game server kills sockets
     private http: AxiosInstance;
@@ -143,6 +179,20 @@ return {${getQueue.map(req => req.luaJSONFields).join(',')}};`;
         }
     }
 
+    async exec<T>(script: string): Promise<T> {
+        const res: AxiosResponse = await this.http.request({
+            timeout: 3 * 1000,
+            method: 'post',
+            url: '/exec.lua',
+            data: script + '\n\nreturn 0',
+            transformResponse: JSON.parse
+        });
+        if (res.data.ERROR) {
+            console.error('error from game server: ' + res.data.ERROR);
+        }
+        return res.data;
+    }
+
     private requestFlush() {
         if (Object.keys(this.pendingQueries).length >= HttpDriver.maxNumberOfResults) {
             this.flush();
@@ -150,6 +200,43 @@ return {${getQueue.map(req => req.luaJSONFields).join(',')}};`;
             setTimeout(this.flush, HttpDriver.minTimeBetweenFlushes);
             this.isFlushing = true;
         }
+    }
+
+    async addSystemFeature(featureName: string, updateLogic: string): Promise<null> {
+        const apiSetterName = 'setSystem' + featureName;
+        const apiGetterName = 'getSystem' + featureName;
+        const logicFuncName = 'handleSystem' + featureName;
+        const gameLoopFuncName = 'update' + featureName;
+        await this.exec(`
+local ship = getPlayerShip(-1)
+if not ship.${apiSetterName} then
+print('loading')
+print(_G._daedalus_hooks)
+    if not ship._daedalus_hooks then
+        ship._daedalus_hooks = {}
+        local script = Script()
+        script:run("_daedalus_hooks_lib.lua")
+    end 
+    function ship:${apiSetterName}(system, value)
+        self[system .. '${featureName}'] = value
+    end
+    function ship:${apiGetterName}(system)
+        return self[system .. '${featureName}']
+    end
+    function ${logicFuncName}(system, value, delta)
+        if value then
+            ${updateLogic}
+        end
+    end
+    
+    function ${gameLoopFuncName}(delta)
+${ESystemNames.map((system) => `        ${logicFuncName}('${system}', ship['${system}${featureName}'], delta)`).join('\n')}
+    end
+
+    table.insert(ship._daedalus_hooks, ${gameLoopFuncName}) 
+end
+`);
+        return null;
     }
 }
 
