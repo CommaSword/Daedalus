@@ -14,7 +14,7 @@ describe('setTimedInterval', () => {
             await new Promise(res => setTimeout(res, 111));
             expect(deltas.length).to.be.gte(9);
             deltas.forEach((delta) => {
-                expect(delta).to.be.gt(10);
+                expect(delta).to.be.gt(8);
                 expect(delta).to.be.lt(15);
             });
         } finally {

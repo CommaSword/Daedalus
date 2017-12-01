@@ -5,7 +5,7 @@ import {GameCommand, GameQuery, translateAddressToGameQuery, translateOscMessage
 import {HttpDriver} from "../empty-epsilon/driver";
 import {OscDriver} from "../osc/osc-driver";
 
-const FILE_PATH = 'game-monitor.json';
+export const FILE_PATH = 'game-monitor.json';
 
 export async function getMonitoredAddresses(fs: FileSystem): Promise<Array<string>> {
 

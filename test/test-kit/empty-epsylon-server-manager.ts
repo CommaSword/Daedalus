@@ -1,10 +1,11 @@
 import {ChildProcess, exec, execSync} from 'child_process';
 import {HttpDriver} from "../../src/empty-epsilon/driver";
 import {retry} from "./retry";
+import {expect} from 'chai';
 
 const timeout = 30 * 1000;
 const killGrace = 1 * 1000;
-const resetGrace = 100;
+const resetGrace = 10;
 
 export type Config = {
     runServer: string;
@@ -15,8 +16,11 @@ export type Config = {
 export class ServerManager {
     driver = new HttpDriver(this.config.serverAddress);
     private serverProcess: ChildProcess;
-    private assertServerIsUp = () => {
-        return this.driver.query('getPlayerShip(-1):getHull()');
+    private assertServerIsUp = async () => {
+        await retry(async () => {
+            await this.driver.command('getPlayerShip(-1).foo = {0}', ['123']);
+            expect(await this.driver.query('getPlayerShip(-1).foo')).to.eql(123);
+        }, {interval: 30, timeout: timeout});
     };
 
     constructor(private config: Config) {
@@ -26,8 +30,9 @@ export class ServerManager {
         this.destroy();
         await new Promise(r => setTimeout(r, killGrace));
         this.serverProcess = exec(this.config.runServer);
+        await this.driver.command('setScenario({0}, {1})', ['"scenario_00_basic.lua"', '"Empty"']);
         try {
-            await retry(this.assertServerIsUp, {interval: 30, timeout: timeout});
+            await this.assertServerIsUp();
         } catch (e) {
             this.destroy();
             throw e;
@@ -36,7 +41,11 @@ export class ServerManager {
 
     async reset() {
         await this.driver.command('setScenario({0}, {1})', ['"scenario_00_basic.lua"', '"Empty"']);
-        await retry(this.assertServerIsUp, {interval: 30, timeout: timeout});
+        try {
+            await this.assertServerIsUp();
+        } catch (e) {
+            await this.init();
+        }
         await new Promise(res => setTimeout(res, resetGrace));
     }
 
@@ -50,7 +59,7 @@ export class ServerManager {
     }
 }
 
-export function beforeAndAfter(config: Config) {
+export function eeTestServerLifecycle(config: Config) {
     let mgr: ServerManager;
     before('init managed server', function () {
         this.timeout(timeout);

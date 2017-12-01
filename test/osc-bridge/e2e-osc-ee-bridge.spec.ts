@@ -1,4 +1,4 @@
-import {beforeAndAfter} from '../test-kit/empty-epsylon-server-manager'
+import {eeTestServerLifecycle} from '../test-kit/empty-epsylon-server-manager'
 import {HttpDriver} from '../../src/empty-epsilon/driver';
 import config from '../test-kit/config';
 import {expect} from 'chai';
@@ -62,8 +62,9 @@ const addresses = [
     "/ee/player-ship/-1/system-coolant/Rear-shield"
 ];
 
-describe('monitorByAddress e2e', () => {
-    beforeAndAfter(config);
+describe('monitorByAddress e2e', function(){
+    this.timeout(4 * 1000);
+    eeTestServerLifecycle(config);
     let httpDriver = new HttpDriver(config.serverAddress);
     const pollRequests = new Subject<string>();
     const pushRequests = new Subject<OscMessage>();

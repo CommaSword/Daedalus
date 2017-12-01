@@ -12,11 +12,10 @@ export class OscDriver {
 
     constructor(options: UdpOptions) {
         options = Object.assign({},
-            options,
             {
                 remoteAddress: "0.0.0.0",
                 metadata: true
-            });
+            }, options);
         this.port = new UDPPort(options);
         this.subject.groupBy((msg: OscMessage) => msg.address)
             .mergeMap((o: Observable<OscMessage>) => {
@@ -30,8 +29,9 @@ export class OscDriver {
         console.info(`OSC server listening on ${options.localAddress}:${options.localPort}, sending to ${options.remoteAddress}:${options.remotePort}`)
     }
 
-    open() {
+    async open() {
         this.port.open();
+        await new Promise(res => this.port.once('ready', res));
     }
 
     close() {

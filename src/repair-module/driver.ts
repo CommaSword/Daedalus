@@ -4,7 +4,7 @@ import {Observable} from "rxjs/Observable";
 import {EEDriverWithHooks} from "../empty-epsilon/driver";
 
 export const repair_per_second = 0.007;
-export const heat_per_second = 0.002;
+export const heat_per_second = 0.01;
 
 const powerQueries = ESystemNames.map((system) => `getPlayerShip(-1):getSystemPower('${system}')`);
 
@@ -18,6 +18,7 @@ export async function makeRepairDriver(eeDriver: EEDriverWithHooks, pulse: Obser
 
     // kill the fake repair crew
     eeDriver.command(`getPlayerShip(-1):setRepairCrewCount({0})`, ['0']);
+    // eeDriver.command(`getPlayerShip(-1):setAutoCoolant({0})`, ['false']);
 
     eeDriver.addSystemFeature('RepairRate', `
 if value > 0 then
