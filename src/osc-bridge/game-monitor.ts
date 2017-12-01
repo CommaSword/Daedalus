@@ -3,6 +3,7 @@ import {OscMessage} from "osc";
 import {FileSystem} from "kissfs";
 import {GameCommand, GameQuery, translateAddressToGameQuery, translateOscMessageToGameCommand} from "./translate";
 import {HttpDriver} from "../empty-epsilon/driver";
+import {OscDriver} from "../osc/osc-driver";
 
 const FILE_PATH = 'game-monitor.json';
 
@@ -46,4 +47,11 @@ export function executeDriverCommands(pushRequests: Observable<OscMessage>, eeDr
         .filter(m => m.address.startsWith('/ee/'))
         .map<OscMessage, GameCommand>(translateOscMessageToGameCommand)
         .subscribe(gc => eeDriver.command(gc.template, gc.values));
+}
+
+export async function loadOscEeApi(fs: FileSystem, pulse: Observable<any>, eeDriver: HttpDriver, oscDriver: OscDriver) {
+    const monitoredAddresses = await getMonitoredAddresses(fs);
+    const pollRequests = pulse.switchMap<any, string>(_ => monitoredAddresses);
+    monitorByAddress(pollRequests, eeDriver).subscribe(oscDriver.outbox);
+    executeDriverCommands(oscDriver.inbox, eeDriver);
 }

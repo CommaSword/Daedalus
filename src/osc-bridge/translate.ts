@@ -4,9 +4,9 @@ import {
     PrimitiveType,
     ProcessedResource,
     ProcessedType,
-    processGeneratedSchema
+    processApiSchema
 } from "./process-schema";
-import generatedSchema from "./generated-schema";
+import eeSchema from "./ee-schema";
 import {Argument, MetaArgument, OscMessage} from "osc";
 import naming = require('naming');
 import {EMissileWeapons, ESystem} from "../empty-epsilon/model";
@@ -22,7 +22,7 @@ export interface GameCommand {
     values: Array<string>;
 }
 
-const processedGameSchema = processGeneratedSchema(generatedSchema);
+const processedGameSchema = processApiSchema(eeSchema);
 
 function translatePrimitiveType(pt: PrimitiveType): 'f' | 'i' {
     return pt.charAt(0) as any;

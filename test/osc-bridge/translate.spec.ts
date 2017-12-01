@@ -1,12 +1,12 @@
 import {expect} from 'chai';
 import {translateAddressToGameQuery, translateOscMessageToGameCommand} from "../../src/osc-bridge/translate";
-import {GeneratedSchema, processGeneratedSchema} from "../../src/osc-bridge/process-schema";
+import {GameSchema, processApiSchema} from "../../src/osc-bridge/process-schema";
 
 function sleep(ms = 1000) {
     return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-describe('processGeneratedSchema', () => {
+describe('processApiSchema', () => {
     it('works on simple input', () => {
         const input = {
             "global": {
@@ -31,8 +31,8 @@ describe('processGeneratedSchema', () => {
                     "type": []
                 },
             }
-        } as GeneratedSchema;
-        const output = processGeneratedSchema(input) as any;
+        } as GameSchema;
+        const output = processApiSchema(input) as any;
         for (let k in input) {
             expect(output[k], 'output.' + k).to.be.ok;
         }

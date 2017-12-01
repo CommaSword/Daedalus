@@ -6,9 +6,9 @@ import {EEDriverWithHooks} from "../empty-epsilon/driver";
 export const repair_per_second = 0.007;
 export const heat_per_second = 0.002;
 
-export async function makeRepairDriver(eeDriver: EEDriverWithHooks, pulse: Observable<any>): Promise<Driver> {
+const powerQueries = ESystemNames.map((system) => `getPlayerShip(-1):getSystemPower('${system}')`);
 
-    const powerQueries = ESystemNames.map((system) => `getPlayerShip(-1):getSystemPower('${system}')`);
+export async function makeRepairDriver(eeDriver: EEDriverWithHooks, pulse: Observable<any>): Promise<Driver> {
 
     function queryPowerOfAllSystems() {
         return Observable.of(...powerQueries)
@@ -49,8 +49,4 @@ end
         },
         powerUpdates: pulse.mergeMap<any, { system: ESystem, power: number }>(queryPowerOfAllSystems)
     };
-}
-
-export async function initRepairModule(driver: EEDriverWithHooks, pulse: Observable<any>): Promise<RepairModule> {
-    return new RepairModule(await makeRepairDriver(driver, pulse));
 }

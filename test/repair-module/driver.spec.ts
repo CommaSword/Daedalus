@@ -1,4 +1,4 @@
-import {heat_per_second, makeRepairDriver, repair_per_second} from "../../src/repair-module/loader";
+import {heat_per_second, makeRepairDriver, repair_per_second} from "../../src/repair-module/driver";
 import {Subscriber} from "rxjs/Subscriber";
 import {Observable} from "rxjs/Observable";
 import {ESystem} from "../../src/empty-epsilon/model";

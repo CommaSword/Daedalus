@@ -9,7 +9,7 @@ import {Entries} from "./excalibur/entries";
 import {Logs} from "./log/logs";
 import {HttpDriver} from './empty-epsilon/driver';
 import {Pulser} from "./core/timing";
-import {executeDriverCommands, getMonitoredAddresses, monitorByAddress} from "./osc-bridge/game-monitor";
+import {loadOscEeApi} from "./osc-bridge/game-monitor";
 import {OscDriver} from "./osc/osc-driver";
 import {UdpOptions} from "osc";
 import resolve = require("resolve");
@@ -18,30 +18,8 @@ export type ServerOptions = Partial<Options> & {
     resources: string
 }
 
-export async function main(optionsArg: ServerOptions) {
-    const options: Options = Object.assign({}, DEFAULT_OPTIONS, optionsArg);
-    let eeServerUrl = `http://${options.eeHost}:${options.eePort}`;
-
-    // FS drivers
-    const fs: LocalFileSystem = await new LocalFileSystem(optionsArg.resources).init();
-    const oscDriver = new OscDriver(options.oscOptions);
-    const p = new Pulser();
-    const eeDriver = new HttpDriver(eeServerUrl);
-
-    // wire game state to OSC
-    const monitoredAddresses = await getMonitoredAddresses(fs);
-    const pollRequests = p.pulse.switchMap<any, string>(_ => monitoredAddresses);
-    monitorByAddress(pollRequests, eeDriver).subscribe(oscDriver.outbox);
-    executeDriverCommands(oscDriver.inbox, eeDriver);
-
-
-    oscDriver.open();
-    p.start();
-
-    // const terminalsServer = new Server(options.terminalsPort);
-    // terminalsServer.start();
-
-    // application BL modules
+async function initFugaziServices(fs: LocalFileSystem) {
+// application BL modules
     const users = new Users(fs);
     const entries = new Entries(fs);
     await entries.init();
@@ -61,10 +39,28 @@ export async function main(optionsArg: ServerOptions) {
 
     // bootstrap connector
     await connector.start();
+    // connector.logger.info("started");
+}
 
-    // await demoApplication(terminalsServer, eeServerUrl);
+async function runServer(options: Options, fs: LocalFileSystem) {
+    const oscDriver = new OscDriver(options.oscOptions);
+    const pulser = new Pulser();
+    const eeDriver = new HttpDriver(`http://${options.eeHost}:${options.eePort}`);
 
-    connector.logger.info("started");
+    // wire game state to OSC
+    await loadOscEeApi(fs, pulser.pulse, eeDriver, oscDriver);
+
+    oscDriver.open();
+    pulser.start();
+
+}
+
+export async function main(optionsArg: ServerOptions) {
+    const options: Options = Object.assign({}, DEFAULT_OPTIONS, optionsArg);
+    const fs: LocalFileSystem = await (new LocalFileSystem(optionsArg.resources)).init();
+
+    await runServer(options, fs);
+    await initFugaziServices(fs);
 }
 
 
@@ -84,32 +80,3 @@ const DEFAULT_OPTIONS: Options = {
         remotePort: 57121
     }
 };
-
-//
-// async function demoApplication(terminalsServer: Server, eeServerUrl: string) {
-//  //   const eeDriver = new EmptyEpsilonDriver(eeServerUrl);
-//
-//     terminalsServer.on('connected', (terminal: TerminalSession) => {
-//         terminal.serverState = 1;
-//         const playerShip = eeDriver.getPlayerShip();
-//         let damageDealTimer: NodeJS.Timer;
-//
-//         async function dealDamage() {
-//             const hull = await playerShip.getHull();
-//             await playerShip.setHull(hull * 0.99);
-//             if (terminal.clientState) {
-//                 damageDealTimer = setTimeout(dealDamage, 150);
-//             }
-//         }
-//
-//         terminal.on('stateChange', () => {
-//             if (terminal.clientState) {
-//                 // ship should start taking damage
-//                 dealDamage();
-//             } else {
-//                 // stop taking damage
-//                 clearTimeout(damageDealTimer);
-//             }
-//         });
-//     });
-// }
