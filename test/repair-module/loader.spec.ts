@@ -1,4 +1,4 @@
-import {makeRepairDriver, RepairPerMilli} from "../../src/repair-module/loader";
+import {heat_per_second, makeRepairDriver, repair_per_second} from "../../src/repair-module/loader";
 import {Subscriber} from "rxjs/Subscriber";
 import {Observable} from "rxjs/Observable";
 import {ESystem} from "../../src/empty-epsilon/model";
@@ -74,7 +74,7 @@ describe('repair-module loader', () => {
                 iterations: 4,
                 graceFactor,
                 tickInterval: 10
-            })).to.be.approximately(scale * repairRate * RepairPerMilli, scale * repairRate * RepairPerMilli * graceFactor);
+            })).to.be.approximately(scale * repairRate * repair_per_second / 1000, scale * repairRate * repair_per_second / 1000 * graceFactor);
 
         }).timeout(40 * 1000);
 
@@ -92,7 +92,7 @@ describe('repair-module loader', () => {
                 iterations: 4,
                 graceFactor,
                 tickInterval: 10
-            })).to.be.approximately(scale * heatRate * RepairPerMilli, scale * heatRate * RepairPerMilli * graceFactor);
+            })).to.be.approximately(scale * heatRate * heat_per_second / 1000, scale * heatRate * heat_per_second / 1000 * graceFactor);
 
         }).timeout(40 * 1000);
 
