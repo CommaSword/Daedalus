@@ -210,8 +210,6 @@ return {${getQueue.map(req => req.luaJSONFields).join(',')}};`;
         await this.exec(`
 local ship = getPlayerShip(-1)
 if not ship.${apiSetterName} then
-print('loading')
-print(_G._daedalus_hooks)
     if not ship._daedalus_hooks then
         ship._daedalus_hooks = {}
         local script = Script()

@@ -9,10 +9,10 @@ import {Users} from "./session/users";
 import {Entries} from "./excalibur/entries";
 import {Logs} from "./log/logs";
 import {HttpDriver} from './empty-epsilon/driver';
-import {Pulser} from "./core/timing";
 import {loadOscEeApi} from "./osc-bridge/game-monitor";
 import {OscDriver} from "./osc/osc-driver";
 import {UdpOptions} from "osc";
+import {RepairModule} from "./repair-module/index";
 import resolve = require("resolve");
 
 export type ServerOptions = Partial<Options> & {
@@ -59,27 +59,27 @@ export class FugaziServices {
 }
 
 export class SimulatorServices {
+    disposer: () => void;
     private readonly eeDriver: HttpDriver;
-    private readonly pulser: Pulser;
     private readonly oscDriver: OscDriver;
+    private readonly repairModule: RepairModule;
 
     constructor(options: Options, private fs: FileSystem) {
         this.oscDriver = new OscDriver(options.oscOptions);
-        this.pulser = new Pulser();
         this.eeDriver = new HttpDriver(options.eeAddress);
+        this.repairModule = new RepairModule(this.eeDriver);
     }
 
     async init() {
-        await Promise.all([
-            loadOscEeApi(this.fs, this.pulser.pulse, this.eeDriver, this.oscDriver),
-            this.oscDriver.open()
-        ]);
-        this.pulser.start();
+        this.disposer = loadOscEeApi(this.fs, this.eeDriver, this.oscDriver);
+        await this.oscDriver.open();
+        await this.repairModule.init();
+      //  this.pulser.start();
     }
 
     close() {
+        this.disposer();
         this.oscDriver.close();
-        this.pulser.stop();
     }
 }
 

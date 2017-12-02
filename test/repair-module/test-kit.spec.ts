@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 
-import {InfraSystem, RepairModule} from "../../src/repair-module/repair";
+import {InfraSystem, RepairLogic} from "../../src/repair-module/logic";
 import {System2} from "../../src/repair-module/systems";
 import {setTimedInterval} from "../../src/core/timing";
 import {getLinearCorruptionDeriviation, getLinearDeriviation} from "./test-kit";
@@ -27,7 +27,7 @@ describe('test-driver', () => {
         const status = new System2(InfraSystem.activeCollector);
         let timer = setTimedInterval(delta => {
             status.corruption = status.corruption + (GAIN_PER_MILLISECOND * delta);
-        }, RepairModule.tickInterval);
+        }, RepairLogic.tickInterval);
 
         try {
             expect(await getLinearCorruptionDeriviation(status, graceFactor)).to.be.approximately(GAIN_PER_MILLISECOND, GAIN_PER_MILLISECOND * graceFactor);

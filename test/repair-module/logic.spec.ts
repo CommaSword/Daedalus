@@ -1,5 +1,5 @@
 import {expect} from 'chai';
-import {InfraSystem, RepairModule} from "../../src/repair-module/repair";
+import {InfraSystem, RepairLogic} from "../../src/repair-module/logic";
 import {ESystem} from "../../src/empty-epsilon/model";
 import {match, spy} from 'sinon';
 import {System1, System2, System2Status} from "../../src/repair-module/systems";
@@ -20,10 +20,10 @@ describe('repair module', () => {
 
     sideEffects.powerUpdates = new Observable<{ system: ESystem, power: number }>(subscriber => sideEffects.powerInput = subscriber);
 
-    let repair: RepairModule;
+    let repair: RepairLogic;
 
     beforeEach('init module', () => {
-        repair = new RepairModule(sideEffects);
+        repair = new RepairLogic(sideEffects);
         repair.init();
         for (let s2 = 0; s2 < InfraSystem.COUNT; s2++) {
             repair.startupSystem2(s2);
@@ -38,7 +38,7 @@ describe('repair module', () => {
     });
 
     it('exposes all the systems', () => {
-        const repair = new RepairModule(sideEffects);
+        const repair = new RepairLogic(sideEffects);
         for (let s1 = 0; s1 < ESystem.COUNT; s1++) {
             expect(repair.getSystem1Status(s1).id).to.eql(s1);
         }

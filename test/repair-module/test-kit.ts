@@ -1,4 +1,4 @@
-import {RepairModule} from "../../src/repair-module/repair";
+import {RepairLogic} from "../../src/repair-module/logic";
 import {System2Status} from "../../src/repair-module/systems";
 import {expect} from 'chai';
 import {match} from "sinon";
@@ -29,7 +29,7 @@ export async function getLinearDeriviation(sample: ()=>Promise<number>, {iterati
 }
 
 export async function getLinearCorruptionDeriviation(status: System2Status, graceFactor : number) {
-    return await getLinearDeriviation(async () => status.corruption, {iterations:3, graceFactor, tickInterval: RepairModule.tickInterval});
+    return await getLinearDeriviation(async () => status.corruption, {iterations:3, graceFactor, tickInterval: RepairLogic.tickInterval});
 }
 
 /**

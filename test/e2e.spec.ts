@@ -8,29 +8,29 @@ import {HttpDriver} from "../src/empty-epsilon/driver";
 import {expect} from 'chai';
 import {retry} from "./test-kit/retry";
 
+const udpHosts = {localAddress: '127.0.0.1', remoteAddress: '127.0.0.1'};
+const options: Options = {
+    ...DEFAULT_OPTIONS,
+    eeAddress: config.serverAddress,
+    oscOptions: {
+        ...DEFAULT_OPTIONS.oscOptions,
+        ...udpHosts
+    }
+};
+
 describe('e2e', () => {
-    eeTestServerLifecycle(config);
     describe('SimulatorServices', () => {
 
-        let server: SimulatorServices;
+        eeTestServerLifecycle(config);
+
+        let services: SimulatorServices;
         let oscClient: UDPPort;
         let eeDriver: HttpDriver;
 
-        beforeEach('init services', async () => {
-            const udpHosts = {localAddress: '127.0.0.1', remoteAddress: '127.0.0.1'};
-            const options: Options = {
-                ...DEFAULT_OPTIONS,
-                eeAddress: config.serverAddress,
-                oscOptions: {
-                    ...DEFAULT_OPTIONS.oscOptions,
-                    ...udpHosts
-                }
-            };
-            const fs = new MemoryFileSystem();
-            const monitorAddresses: string[] = ['/ee/player-ship/-1/hull'];
-            fs.saveFileSync(FILE_PATH, JSON.stringify(monitorAddresses));
-            server = new SimulatorServices(options, fs);
+
+        before('init test clients', async () => {
             eeDriver = new HttpDriver(options.eeAddress);
+
             oscClient = new UDPPort({
                 localAddress: options.oscOptions.remoteAddress,
                 localPort: options.oscOptions.remotePort,
@@ -38,27 +38,34 @@ describe('e2e', () => {
                 remotePort: options.oscOptions.localPort,
                 metadata: true
             });
-            await Promise.all([
-                oscClient.open(),
-                server.init()
-            ]);
+            oscClient.open();
         });
 
-        afterEach('destroy services', () => {
-            server.close();
+        beforeEach('init services', async () => {
+            const fs = new MemoryFileSystem();
+            const monitorAddresses: string[] = ['/ee/player-ship/-1/hull'];
+            fs.saveFileSync(FILE_PATH, JSON.stringify(monitorAddresses));
+            services = new SimulatorServices(options, fs);
+            await services.init();
+        });
+
+        after('destroy test clients', () => {
             oscClient.close();
+        });
+        afterEach('destroy services', () => {
+            services.close();
         });
 
         function getOscValue(address: string) {
+            const client = oscClient;
             return new Promise(res => {
                 function listener(message: OscMessage) {
                     if (message.address === address) {
-                        oscClient.removeListener('message', listener);
+                        client.removeListener('message', listener);
                         res((message.args as Array<MetaArgument>)[0].value);
                     }
                 }
-
-                oscClient.addListener('message', listener);
+                client.addListener('message', listener);
             });
         }
 
@@ -66,25 +73,27 @@ describe('e2e', () => {
             oscClient.send({address, args: [{type: 'f', value}]});
         }
 
-        it(`read value from ee via osc`, async () => {
-            let hull = await getOscValue('/ee/player-ship/-1/hull');
-            expect(hull).to.eql(250);
-        });
-
-        it(`change value in ee via osc`, async () => {
-            setOscValue('/ee/player-ship/-1/hull', 123);
-            await retry(async () => {
+        describe('ee-osc bridge', () => {
+            it(`read value from ee via osc`, async () => {
                 let hull = await getOscValue('/ee/player-ship/-1/hull');
-                expect(hull).to.eql(123);
-            }, {interval: 20, timeout: 1000});
-        });
+                expect(hull).to.eql(250);
+            });
 
-        it(`listen to game value change via osc`, async () => {
-            await eeDriver.command('getPlayerShip(-1):setHull({0})', ['123'])
-            await retry(async () => {
-                let hull = await getOscValue('/ee/player-ship/-1/hull');
-                expect(hull).to.eql(123);
-            }, {interval: 20, timeout: 1000});
+            it(`change value in ee via osc`, async () => {
+                setOscValue('/ee/player-ship/-1/hull', 123);
+                await retry(async () => {
+                    let hull = await getOscValue('/ee/player-ship/-1/hull');
+                    expect(hull).to.eql(123);
+                }, {interval: 20, timeout: 1000});
+            });
+
+            it(`listen to game value change via osc`, async () => {
+                await eeDriver.command('getPlayerShip(-1):setHull({0})', ['123'])
+                await retry(async () => {
+                    let hull = await getOscValue('/ee/player-ship/-1/hull');
+                    expect(hull).to.eql(123);
+                }, {interval: 20, timeout: 1000});
+            });
         });
 
     });

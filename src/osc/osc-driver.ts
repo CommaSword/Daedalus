@@ -1,9 +1,11 @@
 import {OscMessage, UdpOptions, UDPPort} from "osc";
 import {Observable, Subject} from 'rxjs';
 import {NextObserver} from "rxjs/Observer";
+import {Subscription} from "rxjs";
 
 
 export class OscDriver {
+    private readonly subscription: Subscription;
 
     public readonly inbox: Observable<OscMessage>;
     private readonly port: UDPPort;
@@ -17,14 +19,14 @@ export class OscDriver {
                 metadata: true
             }, options);
         this.port = new UDPPort(options);
-        this.subject.groupBy((msg: OscMessage) => msg.address)
+        this.subscription = this.subject.groupBy((msg: OscMessage) => msg.address)
             .mergeMap((o: Observable<OscMessage>) => {
                 // o is an observable of all messages of the same address
                 // this is the place to use distinctUntilKeyChanged('args', (args1, args2) => deepEqual(args1, args2))
                 // and throttleTime
                 return o;
             })
-            .subscribe(this.port.send.bind(this.port));
+            .subscribe(msg => this.port.send(msg));
         this.inbox = Observable.fromEvent(this.port, 'message');
         console.info(`OSC server listening on ${options.localAddress}:${options.localPort}, sending to ${options.remoteAddress}:${options.remotePort}`)
     }
@@ -35,6 +37,7 @@ export class OscDriver {
     }
 
     close() {
+        this.subscription.unsubscribe();
         this.port.close();
     }
 }

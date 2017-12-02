@@ -1,10 +1,10 @@
 import {LocalFileSystem} from "kissfs";
 import {HttpDriver} from '../src/empty-epsilon/driver';
-import {Pulser} from "../src/core/timing";
 import {executeDriverCommands, getMonitoredAddresses, monitorByAddress} from "../src/osc-bridge/game-monitor";
 import {OscDriver} from "../src/osc/osc-driver";
 import {UdpOptions} from "osc";
 import {resolve} from 'path';
+import {Observable} from "rxjs/Observable";
 
 export type ServerOptions = Partial<Options> & {
     resources: string
@@ -36,18 +36,15 @@ export async function main(optionsArg: ServerOptions) {
     // FS drivers
     const fs: LocalFileSystem = await new LocalFileSystem(optionsArg.resources).init();
     const oscDriver = new OscDriver(options.oscOptions);
-    const p = new Pulser();
     const eeDriver = new HttpDriver(eeServerUrl);
 
     // wire game state to OSC
     const monitoredAddresses = await getMonitoredAddresses(fs);
-    const pollRequests = p.pulse.switchMap<any, string>(_ => monitoredAddresses);
+    const pollRequests =   Observable.interval(500).switchMap<any, string>(_ => monitoredAddresses);
     monitorByAddress(pollRequests, eeDriver).subscribe(oscDriver.outbox);
     executeDriverCommands(oscDriver.inbox, eeDriver);
 
-
     oscDriver.open();
-    p.start();
 
     console.log('pre ONLINE');
 

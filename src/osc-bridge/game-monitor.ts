@@ -7,7 +7,7 @@ import {OscDriver} from "../osc/osc-driver";
 
 export const FILE_PATH = 'game-monitor.json';
 
-export async function getMonitoredAddresses(fs: FileSystem): Promise<Array<string>> {
+export function getMonitoredAddresses(fs: FileSystem): Array<string>{
 
     const result: Array<string> = [];
 
@@ -25,7 +25,7 @@ export async function getMonitoredAddresses(fs: FileSystem): Promise<Array<strin
             handleFileContent(newContent);
         }
     });
-    handleFileContent(await fs.loadTextFile(FILE_PATH));
+    fs.loadTextFile(FILE_PATH).then(handleFileContent);
 
     return result;
 }
@@ -49,9 +49,12 @@ export function executeDriverCommands(pushRequests: Observable<OscMessage>, eeDr
         .subscribe(gc => eeDriver.command(gc.template, gc.values));
 }
 
-export async function loadOscEeApi(fs: FileSystem, pulse: Observable<any>, eeDriver: HttpDriver, oscDriver: OscDriver) {
-    const monitoredAddresses = await getMonitoredAddresses(fs);
+export function loadOscEeApi(fs: FileSystem, eeDriver: HttpDriver, oscDriver: OscDriver) {
+    const pulse = Observable.interval(500);
+
+    const monitoredAddresses = getMonitoredAddresses(fs);
     const pollRequests = pulse.switchMap<any, string>(_ => monitoredAddresses);
-    monitorByAddress(pollRequests, eeDriver).subscribe(oscDriver.outbox);
+    const subscription = monitorByAddress(pollRequests, eeDriver).subscribe(oscDriver.outbox);
     executeDriverCommands(oscDriver.inbox, eeDriver);
+    return () => {subscription.unsubscribe();}
 }

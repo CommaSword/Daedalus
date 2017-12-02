@@ -1,4 +1,4 @@
-import {heat_per_second, makeRepairDriver, repair_per_second} from "../../src/repair-module/driver";
+import {heat_per_second, repair_per_second, RepairDriver} from "../../src/repair-module/driver";
 import {Subscriber} from "rxjs/Subscriber";
 import {Observable} from "rxjs/Observable";
 import {ESystem} from "../../src/empty-epsilon/model";
@@ -6,100 +6,97 @@ import {eeTestServerLifecycle} from '../test-kit/empty-epsylon-server-manager'
 import {HttpDriver} from '../../src/empty-epsilon/driver';
 import config from '../test-kit/config';
 import {expect} from 'chai';
-import {Driver} from "../../src/repair-module/repair";
 import {retry} from "../test-kit/retry";
 import {System1} from "../../src/repair-module/systems";
 import {getLinearDeriviation} from "./test-kit";
 
 
-describe('repair-module loader', () => {
-    describe('makeRepairDriver', async () => {
-        let pulser: Subscriber<null>;
-        let httpDriver: HttpDriver;
-        let repairDriver: Driver;
-        eeTestServerLifecycle(config);
-        beforeEach(async () => {
-            let pulse: Observable<any> = new Observable<null>((s: Subscriber<null>) => pulser = s);
-            httpDriver = new HttpDriver(config.serverAddress);
-            repairDriver = await makeRepairDriver(httpDriver, pulse);
-        });
+describe('RepairDriver', async () => {
+    let pulser: Subscriber<null>;
+    let httpDriver: HttpDriver;
+    let repairDriver: RepairDriver;
+    eeTestServerLifecycle(config);
+    beforeEach(async () => {
+        let pulse: Observable<any> = new Observable<null>((s: Subscriber<null>) => pulser = s);
+        httpDriver = new HttpDriver(config.serverAddress);
+        repairDriver = new RepairDriver(httpDriver, pulse);
+        await repairDriver.init();
+    });
 
-        async function powerUpdate() {
-            const updates: any[] = [];
+    async function powerUpdate() {
+        const updates: any[] = [];
 
-            const subscription = repairDriver.powerUpdates.subscribe(update => updates.push(update));
-            pulser.next();
-            await  retry(() => {
-                expect(updates.length).to.equal(ESystem.COUNT)
-            }, {interval: 30, timeout: 1500});
-            subscription.unsubscribe();
-            return updates;
-        }
+        const subscription = repairDriver.powerUpdates.subscribe(update => updates.push(update));
+        pulser.next();
+        await  retry(() => {
+            expect(updates.length).to.equal(ESystem.COUNT)
+        }, {interval: 30, timeout: 1500});
+        subscription.unsubscribe();
+        return updates;
+    }
 
-        it('powerUpdates', async () => {
-            const updates = await powerUpdate();
+    it('powerUpdates', async () => {
+        const updates = await powerUpdate();
 
-            const expected = Array.from(Array(ESystem.COUNT)).map((_, i) => ({
-                system: i,
-                power: System1.maxSupportedPower
-            }));
+        const expected = Array.from(Array(ESystem.COUNT)).map((_, i) => ({
+            system: i,
+            power: System1.maxSupportedPower
+        }));
 
-            expect(updates).to.eql(expected);
-        });
+        expect(updates).to.eql(expected);
+    });
 
-        it('setMaxPower', async () => {
-            const MAX_POWER_TEST_VAL = 0.3;
-            const SYSTEM = ESystem.MissileSystem;
+    it('setMaxPower', async () => {
+        const MAX_POWER_TEST_VAL = 0.3;
+        const SYSTEM = ESystem.MissileSystem;
 
-            await repairDriver.setMaxPower(SYSTEM, MAX_POWER_TEST_VAL);
-            const updates = await powerUpdate();
-            const expected = Array.from(Array(ESystem.COUNT)).map((_, i) => ({
-                system: i,
-                power: i === SYSTEM ? MAX_POWER_TEST_VAL : System1.maxSupportedPower
-            }));
-            expect(updates).to.eql(expected);
-        });
+        await repairDriver.setMaxPower(SYSTEM, MAX_POWER_TEST_VAL);
+        const updates = await powerUpdate();
+        const expected = Array.from(Array(ESystem.COUNT)).map((_, i) => ({
+            system: i,
+            power: i === SYSTEM ? MAX_POWER_TEST_VAL : System1.maxSupportedPower
+        }));
+        expect(updates).to.eql(expected);
+    });
 
-        it('setRepairRate', async function () {
-            this.timeout(20 * 1000);
-            const graceFactor = 0.5;
+    it('setRepairRate', async function () {
+        this.timeout(20 * 1000);
+        const graceFactor = 0.5;
 
-            const SYSTEM = ESystem.MissileSystem;
-            await httpDriver.command(`getPlayerShip(-1):setSystemHealth('${ESystem[SYSTEM]}', {0})`, ['0.1']);
+        const SYSTEM = ESystem.MissileSystem;
+        await httpDriver.command(`getPlayerShip(-1):setSystemHealth('${ESystem[SYSTEM]}', {0})`, ['0.1']);
 
-            const scale = 10000;
-            const repairRate = 0.5;
-            await repairDriver.setRepairRate(SYSTEM, repairRate);
+        const scale = 10000;
+        const repairRate = 0.5;
+        await repairDriver.setRepairRate(SYSTEM, repairRate);
 
-            const expected = scale * repairRate * repair_per_second / 1000;
-            expect(await getLinearDeriviation(() => httpDriver.query<number>(`getPlayerShip(-1):getSystemHealth('${ESystem[SYSTEM]}') * ${scale}`), {
-                iterations: 4,
-                graceFactor,
-                tickInterval: 10
-            })).to.be.approximately(expected, expected * graceFactor);
-
-        });
-
-
-
-        it('setHeatRate', async function () {
-            this.timeout(20 * 1000);
-            const graceFactor = 0.2;
-
-            const SYSTEM = ESystem.MissileSystem;
-
-            const scale = 10000;
-            const heatRate = 0.5;
-            await repairDriver.setHeatRate(SYSTEM, heatRate);
-            //    await new Promise(res => setTimeout(res, 100));
-            const expected = scale * heatRate * heat_per_second / 1000;
-            expect(await getLinearDeriviation(() => httpDriver.query<number>(`getPlayerShip(-1):getSystemHeat('${ESystem[SYSTEM]}') * ${scale}`), {
-                iterations: 4,
-                graceFactor,
-                tickInterval: 10
-            })).to.be.approximately(expected, expected * graceFactor);
-
-        });
+        const expected = scale * repairRate * repair_per_second / 1000;
+        expect(await getLinearDeriviation(() => httpDriver.query<number>(`getPlayerShip(-1):getSystemHealth('${ESystem[SYSTEM]}') * ${scale}`), {
+            iterations: 4,
+            graceFactor,
+            tickInterval: 10
+        })).to.be.approximately(expected, expected * graceFactor);
 
     });
+
+
+    it('setHeatRate', async function () {
+        this.timeout(20 * 1000);
+        const graceFactor = 0.2;
+
+        const SYSTEM = ESystem.MissileSystem;
+
+        const scale = 10000;
+        const heatRate = 0.5;
+        await repairDriver.setHeatRate(SYSTEM, heatRate);
+        //    await new Promise(res => setTimeout(res, 100));
+        const expected = scale * heatRate * heat_per_second / 1000;
+        expect(await getLinearDeriviation(() => httpDriver.query<number>(`getPlayerShip(-1):getSystemHeat('${ESystem[SYSTEM]}') * ${scale}`), {
+            iterations: 4,
+            graceFactor,
+            tickInterval: 10
+        })).to.be.approximately(expected, expected * graceFactor);
+
+    });
+
 });

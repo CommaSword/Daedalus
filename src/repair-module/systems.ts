@@ -1,5 +1,5 @@
 import {ESystem} from "../empty-epsilon/model";
-import {InfraSystem} from "./repair";
+import {InfraSystem} from "./logic";
 
 export interface System1Status {
 
