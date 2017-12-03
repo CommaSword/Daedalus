@@ -129,6 +129,12 @@ describe('e2e', () => {
                         expect(corruption).to.eql(0);
                     })()]);
                 });
+                it(`start up ${InfraSystem[s2]} via osc`, async () => {
+                    oscClient.send({address: `/d/repairs/${InfraSystem[s2]}/start-up`, args: []});
+                    await new Promise(res => setTimeout(res, 250));
+                    let isOnline = await getOscValue(`/d/repairs/${InfraSystem[s2]}/is-online`);
+                    expect(isOnline).to.eql(1);
+                });
             }
         });
     });

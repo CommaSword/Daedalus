@@ -13,6 +13,8 @@ export enum InfraSystem {
     dilithiumParticleGenerator,
     COUNT
 }
+export const InfraSystemNames : ReadonlyArray<string> = Array.from(Array(InfraSystem.COUNT)).map((_, i) => InfraSystem[i]);
+export const lowercaseInfraSystemNames : ReadonlyArray<string> = InfraSystemNames.map((_, i) => InfraSystem[i].toLowerCase());
 
 export interface Driver {
     setRepairRate(system: ESystem, repairRate: number): Promise<null>;
