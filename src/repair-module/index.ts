@@ -16,7 +16,6 @@ export class RepairModule {
     constructor(eeDriver: EEDriverWithHooks, private oscDriver: OscDriver) {
         this.repairDriver = new RepairDriver(eeDriver, this.pulse);
         this.logic = new RepairLogic(this.repairDriver);
-
     }
 
     async init() {
@@ -31,8 +30,14 @@ export class RepairModule {
                 const s2 = lowercaseInfraSystemNames.indexOf(systemName);
                 if (~s2) {
                     switch (command) {
+                        case 'error':
+                            this.logic.setError(s2);
+                            break;
                         case 'start-up':
                             this.logic.startupSystem2(s2);
+                            break;
+                        case 'shut-down':
+                            this.logic.shutdownSystem2(s2);
                             break;
                         default:
                             console.error('unknown command', command);

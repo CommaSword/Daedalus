@@ -129,11 +129,24 @@ describe('e2e', () => {
                         expect(corruption).to.eql(0);
                     })()]);
                 });
-                it(`start up ${InfraSystem[s2]} via osc`, async () => {
+                it(`start up / error / shut down ${InfraSystem[s2]} via osc`, async () => {
                     oscClient.send({address: `/d/repairs/${InfraSystem[s2]}/start-up`, args: []});
-                    await new Promise(res => setTimeout(res, 250));
+                 //   await new Promise(res => setTimeout(res, 250));
                     let isOnline = await getOscValue(`/d/repairs/${InfraSystem[s2]}/is-online`);
                     expect(isOnline).to.eql(1);
+                    oscClient.send({address: `/d/repairs/${InfraSystem[s2]}/error`, args: []});
+                //    await new Promise(res => setTimeout(res, 250));
+                    isOnline = await getOscValue(`/d/repairs/${InfraSystem[s2]}/is-error`);
+                    expect(isOnline).to.eql(1);
+                    oscClient.send({address: `/d/repairs/${InfraSystem[s2]}/shut-down`, args: []});
+                 //   await new Promise(res => setTimeout(res, 250));
+                    Promise.all([(async () => {
+                        isOnline = await getOscValue(`/d/repairs/${InfraSystem[s2]}/is-online`);
+                        expect(isOnline).to.eql(0);
+                    })(), (async () => {
+                        isOnline = await getOscValue(`/d/repairs/${InfraSystem[s2]}/is-error`);
+                        expect(isOnline).to.eql(0);
+                    })()]);
                 });
             }
         });
