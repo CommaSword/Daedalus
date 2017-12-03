@@ -24,8 +24,8 @@
     "SBS",
     "OSC"
   ],
-  "author": "Amir Arad (amira@wix.com)",
-  "license": "MIT",
+  "author": "Amir Arad <greenshade@gmail.com>",
+  "license": "AGPL-3.0",
   "bugs": {
     "url": "https://github.com/CommaSword/Daedalus/issues"
   },
