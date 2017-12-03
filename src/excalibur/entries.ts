@@ -71,6 +71,11 @@ export class Entries {
             }
         }
     }
+    private fileDeleteHandler = (e: FileDeletedEvent) => {
+        if (e.fullPath.startsWith(Entries.entriesPath) || e.fullPath.startsWith(Entries.queriesPath)) {
+            this.entries.delete(e.fullPath);
+        }
+    };
     private scanQueries = async () => {
         try {
             const queries = await this.fs.loadDirectoryChildren(Entries.queriesPath);
@@ -117,15 +122,14 @@ export class Entries {
 
         this.fs.events.on('fileChanged', this.fileHandler);
         this.fs.events.on('fileCreated', this.fileHandler);
-        this.fs.events.on('fileDeleted', (e: FileDeletedEvent) => {
-            if (e.fullPath.startsWith(Entries.entriesPath) || e.fullPath.startsWith(Entries.queriesPath)) {
-                this.entries.delete(e.fullPath);
-            }
-        });
+        this.fs.events.on('fileDeleted', this.fileDeleteHandler);
         await this.scanQueries();
     }
 
     destroy() {
+        this.fs.events.off('fileChanged', this.fileHandler);
+        this.fs.events.off('fileCreated', this.fileHandler);
+        this.fs.events.off('fileDeleted', this.fileDeleteHandler);
         clearTimeout(this.watchdog);
     }
 

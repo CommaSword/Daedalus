@@ -1,4 +1,31 @@
-import {GeneratedSchema} from "./process-schema";
+import {GameContext, GameSchema} from "./process-schema";
+
+const repairModuleApi = {
+    "setSystemMaxPower": {
+        "arguments": ["ESystem", "float"],
+        "type": []
+    },
+    "getSystemMaxPower": {
+        "arguments": ["ESystem"],
+        "type": ["float"]
+    },
+    "setSystemHeatRate": {
+        "arguments": ["ESystem", "float"],
+        "type": []
+    },
+    "getSystemHeatRate": {
+        "arguments": ["ESystem"],
+        "type": ["float"]
+    },
+    "setSystemRepairRate": {
+        "arguments": ["ESystem", "float"],
+        "type": []
+    },
+    "getSystemRepairRate": {
+        "arguments": ["ESystem"],
+        "type": ["float"]
+    }
+} as GameContext<any>;
 
 export default {
     "global": {
@@ -33,10 +60,6 @@ export default {
             "type": ["float"]
         },
         "setSystemPower": {
-            "arguments": ["ESystem", "float"],
-            "type": []
-        },
-        "setSystemMaxPower": { // this is an addition to the game's API
             "arguments": ["ESystem", "float"],
             "type": []
         },
@@ -83,6 +106,7 @@ export default {
             "arguments": ["float"],
             "type": []
         },
+        ...repairModuleApi
     },
     "ShipTemplateBasedObject": {
         "getHull": {
@@ -126,4 +150,4 @@ export default {
             "type": []
         },
     }
-} as GeneratedSchema;
+} as GameSchema;

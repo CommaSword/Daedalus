@@ -3,10 +3,11 @@ import {OscMessage} from "osc";
 import {FileSystem} from "kissfs";
 import {GameCommand, GameQuery, translateAddressToGameQuery, translateOscMessageToGameCommand} from "./translate";
 import {HttpDriver} from "../empty-epsilon/driver";
+import {OscDriver} from "../osc/osc-driver";
 
-const FILE_PATH = 'game-monitor.json';
+export const FILE_PATH = 'game-monitor.json';
 
-export async function getMonitoredAddresses(fs: FileSystem): Promise<Array<string>> {
+export function getMonitoredAddresses(fs: FileSystem): Array<string>{
 
     const result: Array<string> = [];
 
@@ -24,7 +25,7 @@ export async function getMonitoredAddresses(fs: FileSystem): Promise<Array<strin
             handleFileContent(newContent);
         }
     });
-    handleFileContent(await fs.loadTextFile(FILE_PATH));
+    fs.loadTextFile(FILE_PATH).then(handleFileContent);
 
     return result;
 }
@@ -46,4 +47,14 @@ export function executeDriverCommands(pushRequests: Observable<OscMessage>, eeDr
         .filter(m => m.address.startsWith('/ee/'))
         .map<OscMessage, GameCommand>(translateOscMessageToGameCommand)
         .subscribe(gc => eeDriver.command(gc.template, gc.values));
+}
+
+export function loadOscEeApi(fs: FileSystem, eeDriver: HttpDriver, oscDriver: OscDriver) {
+    const pulse = Observable.interval(500);
+
+    const monitoredAddresses = getMonitoredAddresses(fs);
+    const pollRequests = pulse.switchMap<any, string>(_ => monitoredAddresses);
+    const subscription = monitorByAddress(pollRequests, eeDriver).subscribe(oscDriver.outbox);
+    executeDriverCommands(oscDriver.inbox, eeDriver);
+    return () => {subscription.unsubscribe();}
 }

@@ -4,20 +4,20 @@ export type PrimitiveType = 'float' | 'integer' | 'bool';
 
 export type EnumType = "ESystem" | "EMissileWeapons";
 
-export interface GeneratedSchema {
+export interface GameSchema {
     [k: string]: GameContext<this>;
 }
 
-export type GameContextName<S extends GeneratedSchema> = keyof S;
+export type GameContextName<S extends GameSchema> = keyof S;
 
-export type GameValueType<S extends GeneratedSchema> = [GameContextName<S>] | Array<PrimitiveType>;
+export type GameValueType<S extends GameSchema> = [GameContextName<S>] | Array<PrimitiveType>;
 
-export type GameMethod<S extends GeneratedSchema> = {
+export type GameMethod<S extends GameSchema> = {
     arguments: Array<PrimitiveType | EnumType>,
     type: GameValueType<S>
 };
 
-export type GameContext<S extends GeneratedSchema> = {
+export type GameContext<S extends GameSchema> = {
     [k: string]: GameContextName<S> | GameMethod<S>;
 }
 
@@ -58,7 +58,7 @@ function isGameMethod(t: any): t is GameMethod<any> {
     return typeof t === 'object' && t && t.arguments !== undefined && typeof t.type !== 'undefined';
 }
 
-function initContextNode<S extends GeneratedSchema>(ctxName: keyof S, generatedGameSchema: S, processedGameSchema: ProcessedSchema) {
+function initContextNode<S extends GameSchema>(ctxName: keyof S, generatedGameSchema: S, processedGameSchema: ProcessedSchema) {
     const existingContext = (processedGameSchema as any)[ctxName];
     if (existingContext) {
         return existingContext;
@@ -72,7 +72,7 @@ function initContextNode<S extends GeneratedSchema>(ctxName: keyof S, generatedG
     }
 }
 
-export function processGeneratedSchema<S extends GeneratedSchema>(generatedGameSchema: GeneratedSchema): ProcessedSchema {
+export function processApiSchema<S extends GameSchema>(generatedGameSchema: GameSchema): ProcessedSchema {
     const processedGameSchema: ProcessedSchema = {} as any;
 
     for (let ctxName of Object.keys(generatedGameSchema)) {

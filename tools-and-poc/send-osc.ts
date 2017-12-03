@@ -1,5 +1,5 @@
 import {UDPPort} from "osc";
-import {Pulser} from "../src/core/timing";
+import {Observable} from "rxjs";
 
 it('pulse', (_neverDie) => {
 
@@ -12,9 +12,27 @@ it('pulse', (_neverDie) => {
     });
     oscServer.open();
 
-    const p = new Pulser();
+    const oscServer2 = new UDPPort({
+        localAddress: "0.0.0.0",
+        localPort: 57122,
+        remotePort: 8002,
+        remoteAddress: "0.0.0.0",
+        metadata:true,
+    });
+    oscServer2.open();
+    oscServer2.close();
 
-    p.pulse.subscribe(i => {
+    // const oscServer3 = new UDPPort({
+    //     localAddress: "0.0.0.0",
+    //     localPort: 57123,
+    //     remotePort: 8003,
+    //     remoteAddress: "0.0.0.0",
+    //     metadata:true,
+    // });
+    // oscServer3.open();
+
+
+    Observable.interval(500).subscribe(i => {
         console.log(i);
         oscServer.send({
             address: '/hello',
@@ -22,5 +40,4 @@ it('pulse', (_neverDie) => {
           //          args: ['world', i]
         });
     });
-    p.start();
-});
+}).timeout(2 * 1000);

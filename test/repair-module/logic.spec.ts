@@ -1,5 +1,5 @@
 import {expect} from 'chai';
-import {InfraSystem, RepairModule} from "../../src/repair-module/repair";
+import {InfraSystem, RepairLogic} from "../../src/repair-module/logic";
 import {ESystem} from "../../src/empty-epsilon/model";
 import {match, spy} from 'sinon';
 import {System1, System2, System2Status} from "../../src/repair-module/systems";
@@ -20,10 +20,10 @@ describe('repair module', () => {
 
     sideEffects.powerUpdates = new Observable<{ system: ESystem, power: number }>(subscriber => sideEffects.powerInput = subscriber);
 
-    let repair: RepairModule;
+    let repair: RepairLogic;
 
     beforeEach('init module', () => {
-        repair = new RepairModule(sideEffects);
+        repair = new RepairLogic(sideEffects);
         repair.init();
         for (let s2 = 0; s2 < InfraSystem.COUNT; s2++) {
             repair.startupSystem2(s2);
@@ -38,7 +38,7 @@ describe('repair module', () => {
     });
 
     it('exposes all the systems', () => {
-        const repair = new RepairModule(sideEffects);
+        const repair = new RepairLogic(sideEffects);
         for (let s1 = 0; s1 < ESystem.COUNT; s1++) {
             expect(repair.getSystem1Status(s1).id).to.eql(s1);
         }
@@ -124,11 +124,11 @@ describe('repair module', () => {
 
     it('When a system2’s corruption level reaches its corruption threshold, it goes into error state', () => {
         const system2 = repair.getSystem2Status(InfraSystem.coaxialPlasmaCapacitor) as System2;
-        expect(system2.error).to.eql(false);
+        expect(system2.isError).to.eql(false);
         repair.addCorruptionToSystem2(InfraSystem.coaxialPlasmaCapacitor, system2.corruptionErrorThreshold);
-        expect(system2.error).to.eql(false);
+        expect(system2.isError).to.eql(false);
         repair.addCorruptionToSystem2(InfraSystem.coaxialPlasmaCapacitor, 0.00001);
-        expect(system2.error).to.eql(true);
+        expect(system2.isError).to.eql(true);
     });
 
     describe('When one or more supporting system2 is in error state', () => {

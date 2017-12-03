@@ -13,6 +13,8 @@ export enum InfraSystem {
     dilithiumParticleGenerator,
     COUNT
 }
+export const InfraSystemNames : ReadonlyArray<string> = Array.from(Array(InfraSystem.COUNT)).map((_, i) => InfraSystem[i]);
+export const lowercaseInfraSystemNames : ReadonlyArray<string> = InfraSystemNames.map((_, i) => InfraSystem[i].toLowerCase());
 
 export interface Driver {
     setRepairRate(system: ESystem, repairRate: number): Promise<null>;
@@ -25,7 +27,7 @@ export interface Driver {
 }
 
 
-export class RepairModule {
+export class RepairLogic {
 
     public static readonly tickInterval = 10;
     private static readonly second2firstMap: { [system2Name: number]: ESystem[] } = {
@@ -34,7 +36,7 @@ export class RepairModule {
         [InfraSystem.polaronLimiter]: [ESystem.Maneuver, ESystem.Impulse, ESystem.JumpDrive],
         [InfraSystem.nanowaveShiftEnergizer]: [ESystem.FrontShield, ESystem.RearShield, ESystem.Reactor],
         [InfraSystem.coaxialPlasmaCapacitor]: [ESystem.MissileSystem, ESystem.FrontShield],
-        [InfraSystem.dilithiumParticleGenerator]: [ESystem.Impulse, ESystem.JumpDrive, ESystem.RearShield],
+        [InfraSystem.dilithiumParticleGenerator]: [ESystem.Warp, ESystem.JumpDrive, ESystem.RearShield],
     };
 
     private readonly systems1: { [systemName: number]: System1 } = {};
@@ -48,16 +50,12 @@ export class RepairModule {
         }
         for (let s2 = 0; s2 < InfraSystem.COUNT; s2++) {
             let sys2 = new System2(s2);
-            for (let s1 of RepairModule.second2firstMap[s2]) {
+            for (let s1 of RepairLogic.second2firstMap[s2]) {
                 const system1 = this.systems1[s1];
                 system1.supportingSystems.push(sys2);
                 sys2.supportedSystems.push(system1);
             }
             this.systems2[s2] = sys2;
-        }
-
-        for (let s1 = 0; s1 < ESystem.COUNT; s1++) {
-            this.updateMaxPower(s1);
         }
     }
 
@@ -66,10 +64,11 @@ export class RepairModule {
         return this._repairing;
     }
 
-    init() {
+    async init() {
+        await Promise.all(Array.from(Array(ESystem.COUNT)).map((_, s1) => this.updateMaxPower(s1)));
         if (this.disposer === undefined) {
             // initiate game loop
-            const ticker = setTimedInterval(this.tick.bind(this), RepairModule.tickInterval);
+            const ticker = setTimedInterval(this.tick.bind(this), RepairLogic.tickInterval);
             // register for power updates
             const subscription = this.driver.powerUpdates.subscribe(msg => this.systems1[msg.system].power = msg.power);
 
@@ -157,17 +156,17 @@ export class RepairModule {
         }
     }
 
-    private updateHeatRate(id: ESystem) {
-        this.driver.setHeatRate(id, this.systems1[id].heatRate);
+    private async updateHeatRate(id: ESystem) {
+        await this.driver.setHeatRate(id, this.systems1[id].heatRate);
     }
 
-    private updateMaxPower(id: ESystem) {
-        this.driver.setMaxPower(id, this.systems1[id].maxPower);
+    private async updateMaxPower(id: ESystem) {
+        await this.driver.setMaxPower(id, this.systems1[id].maxPower);
     }
 
-    private updateRepairRate(id: ESystem) {
+    private async updateRepairRate(id: ESystem) {
         if (this._repairing === id) {
-            this.driver.setRepairRate(id, this.systems1[id].repairRate);
+            await this.driver.setRepairRate(id, this.systems1[id].repairRate);
         }
     }
 
