@@ -4,6 +4,9 @@ import {InfraSystem} from "./logic";
 export interface System1Status {
 
     readonly id: ESystem;
+    readonly repairRate : number;
+    readonly heatRate : number;
+    readonly maxPower : number;
 }
 
 
@@ -20,7 +23,7 @@ export class System1 implements System1Status {
     }
 
     get repairRate() {
-        if (this.supportingSystems.every(sys => !sys.error)) {
+        if (this.supportingSystems.every(sys => !sys.isError)) {
             return System1.repairRate;
         } else {
             return 0.5 * System1.repairRate;
@@ -28,7 +31,7 @@ export class System1 implements System1Status {
     }
 
     get heatRate() {
-        if (this.supportingSystems.every(sys => !sys.error)) {
+        if (this.supportingSystems.every(sys => !sys.isError)) {
             return 0;
         } else {
             return System1.heatOnErrorRate;
@@ -40,7 +43,7 @@ export class System1 implements System1Status {
         if (onlineSystems === this.supportingSystems.length) {
             return System1.maxOverPower;
         } else {
-            return onlineSystems / this.supportingSystems.length;
+            return System1.maxSupportedPower * onlineSystems / this.supportingSystems.length;
         }
     }
 
@@ -56,6 +59,8 @@ export class System1 implements System1Status {
 export interface System2Status {
 
     readonly id: InfraSystem;
+    readonly isError: boolean;
+    readonly isOnline: boolean;
     readonly corruption: number;
 }
 
@@ -66,7 +71,7 @@ export class System2 implements System2Status {
 
     public readonly name: string;
     public readonly supportedSystems: System1[] = []
-    public error: boolean;
+    public isError: boolean;
     public isOnline: boolean;
     public corruption: number;
     public corruptionErrorThreshold: number;
@@ -84,7 +89,7 @@ export class System2 implements System2Status {
 
     shutdown() {
         this.isOnline = false;
-        this.error = false;
+        this.isError = false;
         this.corruption = 0;
         this.corruptionErrorThreshold = Math.max(Math.random() * System2.maxCorruption, System2.corruptionPerMillisecond);
     }
@@ -95,7 +100,7 @@ export class System2 implements System2Status {
 
     setError() {
         if (this.isOnline) {
-            this.error = true;
+            this.isError = true;
         }
     }
 }

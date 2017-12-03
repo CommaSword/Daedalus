@@ -9,6 +9,7 @@ import {expect} from 'chai';
 import {retry} from "./test-kit/retry";
 import {ESystem} from "../src/empty-epsilon/model";
 import {InfraSystem} from "../src/repair-module/logic";
+import {System1} from "../src/repair-module/systems";
 
 const udpHosts = {localAddress: '127.0.0.1', remoteAddress: '127.0.0.1'};
 const options: Options = {
@@ -100,20 +101,28 @@ describe('e2e', () => {
 
         describe('repair module', () => {
             for (let s1 = 0; s1 < ESystem.COUNT; s1++) {
-                it(`read ${ESystem[s1]} power from module via osc`, async () => {
-                    let power = await getOscValue(`/d/repairs/${ESystem[s1]}/power`);
-                    expect(power).to.eql(1);
+                it(`read ${ESystem[s1]} repairRate from module via osc`, async () => {
+                    let power = await getOscValue(`/d/repairs/${ESystem[s1]}/repair-rate`);
+                    expect(power).to.eql(System1.repairRate);
+                });
+                it(`read ${ESystem[s1]} heatRate from module via osc`, async () => {
+                    let power = await getOscValue(`/d/repairs/${ESystem[s1]}/heat-rate`);
+                    expect(power).to.eql(0);
+                });
+                it(`read ${ESystem[s1]} maxPower from module via osc`, async () => {
+                    let power = await getOscValue(`/d/repairs/${ESystem[s1]}/max-power`);
+                    expect(power).to.eql(0);
                 });
             }
 
             for (let s2 = 0; s2 < InfraSystem.COUNT; s2++) {
                 it(`read ${InfraSystem[s2]} error from module via osc`, async () => {
-                    let isErr = await getOscValue(`/d/repairs/${InfraSystem[s2]}/error`);
-                    expect(isErr).to.eql(false);
+                    let isErr = await getOscValue(`/d/repairs/${InfraSystem[s2]}/is-error`);
+                    expect(isErr).to.eql(0);
                 });
                 it(`read ${InfraSystem[s2]} isOnline from module via osc`, async () => {
-                    let isOnline = await getOscValue(`/d/repairs/${InfraSystem[s2]}/isOnline`);
-                    expect(isOnline).to.eql(false);
+                    let isOnline = await getOscValue(`/d/repairs/${InfraSystem[s2]}/is-online`);
+                    expect(isOnline).to.eql(0);
                 });
                 it(`read ${InfraSystem[s2]} corruption from module via osc`, async () => {
                     let corruption = await getOscValue(`/d/repairs/${InfraSystem[s2]}/corruption`);

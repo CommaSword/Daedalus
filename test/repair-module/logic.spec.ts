@@ -124,11 +124,11 @@ describe('repair module', () => {
 
     it('When a system2’s corruption level reaches its corruption threshold, it goes into error state', () => {
         const system2 = repair.getSystem2Status(InfraSystem.coaxialPlasmaCapacitor) as System2;
-        expect(system2.error).to.eql(false);
+        expect(system2.isError).to.eql(false);
         repair.addCorruptionToSystem2(InfraSystem.coaxialPlasmaCapacitor, system2.corruptionErrorThreshold);
-        expect(system2.error).to.eql(false);
+        expect(system2.isError).to.eql(false);
         repair.addCorruptionToSystem2(InfraSystem.coaxialPlasmaCapacitor, 0.00001);
-        expect(system2.error).to.eql(true);
+        expect(system2.isError).to.eql(true);
     });
 
     describe('When one or more supporting system2 is in error state', () => {

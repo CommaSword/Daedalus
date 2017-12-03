@@ -34,7 +34,7 @@ export class RepairLogic {
         [InfraSystem.polaronLimiter]: [ESystem.Maneuver, ESystem.Impulse, ESystem.JumpDrive],
         [InfraSystem.nanowaveShiftEnergizer]: [ESystem.FrontShield, ESystem.RearShield, ESystem.Reactor],
         [InfraSystem.coaxialPlasmaCapacitor]: [ESystem.MissileSystem, ESystem.FrontShield],
-        [InfraSystem.dilithiumParticleGenerator]: [ESystem.Impulse, ESystem.JumpDrive, ESystem.RearShield],
+        [InfraSystem.dilithiumParticleGenerator]: [ESystem.Warp, ESystem.JumpDrive, ESystem.RearShield],
     };
 
     private readonly systems1: { [systemName: number]: System1 } = {};

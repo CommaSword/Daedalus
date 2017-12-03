@@ -67,7 +67,7 @@ export class SimulatorServices {
     constructor(options: Options, private fs: FileSystem) {
         this.oscDriver = new OscDriver(options.oscOptions);
         this.eeDriver = new HttpDriver(options.eeAddress);
-        this.repairModule = new RepairModule(this.eeDriver);
+        this.repairModule = new RepairModule(this.eeDriver, this.oscDriver);
     }
 
     async init() {
