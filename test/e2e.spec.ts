@@ -102,37 +102,32 @@ describe('e2e', () => {
 
         describe('repair module', () => {
             for (let s1 = 0; s1 < ESystem.COUNT; s1++) {
-                describe(`read ${ESystem[s1]} via osc`, () => {
-
-                    it(`repairRate`, async () => {
-                        let power = await getOscValue(`/d/repairs/${ESystem[s1]}/repair-rate`);
-                        expect(power).to.eql(System1.repairRate);
-                    });
-                    it(`heatRate`, async () => {
-                        let power = await getOscValue(`/d/repairs/${ESystem[s1]}/heat-rate`);
-                        expect(power).to.eql(0);
-                    });
-                    it(`maxPower`, async () => {
-                        let power = await getOscValue(`/d/repairs/${ESystem[s1]}/max-power`);
-                        expect(power).to.eql(0);
-                    });
+                it(`read ${ESystem[s1]} via osc`, () => {
+                    return Promise.all([(async () => {
+                        let repairRate = await getOscValue(`/d/repairs/${ESystem[s1]}/repair-rate`);
+                        expect(repairRate).to.eql(System1.repairRate);
+                    })(), (async () => {
+                        let heatRate = await getOscValue(`/d/repairs/${ESystem[s1]}/heat-rate`);
+                        expect(heatRate).to.eql(0);
+                    })(), (async () => {
+                        let maxPower = await getOscValue(`/d/repairs/${ESystem[s1]}/max-power`);
+                        expect(maxPower).to.eql(0);
+                    })()]);
                 });
             }
 
             for (let s2 = 0; s2 < InfraSystem.COUNT; s2++) {
-                describe(`read ${InfraSystem[s2]}  via osc`, async () => {
-                    it(`isError`, async () => {
+                it(`read ${InfraSystem[s2]} via osc`, async () => {
+                    return Promise.all([(async () => {
                         let isErr = await getOscValue(`/d/repairs/${InfraSystem[s2]}/is-error`);
                         expect(isErr).to.eql(0);
-                    });
-                    it(`isOnline`, async () => {
+                    })(), (async () => {
                         let isOnline = await getOscValue(`/d/repairs/${InfraSystem[s2]}/is-online`);
                         expect(isOnline).to.eql(0);
-                    });
-                    it(`corruption`, async () => {
+                    })(), (async () => {
                         let corruption = await getOscValue(`/d/repairs/${InfraSystem[s2]}/corruption`);
                         expect(corruption).to.eql(0);
-                    });
+                    })()]);
                 });
             }
         });
