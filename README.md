@@ -7,6 +7,10 @@ by simulating the spaceship's need for [Maintenance, Repair and Operations](http
 ## Core concept
 Daedalus replaces the singular auto-repair screen with a simulation of the ship's several sub-systems engineering interfaces. 
 
+## instructions
+ - Copy the files in this project's `lua` directory into empty epsilon's `Contents/Resources/scripts` directory
+ - start the server by running `node main.js` 
+
 ## product documentation
 can be found in [the excalibur entries folder](./resources/entries)
 
