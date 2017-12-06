@@ -120,7 +120,7 @@ return {${getQueue.map(req => req.luaJSONFields).join(',')}};`;
                 Object.keys(setMap).forEach(s => setMap[s].resolver(null));
             }
         } catch (e) {
-            console.error('error communicating with game server: ' + e.message);
+            console.error(`error communicating with game server: (retrying) ${ e.message}`);
             Object.keys(getMap).forEach(s => {
                 this.pendingQueries[s] ? this.pendingQueries[s].promise.then(getMap[s].resolver as any) : (this.pendingQueries[s] = getMap[s])
             });

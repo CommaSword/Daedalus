@@ -4,6 +4,8 @@
   "description": "Empty Epsilon - Maintainence, Repair and Operations extension",
   "main": "main.js",
   "scripts": {
+    "osc": "/Applications/open-stage-control.app/Contents/MacOS/open-stage-control --osc-port 57122 --send 127.0.0.1:57121 --read--only --load /Users/amira/IdeaProjects/Daedalus/dashboards/panels.json ",
+    "build:osc": "node dashboards/make.js",
     "build:client": "tsc -p node_modules/@fugazi/webclient/scripts & tsc -p node_modules/@fugazi/webclient/modules/scripts & echo 'done'",
     "reset:client": "yarn upgrade @fugazi/connector && yarn upgrade @fugazi/webclient && yarn prepublish",
     "prepublish": "yarn build:client",

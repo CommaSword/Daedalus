@@ -101,7 +101,7 @@ export class RepairLogic {
     }
 
     addCorruptionToSystem2(id: InfraSystem, corruption: number) {
-        const system2 = this.systems2[id]
+        const system2 = this.systems2[id];
         system2.addCorruption(corruption);
         if (system2.corruption > system2.corruptionErrorThreshold) {
             this.setError(system2.id);
@@ -114,6 +114,22 @@ export class RepairLogic {
 
     getSystem2Status(id: InfraSystem): System2Status {
         return this.systems2[id];
+    }
+
+    setCorruption(id: InfraSystem, value:number) {
+        const system2 = this.systems2[id];
+        system2.corruption = value;
+        if (system2.corruption > system2.corruptionErrorThreshold) {
+            this.setError(system2.id);
+        }
+    }
+
+    setCorruptionThreshold(id: InfraSystem, value:number) {
+        const system2 = this.systems2[id];
+        system2.corruptionErrorThreshold = value;
+        if (system2.corruption > system2.corruptionErrorThreshold) {
+            this.setError(system2.id);
+        }
     }
 
     setError(id: InfraSystem) {

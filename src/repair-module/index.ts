@@ -3,7 +3,7 @@ import {RepairDriver} from "./driver";
 import {InfraSystem, lowercaseInfraSystemNames, RepairLogic} from "./logic";
 import {OscDriver} from "../osc/osc-driver";
 import {ESystem} from "../empty-epsilon/model";
-import {OscMessage} from "osc";
+import {MetaArgument, OscMessage} from "osc";
 import {Observable, Subscription} from "rxjs";
 
 
@@ -38,6 +38,14 @@ export class RepairModule {
                             break;
                         case 'shut-down':
                             this.logic.shutdownSystem2(s2);
+                            break;
+                        case 'corruption-threshold':
+                            const corruptionThreshold = (message.args as [MetaArgument])[0].value as number;
+                            this.logic.setCorruptionThreshold(s2, corruptionThreshold);
+                            break;
+                        case 'corruption':
+                            const corruption = (message.args as [MetaArgument])[0].value as number;
+                            this.logic.setCorruption(s2, corruption);
                             break;
                         default:
                             console.error('unknown command', command);
@@ -78,6 +86,9 @@ export class RepairModule {
                 }, {
                     address: `/d/repairs/${InfraSystem[s2]}/corruption`,
                     args: {type: 'f', value: system2.corruption}
+                }, {
+                    address: `/d/repairs/${InfraSystem[s2]}/corruption-threshold`,
+                    args: {type: 'f', value: system2.corruptionErrorThreshold}
                 });
             }
             return result;

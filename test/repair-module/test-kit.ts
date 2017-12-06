@@ -4,7 +4,7 @@ import {expect} from 'chai';
 import {match} from "sinon";
 
 
-type Options = {
+export type Options = {
     iterations : number,
     graceFactor : number,
     tickInterval : number,

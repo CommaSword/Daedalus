@@ -62,15 +62,19 @@ export interface System2Status {
     readonly isError: boolean;
     readonly isOnline: boolean;
     readonly corruption: number;
+    readonly corruptionErrorThreshold: number;
 }
 
 export class System2 implements System2Status {
-
-    public static readonly corruptionPerMillisecond = 0.01;
+    // say it takes ~3 minutes of ~200% power to cause an error on average
+    // so it should take twice to reach maximum corruption (1).
+    // so corruption per milli :
+    // 1 / 2 * 3 * 60 * 1000  = 1 / 180000 ~= 0.0000055
+    public static readonly corruptionPerMillisecond = 0.0000055;
     public static readonly maxCorruption = 1;
 
     public readonly name: string;
-    public readonly supportedSystems: System1[] = []
+    public readonly supportedSystems: System1[] = [];
     public isError: boolean;
     public isOnline: boolean;
     public corruption: number;
@@ -91,7 +95,7 @@ export class System2 implements System2Status {
         this.isOnline = false;
         this.isError = false;
         this.corruption = 0;
-        this.corruptionErrorThreshold = Math.max(Math.random() * System2.maxCorruption, System2.corruptionPerMillisecond);
+        this.corruptionErrorThreshold = Math.max(Math.random() * System2.maxCorruption, System2.corruptionPerMillisecond * 1000);
     }
 
     startup() {
