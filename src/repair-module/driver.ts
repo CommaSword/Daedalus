@@ -1,10 +1,12 @@
 import {Driver} from "./logic";
 import {ESystem, ESystemNames} from "../empty-epsilon/model";
-import {Observable} from "rxjs/Observable";
+import {Observable} from "rxjs";
 import {EEDriverWithHooks} from "../empty-epsilon/driver";
 
 export const repair_per_second = 0.007;
-export const heat_per_second = 0.01;
+export const heat_per_second = 0.05;
+export const damage_per_second_on_overheat = 0.08;
+export const min_reactor_health = -0.89;
 
 const powerQueries = ESystemNames.map((system) => `getPlayerShip(-1):getSystemPower('${system}')`);
 
@@ -34,9 +36,24 @@ if value > 0 then
     ship:setSystemHealth(system, math.min(1, ship:getSystemHealth(system) + (value * ${repair_per_second} * delta)))
 end
 `),
+
             this.eeDriver.addSystemFeature('HeatRate', `
 if value > 0 then
-    ship:setSystemHeat(system, math.min(1, ship:getSystemHeat(system) + (value * ${heat_per_second} * delta)))
+    local newHeat = ship:getSystemHeat(system) + (value * ${heat_per_second} * delta)
+    if newHeat > 1 then
+        newHeat = 1 ${
+/*
+// Heat damage is specified as damage per second while overheating.
+// Calculate the amount of overheat back to a time, and use that to
+// calculate the actual damage taken.
+ */''}
+        local newHealth = ship:getSystemHealth(system) - (newHeat -1) * ${damage_per_second_on_overheat / heat_per_second}
+        if system == '${ESystem[ESystem.Reactor]}' and newHealth < ${min_reactor_health} then 
+            newHealth = ${min_reactor_health}
+        end
+        ship:setSystemHealth(system, math.max(-1, newHealth))
+    end
+    ship:setSystemHeat(system, newHeat)
 end
 `),
             this.eeDriver.addSystemFeature('MaxPower', `
@@ -44,7 +61,23 @@ local power = ship:getSystemPower(system)
 if power > value then
     ship:setSystemPower(system, value)
 end
-`)])
+`),
+            this.eeDriver.exec(`
+local ship = getPlayerShip(-1)
+if not ship.maxReactorHealth then
+    ship.maxReactorHealth = true
+    
+    function setMaxReactorHealth(delta)
+        local health = ship:getSystemHealth('${ESystem[ESystem.Reactor]}')
+        if health < ${min_reactor_health} then
+            ship:setSystemHealth('${ESystem[ESystem.Reactor]}', ${min_reactor_health})
+        end
+    end
+
+    table.insert(ship._daedalus_hooks, setMaxReactorHealth) 
+end
+`)
+        ])
     }
 
     setRepairRate(system: ESystem, repairRate: number): Promise<null> {

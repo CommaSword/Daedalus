@@ -100,7 +100,7 @@ describe('e2e', () => {
             });
         });
 
-        describe('repair module', () => {
+        xdescribe('repair module', () => {
             for (let s1 = 0; s1 < ESystem.COUNT; s1++) {
                 it(`read ${ESystem[s1]} via osc`, () => {
                     return Promise.all([(async () => {

@@ -1,6 +1,5 @@
 import {heat_per_second, repair_per_second, RepairDriver} from "../../src/repair-module/driver";
-import {Subscriber} from "rxjs/Subscriber";
-import {Observable} from "rxjs/Observable";
+import {Observable, Subscriber} from "rxjs";
 import {ESystem} from "../../src/empty-epsilon/model";
 import {eeTestServerLifecycle} from '../test-kit/empty-epsylon-server-manager'
 import {HttpDriver} from '../../src/empty-epsilon/driver';

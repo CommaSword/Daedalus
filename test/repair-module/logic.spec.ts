@@ -69,7 +69,7 @@ describe('repair module', () => {
     it('A system1 can only be over-powered (more than 100% energy) when all of its supporting system2s are online', () => {
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, System1.maxOverPower);
         sideEffects.setMaxPower.reset();
-        repair.shutdownSystem2(InfraSystem.dilithiumParticleGenerator);
+        repair.shutdownSystem2(InfraSystem.activeCollector);
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, match.number.and(match((n: number) => n <= System1.maxSupportedPower)));
         expect(sideEffects.setMaxPower).to.have.not.been.calledWith(ESystem.Impulse, System1.maxOverPower);
     });
@@ -78,19 +78,13 @@ describe('repair module', () => {
         '100%  * number of online supporting systems/ number of supporting systems', () => {
         sideEffects.setMaxPower.reset();
         repair.shutdownSystem2(InfraSystem.activeCollector);
-        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, approx(System1.maxSupportedPower * 2 / 3));
+        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, approx(System1.maxSupportedPower /2));
         sideEffects.setMaxPower.reset();
         repair.shutdownSystem2(InfraSystem.polaronLimiter);
-        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, System1.maxSupportedPower / 3);
-        sideEffects.setMaxPower.reset();
-        repair.shutdownSystem2(InfraSystem.dilithiumParticleGenerator);
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, 0);
         sideEffects.setMaxPower.reset();
-        repair.startupSystem2(InfraSystem.dilithiumParticleGenerator);
-        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, System1.maxSupportedPower / 3);
-        sideEffects.setMaxPower.reset();
         repair.startupSystem2(InfraSystem.polaronLimiter);
-        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, approx(System1.maxSupportedPower * 2 / 3));
+        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, approx(System1.maxSupportedPower /2));
         sideEffects.setMaxPower.reset();
         repair.startupSystem2(InfraSystem.activeCollector);
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, System1.maxOverPower);

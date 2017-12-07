@@ -61,7 +61,7 @@ export interface EEDriver {
     exec<T>(script: string): Promise<T>;
 }
 
-export interface EEDriverWithHooks extends EEDriver{
+export interface EEDriverWithHooks extends EEDriver {
     /**
      * add a feature to the ship's systems.
      * it will be exported as  ship:setSystemX and ship:getSystemX where X is the name of the feature
@@ -82,6 +82,7 @@ export class HttpDriver implements EEDriverWithHooks {
     private pendingQueries: { [getter: string]: Query } = {};
     private pendingCommands: { [setter: string]: Command } = {};
     private isFlushing = false;
+    private timeBetweenFlushes = HttpDriver.minTimeBetweenFlushes;
 
     constructor(baseURL: string) {
         this.http = Axios.create({baseURL});
@@ -90,14 +91,18 @@ export class HttpDriver implements EEDriverWithHooks {
     /**
      * flush all commands to the game server
      * at most, only a single flush is active at each point in time
-     * at least `HttpDriver.minTimeBetweenFlushes` milliseconds will puss between the end of one flush and the beginning of the other
+     * at least `timeBetweenFlushes` milliseconds will puss between the end of one flush and the beginning of the other
      * @returns {Promise<void>}
      */
     private flush = async () => {
-        const getMap = this.pendingQueries;
         const setMap = this.pendingCommands;
-        this.pendingQueries = {};
         this.pendingCommands = {};
+        const getMap: { [getter: string]: Query } = {};
+        const gettersToPoll = Object.keys(this.pendingQueries).slice(0, HttpDriver.maxNumberOfResults);
+        gettersToPoll.forEach(g => {
+            getMap[g] = this.pendingQueries[g];
+            delete this.pendingQueries[g];
+        });
         id = 0;
         const getQueue = Object.keys(getMap).map(q => getMap[q]);
         const setQueue = Object.keys(setMap).map(q => setMap[q]);
@@ -194,10 +199,10 @@ return {${getQueue.map(req => req.luaJSONFields).join(',')}};`;
     }
 
     private requestFlush() {
-        if (Object.keys(this.pendingQueries).length >= HttpDriver.maxNumberOfResults) {
+        /*if (Object.keys(this.pendingQueries).length >= HttpDriver.maxNumberOfResults) {
             this.flush();
-        } else if (!this.isFlushing) {
-            setTimeout(this.flush, HttpDriver.minTimeBetweenFlushes);
+        } else */if (!this.isFlushing) {
+            setTimeout(this.flush, this.timeBetweenFlushes);
             this.isFlushing = true;
         }
     }

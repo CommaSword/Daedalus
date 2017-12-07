@@ -83,6 +83,7 @@ export class System2 implements System2Status {
     constructor(public id: InfraSystem) {
         this.name = InfraSystem[id];
         this.shutdown();
+        this.startup();
     }
 
     addCorruption(delta: number) {
