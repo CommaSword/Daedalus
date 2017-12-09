@@ -23,7 +23,7 @@
 byte mac[] = {
         0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
 };
-IPAddress ip(10, 0, 0, 45);
+IPAddress ip(192,168,1,10);
 
 unsigned int localPort = 57122;      // local port to listen on
 
@@ -166,15 +166,13 @@ void handleIsOnline(OSCMessage &msg) {
 void handleIsError(OSCMessage &msg) {
     error = msg.getInt(0) == 1;
     Serial.print("error : ");
-    Serial.println(msg.getFloat(0));
+    Serial.println(msg.getInt(0));
 }
 
 void handleCorruption(OSCMessage &msg) {
     load = msg.getFloat(0);
     Serial.print("corruption : ");
     Serial.println(msg.getFloat(0));
-    Serial.println(load);
-
 }
 
 void applyStateToLeds() {

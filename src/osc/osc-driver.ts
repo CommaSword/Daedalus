@@ -15,7 +15,7 @@ export class OscDriver {
     constructor(options: UdpOptions) {
         options = Object.assign({},
             {
-                remoteAddress: "10.0.0.45",
+                remoteAddress: "192.168.1.10",
                 metadata: true
             }, options);
         this.port = new UDPPort(options);
