@@ -62,6 +62,7 @@ if power > value then
     ship:setSystemPower(system, value)
 end
 `),
+
             this.eeDriver.exec(`
 local ship = getPlayerShip(-1)
 if not ship.maxReactorHealth then
