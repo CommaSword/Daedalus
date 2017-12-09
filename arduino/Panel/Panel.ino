@@ -13,19 +13,28 @@
 #define yellowLed 5
 #define blueLed 6
 //buttons
-#define buttonOn 7
-#define buttonOff 8
+#define buttonOn 8
+#define buttonOff 7
+//button functionality
+#define debounce 20 // ms debounce period to prevent flickering when pressing or releasing the button
+#define holdTime 2000 // ms hold period: how long to wait for press+hold event
 //jack
 #define jack 9
+// server data
+#define serverPort 57121
 
 // Enter a MAC address and IP address for your controller below.
 // The IP address will be dependent on your local network:
 byte mac[] = {
         0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
 };
+
 IPAddress ip(192,168,1,10);
 
 unsigned int localPort = 57122;      // local port to listen on
+
+//the Arduino's IP
+IPAddress serverIp(0, 0, 0, 0);
 
 // buffers for receiving and sending data
 char packetBuffer[UDP_TX_PACKET_MAX_SIZE]; //buffer to hold incoming packet,
@@ -55,10 +64,11 @@ boolean error = 0;
 // load of the panel
 float load = 0;
 
-//sate of buttons/jack
+//state of buttons/jack
+long btnDnTime; // time the button was pressed down
+long btnUpTime; // time the button was released
+boolean ignoreUp = false; // whether to ignore the button release because the click+hold was triggered
 
-int onPressed = 0;
-int offPressed = 0;
 int jackIn = 0;
 
 void setup() {
@@ -77,7 +87,7 @@ void setup() {
     pinMode(buttonOn, INPUT);
     pinMode(buttonOff, INPUT);
     pinMode(jack, INPUT);
-
+    Udp.remoteIP() = serverIp;
     applyStateToLeds();
 }
 
@@ -86,6 +96,39 @@ void loop() {
     OSCErrorCode error;
     //make an empty message to fill with the incoming data
     OSCMessage msg;
+    // Read the state of the button
+    int buttonOffVal = digitalRead(buttonOff);
+    int buttonOnVal = digitalRead(buttonOn);
+    
+    if (buttonOffVal == LOW){
+        
+        Serial.println("Button off is pressed");
+        Serial.println(Udp.remoteIP());
+        OSCMessage msgOut("/d/repairs/switch_A/shut-down");
+        Udp.beginPacket(Udp.remoteIP(), serverPort);
+        msgOut.send(Udp);
+        Udp.endPacket(); 
+        if (msgOut.hasError()){
+          Serial.println(msgOut.hasError());
+        }
+        msgOut.empty();
+    }
+
+    if (buttonOnVal == HIGH){
+        
+        Serial.println("Button on is pressed");
+        Serial.println(Udp.remoteIP());
+        OSCMessage msgOut("/d/repairs/switch_A/start-up");
+        Udp.beginPacket(Udp.remoteIP(), serverPort);
+        msgOut.send(Udp);
+        Udp.endPacket(); 
+        if (msgOut.hasError()){
+          Serial.println(msgOut.hasError());
+        }
+        msgOut.empty();
+    }
+  
+    
     // if there's data available, read a packet
     int packetSize = Udp.parsePacket();
     if (packetSize) {
@@ -98,7 +141,6 @@ void loop() {
             Serial.println(error);
         } else {
             //  printMessageData(msg);
-
             msg.dispatch("/d/repairs/switch_A/is-online", handleIsOnline);
             msg.dispatch("/d/repairs/switch_A/is-error", handleIsError);
             msg.dispatch("/d/repairs/switch_A/corruption", handleCorruption);
@@ -160,7 +202,7 @@ void printMessageData(OSCMessage &msg) {
 void handleIsOnline(OSCMessage &msg) {
     online = msg.getInt(0) == 1;
     Serial.print("online : ");
-    Serial.println(msg.getFloat(0));
+    Serial.println(msg.getInt(0));
 }
 
 void handleIsError(OSCMessage &msg) {
@@ -178,5 +220,5 @@ void handleCorruption(OSCMessage &msg) {
 void applyStateToLeds() {
     digitalWrite(greenLed, online ? HIGH : LOW);
     digitalWrite(yellowLed, error ? HIGH : LOW);
-    digitalWrite(blueLed, load > 0.0 ? LOW : HIGH);
+    digitalWrite(blueLed, load > 0.0 && !error ? LOW : HIGH);
 }
