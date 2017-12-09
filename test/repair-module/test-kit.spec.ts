@@ -24,7 +24,7 @@ describe('test-driver', () => {
 
     it('getLinearCorruptionDeriviation', async () => {
         const graceFactor = 0.1;
-        const status = new System2(InfraSystem.activeCollector);
+        const status = new System2(InfraSystem.switch_B);
         let timer = setTimedInterval(delta => {
             status.corruption = status.corruption + (GAIN_PER_MILLISECOND * delta);
         }, RepairLogic.tickInterval);

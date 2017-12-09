@@ -7,8 +7,8 @@ process.on('uncaughtException', function (err) {
     console.error(err.stack);
 });
 
-require('./dist/src/index').main({
-//require('./src/index').main({
+// require('./dist/src/index').main({
+require('./src/index').main({
     resources: path.join(__dirname, 'resources'),
     terminalsPort: 8888,
     eeAddress: 'http://localhost:8081',

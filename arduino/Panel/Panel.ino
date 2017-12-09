@@ -89,7 +89,7 @@ void loop() {
     // if there's data available, read a packet
     int packetSize = Udp.parsePacket();
     if (packetSize) {
-       //  printPacketMetadata(packetSize);
+        //  printPacketMetadata(packetSize);
         while (packetSize--)
             msg.fill(Udp.read());
         if (msg.hasError()) {
@@ -97,7 +97,7 @@ void loop() {
             Serial.print("error: ");
             Serial.println(error);
         } else {
-          //  printMessageData(msg);
+            //  printMessageData(msg);
 
             msg.dispatch("/d/repairs/switch_A/is-online", handleIsOnline);
             msg.dispatch("/d/repairs/switch_A/is-error", handleIsError);
@@ -158,13 +158,13 @@ void printMessageData(OSCMessage &msg) {
 }
 
 void handleIsOnline(OSCMessage &msg) {
-    online =  msg.getInt(0) == 1;
+    online = msg.getInt(0) == 1;
     Serial.print("online : ");
     Serial.println(msg.getFloat(0));
 }
 
 void handleIsError(OSCMessage &msg) {
-    error =  msg.getInt(0) == 1;
+    error = msg.getInt(0) == 1;
     Serial.print("error : ");
     Serial.println(msg.getFloat(0));
 }
@@ -180,5 +180,5 @@ void handleCorruption(OSCMessage &msg) {
 void applyStateToLeds() {
     digitalWrite(greenLed, online ? HIGH : LOW);
     digitalWrite(yellowLed, error ? HIGH : LOW);
-    digitalWrite(blueLed, load  > 0.0? LOW : HIGH);
+    digitalWrite(blueLed, load > 0.0 ? LOW : HIGH);
 }

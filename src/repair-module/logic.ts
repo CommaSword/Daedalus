@@ -5,12 +5,12 @@ import {Observable} from "rxjs/Observable";
 
 export enum InfraSystem {
     None = -1,
-    zeroPointModule = 0,
-    activeCollector,
-    polaronLimiter,
-    nanowaveShiftEnergizer,
-    coaxialPlasmaCapacitor,
-    dilithiumParticleGenerator,
+    switch_A = 0,
+    switch_B,
+    switch_C,
+    switch_D,
+    switch_E,
+    switch_F,
     COUNT
 }
 export const InfraSystemNames : ReadonlyArray<string> = Array.from(Array(InfraSystem.COUNT)).map((_, i) => InfraSystem[i]);
@@ -31,12 +31,12 @@ export class RepairLogic {
 
     public static readonly tickInterval = 10;
     private static readonly second2firstMap: { [system2Name: number]: ESystem[] } = {
-        [InfraSystem.zeroPointModule]: [ESystem.Maneuver, ESystem.BeamWeapons],
-        [InfraSystem.activeCollector]: [ESystem.Impulse, ESystem.BeamWeapons, ESystem.MissileSystem],
-        [InfraSystem.polaronLimiter]: [ESystem.Maneuver, ESystem.Impulse, ESystem.JumpDrive],
-        [InfraSystem.nanowaveShiftEnergizer]: [ESystem.FrontShield, ESystem.RearShield, ESystem.Reactor],
-        [InfraSystem.coaxialPlasmaCapacitor]: [ESystem.MissileSystem, ESystem.FrontShield],
-        [InfraSystem.dilithiumParticleGenerator]: [ESystem.Warp, ESystem.JumpDrive, ESystem.RearShield],
+        [InfraSystem.switch_A]: [ESystem.Maneuver, ESystem.BeamWeapons],
+        [InfraSystem.switch_B]: [ESystem.Impulse, ESystem.BeamWeapons, ESystem.MissileSystem],
+        [InfraSystem.switch_C]: [ESystem.Maneuver, ESystem.Impulse, ESystem.JumpDrive],
+        [InfraSystem.switch_D]: [ESystem.FrontShield, ESystem.RearShield, ESystem.Reactor],
+        [InfraSystem.switch_E]: [ESystem.MissileSystem, ESystem.FrontShield],
+        [InfraSystem.switch_F]: [ESystem.Warp, ESystem.JumpDrive, ESystem.RearShield],
     };
 
     private readonly systems1: { [systemName: number]: System1 } = {};

@@ -3,12 +3,12 @@ const path = require('path');
 const naming = require('naming');
 
 const infraSystems = [
-    'zeroPointModule',
-    'activeCollector',
-    'polaronLimiter',
-    'nanowaveShiftEnergizer',
-    'coaxialPlasmaCapacitor',
-    'dilithiumParticleGenerator'
+    'switch_A',
+    'switch_B',
+    'switch_C',
+    'switch_D',
+    'switch_E',
+    'switch_F'
 ];
 
 const panelsTab = (sysname) => {
