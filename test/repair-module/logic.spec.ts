@@ -3,7 +3,7 @@ import {InfraSystem, RepairLogic} from "../../src/repair-module/logic";
 import {ESystem} from "../../src/empty-epsilon/model";
 import {match, spy} from 'sinon';
 import {System1, System2, System2Status} from "../../src/repair-module/systems";
-import {approx, getLinearCorruptionDeriviation} from "./test-kit";
+import {approx, getLinearOverloadDeriviation} from "./test-kit";
 import {Subscriber} from "rxjs/Subscriber";
 import {Observable} from "rxjs/Observable";
 
@@ -96,32 +96,32 @@ describe('repair module', () => {
             activeCollectorStatus = repair.getSystem2Status(InfraSystem.switch_B);
         });
 
-        it('its supporting system2s accumulate corruption', async () => {
+        it('its supporting system2s accumulate overload', async () => {
             sideEffects.powerInput.next({system: ESystem.Impulse, power: System1.maxSupportedPower});
-            expect(await getLinearCorruptionDeriviation(activeCollectorStatus, graceFactor)).to.eql(0);
+            expect(await getLinearOverloadDeriviation(activeCollectorStatus, graceFactor)).to.eql(0);
             sideEffects.powerInput.next({system: ESystem.Impulse, power: System1.maxSupportedPower * 2});
-            expect(await getLinearCorruptionDeriviation(activeCollectorStatus, graceFactor)).to.be.gt(0);
+            expect(await getLinearOverloadDeriviation(activeCollectorStatus, graceFactor)).to.be.gt(0);
         }).timeout(10 * 1000);
 
-        it('The corruption rate is linear to the level of extra energy', async () => {
+        it('The overload rate is linear to the level of extra energy', async () => {
             sideEffects.powerInput.next({system: ESystem.Impulse, power: System1.maxSupportedPower * 1.5});
-            expect(await getLinearCorruptionDeriviation(activeCollectorStatus, graceFactor), '1.5 power').to.be.approximately(System2.corruptionPerMillisecond * 0.5, System2.corruptionPerMillisecond * graceFactor);
+            expect(await getLinearOverloadDeriviation(activeCollectorStatus, graceFactor), '1.5 power').to.be.approximately(System2.overloadPerMillisecond * 0.5, System2.overloadPerMillisecond * graceFactor);
             sideEffects.powerInput.next({system: ESystem.Impulse, power: System1.maxSupportedPower * 2});
             await Promise.resolve();
-            expect(await getLinearCorruptionDeriviation(activeCollectorStatus, graceFactor), '2 power').to.be.approximately(System2.corruptionPerMillisecond, System2.corruptionPerMillisecond * graceFactor);
+            expect(await getLinearOverloadDeriviation(activeCollectorStatus, graceFactor), '2 power').to.be.approximately(System2.overloadPerMillisecond, System2.overloadPerMillisecond * graceFactor);
             sideEffects.powerInput.next({system: ESystem.Impulse, power: System1.maxSupportedPower * 2.5});
-            expect(await getLinearCorruptionDeriviation(activeCollectorStatus, graceFactor), '2.5 power').to.be.approximately(System2.corruptionPerMillisecond * 1.5, System2.corruptionPerMillisecond * graceFactor);
+            expect(await getLinearOverloadDeriviation(activeCollectorStatus, graceFactor), '2.5 power').to.be.approximately(System2.overloadPerMillisecond * 1.5, System2.overloadPerMillisecond * graceFactor);
             sideEffects.powerInput.next({system: ESystem.Impulse, power: System1.maxSupportedPower * 3});
-            expect(await getLinearCorruptionDeriviation(activeCollectorStatus, graceFactor), '3 power').to.be.approximately(System2.corruptionPerMillisecond * 2, System2.corruptionPerMillisecond * graceFactor);
+            expect(await getLinearOverloadDeriviation(activeCollectorStatus, graceFactor), '3 power').to.be.approximately(System2.overloadPerMillisecond * 2, System2.overloadPerMillisecond * graceFactor);
         }).timeout(20 * 1000);
     });
 
-    it('When a system2’s corruption level reaches its corruption threshold, it goes into error state', () => {
+    it('When a system2’s overload level reaches its overload threshold, it goes into error state', () => {
         const system2 = repair.getSystem2Status(InfraSystem.switch_E) as System2;
         expect(system2.isError).to.eql(false);
-        repair.addCorruptionToSystem2(InfraSystem.switch_E, system2.corruptionErrorThreshold);
+        repair.addOverloadToSystem2(InfraSystem.switch_E, system2.overloadErrorThreshold);
         expect(system2.isError).to.eql(false);
-        repair.addCorruptionToSystem2(InfraSystem.switch_E, 0.00001);
+        repair.addOverloadToSystem2(InfraSystem.switch_E, 0.00001);
         expect(system2.isError).to.eql(true);
     });
 

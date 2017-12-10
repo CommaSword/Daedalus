@@ -45,16 +45,6 @@ char ReplyBuffer[] = "acknowledged";       // a string to send back
 // An EthernetUDP instance to let us send and receive packets over UDP
 EthernetUDP Udp;
 
-//// state of the panel:
-//enum PanelState {
-//    OFFLINE = 0,
-//    ONLINE_PURE = 1,
-//    ONLINE = 2,
-//    ONLINE_ERROR = 3
-//};
-//PanelState panelState = OFFLINE;
-
-
 // online state of the panel
 boolean online = 0;
 
@@ -99,15 +89,15 @@ void loop() {
     // Read the state of the button
     int buttonOffVal = digitalRead(buttonOff);
     int buttonOnVal = digitalRead(buttonOn);
-    
+
     if (buttonOffVal == LOW){
-        
+
         Serial.println("Button off is pressed");
         Serial.println(Udp.remoteIP());
         OSCMessage msgOut("/d/repairs/switch_A/shut-down");
         Udp.beginPacket(Udp.remoteIP(), serverPort);
         msgOut.send(Udp);
-        Udp.endPacket(); 
+        Udp.endPacket();
         if (msgOut.hasError()){
           Serial.println(msgOut.hasError());
         }
@@ -115,20 +105,20 @@ void loop() {
     }
 
     if (buttonOnVal == HIGH){
-        
+
         Serial.println("Button on is pressed");
         Serial.println(Udp.remoteIP());
         OSCMessage msgOut("/d/repairs/switch_A/start-up");
         Udp.beginPacket(Udp.remoteIP(), serverPort);
         msgOut.send(Udp);
-        Udp.endPacket(); 
+        Udp.endPacket();
         if (msgOut.hasError()){
           Serial.println(msgOut.hasError());
         }
         msgOut.empty();
     }
-  
-    
+
+
     // if there's data available, read a packet
     int packetSize = Udp.parsePacket();
     if (packetSize) {
@@ -143,7 +133,7 @@ void loop() {
             //  printMessageData(msg);
             msg.dispatch("/d/repairs/switch_A/is-online", handleIsOnline);
             msg.dispatch("/d/repairs/switch_A/is-error", handleIsError);
-            msg.dispatch("/d/repairs/switch_A/corruption", handleCorruption);
+            msg.dispatch("/d/repairs/switch_A/overload", handleOverload);
         }
     }
 
@@ -211,9 +201,9 @@ void handleIsError(OSCMessage &msg) {
     Serial.println(msg.getInt(0));
 }
 
-void handleCorruption(OSCMessage &msg) {
+void handleOverload(OSCMessage &msg) {
     load = msg.getFloat(0);
-    Serial.print("corruption : ");
+    Serial.print("overload : ");
     Serial.println(msg.getFloat(0));
 }
 

@@ -76,7 +76,7 @@ const panelsTab = (sysname) => {
             "id": `${label}_led_3`,
             "width": `auto`,
             "height": `auto`,
-            "label": `PURE`,
+            "label": `STABLE`,
             "color": `blue`,
             "css": ``,
             "widgetId": ``,
@@ -87,7 +87,7 @@ const panelsTab = (sysname) => {
             "logScale": false,
             "value": ``,
             "preArgs": [],
-            "address": `${address}/corruption`
+            "address": `${address}/overload`
         },
         {
             "type": `push`,
@@ -131,10 +131,10 @@ const panelsTab = (sysname) => {
                 "type": "visualizer",
                 "top": 290,
                 "left": 70,
-                "id": `${label}_corruption`,
+                "id": `${label}_overload`,
                 "width": 360,
                 "height": "auto",
-                "label": "corruption",
+                "label": "overload",
                 "color": "auto",
                 "css": "",
                 "widgetId": "",
@@ -148,7 +148,7 @@ const panelsTab = (sysname) => {
                 "smooth": false,
                 "pips": false,
                 "value": "",
-                "address": `${address}/corruption`,
+                "address": `${address}/overload`,
                 "preArgs": []
             },
             {
@@ -174,7 +174,7 @@ const panelsTab = (sysname) => {
                 "type": "fader",
                 "top": 290,
                 "left": 430,
-                "id": `${label}_corruption_threshold`,
+                "id": `${label}_overload_threshold`,
                 "width": "auto",
                 "height": 200,
                 "label": "threshold",
@@ -193,7 +193,7 @@ const panelsTab = (sysname) => {
                 "pips": false,
                 "dashed": false,
                 "value": "",
-                "address": `${address}/corruption-threshold`,
+                "address": `${address}/overload-threshold`,
                 "preArgs": [],
                 "compact": true,
                 "input": false

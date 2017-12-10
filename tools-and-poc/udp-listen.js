@@ -5,7 +5,7 @@ const message = Buffer.from('Hello world');
 server.on('listening', function () {
     var address = server.address();
     console.log('UDP Server listening on ' + address.address + ":" + address.port);
-    server.send(message, 8888, "10.0.0.45", (err) => {
+    server.send(message, 57122, "127.0.0.1", (err) => {
         console.log('UDP sent');
     });
 

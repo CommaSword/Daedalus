@@ -29,6 +29,7 @@ export class OscDriver {
                 return o;
             })
             .subscribe(msg => this.port.send(msg));
+//        this.port.on('message', (m: OscMessage) => console.log('#####MSG', m.address));
         this.inbox = Observable.fromEvent(this.port, 'message');
         console.info(`OSC server listening on ${options.localAddress}:${options.localPort}, sending to ${options.remoteAddress}:${options.remotePort}`)
     }

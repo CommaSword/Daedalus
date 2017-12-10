@@ -41,7 +41,7 @@ end
 if value > 0 then
     local newHeat = ship:getSystemHeat(system) + (value * ${heat_per_second} * delta)
     if newHeat > 1 then
-        newHeat = 1 ${
+        ${
 /*
 // Heat damage is specified as damage per second while overheating.
 // Calculate the amount of overheat back to a time, and use that to
@@ -52,6 +52,7 @@ if value > 0 then
             newHealth = ${min_reactor_health}
         end
         ship:setSystemHealth(system, math.max(-1, newHealth))
+        newHeat = 1 
     end
     ship:setSystemHeat(system, newHeat)
 end
