@@ -145,7 +145,7 @@ describe('repair module', () => {
             expect(sideEffects.setRepairRate, `after 1st error`).to.have.been.calledWith(ESystem.JumpDrive, approx(System1.repairRate * 0.5));
             sideEffects.setRepairRate.reset();
             repair.setError(InfraSystem.switch_C);
-            expect(sideEffects.setRepairRate, `after 2nd error`).to.have.been.calledWith(ESystem.JumpDrive, approx(System1.repairRate * 0.5));
+            expect(sideEffects.setRepairRate, `after 2nd error`).to.have.been.calledWith(ESystem.JumpDrive, approx(System1.repairRate * 0.2));
             sideEffects.setRepairRate.reset();
             repair.shutdownSystem2(InfraSystem.switch_F);
             repair.shutdownSystem2(InfraSystem.switch_C);
