@@ -20,7 +20,7 @@ We replace the existing repair mechanic with a custom CLI screen (that also hand
 
 Overloaded switches produce extra heat to all their supported system until reset. resetting a switchboard takes precious time, and during that time there are severe penalties to the bridge systems supported by the power switch (very low cap on power and repair speed) so it becomes a major tactical concern. 
 
-In our LARP the switchboards are implemented by plastic electricity boards (based on arduino) located in various locations around the ship. however any O compatible netwoSCrk endpoint will do (we're using [open-stage-control](https://github.com/jean-emmanuel/open-stage-control) for the backoffice and the test client and it's great)
+In our LARP the switchboards are implemented by plastic electricity boards (based on arduino) located in various locations around the ship. however any OSC compatible network endpoint will do (we're using [open-stage-control](https://github.com/jean-emmanuel/open-stage-control) for the backoffice and the test client and it's great)
 
 ## product documentation
 can be found in [the excalibur entries folder](./resources/entries)
