@@ -10,7 +10,8 @@ in addition, Copy the files in this project's `lua` directory into empty epsilon
  
 ### what to expect
 TL;DR : a mess
-Daedalus hosts the latest iteration of software written to support a sci-fi LARP we've been working on for a long while now. Its first test-run is due in two weeks, so the current state of the project is a mess (documentation, test coverage and stability etc.) as we sprint towards the minimum viable product that is game-ready. After the test run, I plan to  separately productize the different features while adding features for the next run. there's a LOT to do in that area: some code can migrate to LUA scripts, configuration can be automated, concerns separated, etc. 
+
+Daedalus hosts the latest iteration of software written to support a sci-fi LARP we've been working on for a long while now. Its first test-run is due very soon, so the current state of the project is a mess (documentation, test coverage and stability etc.) as we sprint towards the minimum viable product that is game-ready. After the test run, I plan to  separately productize the different features while adding features for the next run. there's a LOT to do in that area: some code can migrate to LUA scripts, configuration can be automated, concerns separated, etc. 
 
 ### the generic API
 the big reusable thing here is that Daedalus exposes an [OSC](http://opensoundcontrol.org/osc) network API to the empty-epsilon server, both input and output. It's open-ended, so you can easily use standard [OSC endpoints](https://github.com/amir-arad/awesome-osc) to extend the game's UI. 
