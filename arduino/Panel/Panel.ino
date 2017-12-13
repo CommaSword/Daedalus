@@ -1,7 +1,6 @@
 /*
  Panel
  */
-
 #include <SPI.h>         // needed for Arduino versions later than 0018
 #include <Ethernet2.h>
 #include <EthernetUdp2.h>     // UDP library from: bjoern@cs.stanford.edu 12/30/2008
@@ -45,21 +44,21 @@ char ReplyBuffer[] = "acknowledged";       // a string to send back
 // An EthernetUDP instance to let us send and receive packets over UDP
 EthernetUDP Udp;
 
-// online state of the panel
-boolean online = 0;
-
-// mode of the panel
-boolean error = 0;
-
-// load of the panel
-float load = 0;
+boolean online = 0; // online state of the panel
+boolean error = 0; // mode of the panel
+float load = 0; // load of the panel
 
 //state of buttons/jack
-long btnDnTime; // time the button was pressed down
-long btnUpTime; // time the button was released
-boolean ignoreUp = false; // whether to ignore the button release because the click+hold was triggered
+long timeSinceOffPress; // time the button was pressed down
+int defaultTimeToWait = 30000; // 30 sec 
+boolean ignoreAll = false; // whether to ignore every other button press and command
+long flickerTime;
 
 int jackIn = 0;
+
+// LED variables
+boolean ledVal1 = false; // state of LED 1
+boolean ledVal2 = false; // state of LED 2
 
 void setup() {
     Serial.begin(9600);
@@ -89,56 +88,68 @@ void loop() {
     // Read the state of the button
     int buttonOffVal = digitalRead(buttonOff);
     int buttonOnVal = digitalRead(buttonOn);
-
-    if (buttonOffVal == LOW){
-
-        Serial.println("Button off is pressed");
-        Serial.println(Udp.remoteIP());
-        OSCMessage msgOut("/d/repairs/switch_A/shut-down");
-        Udp.beginPacket(Udp.remoteIP(), serverPort);
-        msgOut.send(Udp);
-        Udp.endPacket();
-        if (msgOut.hasError()){
-          Serial.println(msgOut.hasError());
+    if (ignoreAll == true){
+        while ((millis() - timeSinceOffPress) > defaultTimeToWait){
+            
+            if ((millis() - flickerTime) > long(debounce)){
+                eventFlicker();
+                flickerTime = millis();
+            }
         }
-        msgOut.empty();
-    }
-
-    if (buttonOnVal == HIGH){
-
-        Serial.println("Button on is pressed");
-        Serial.println(Udp.remoteIP());
-        OSCMessage msgOut("/d/repairs/switch_A/start-up");
-        Udp.beginPacket(Udp.remoteIP(), serverPort);
-        msgOut.send(Udp);
-        Udp.endPacket();
-        if (msgOut.hasError()){
-          Serial.println(msgOut.hasError());
+        ignoreAll = false;
+    }else{
+        if (online == 1){ // We're online
+            if (buttonOffVal == LOW){
+                Serial.println("Button off is pressed");
+                timeSinceOffPress = millis();
+                sendMessage("/d/repairs/switch_A/shut-down");
+                ignoreAll = true;
+            }
+        }else{ // Offline
+            if (buttonOnVal == HIGH){
+                Serial.println("Button on is pressed");
+                sendMessage("/d/repairs/switch_A/start-up");
+            }
         }
-        msgOut.empty();
-    }
 
-
-    // if there's data available, read a packet
-    int packetSize = Udp.parsePacket();
-    if (packetSize) {
-        //  printPacketMetadata(packetSize);
-        while (packetSize--)
-            msg.fill(Udp.read());
-        if (msg.hasError()) {
-            error = msg.getError();
-            Serial.print("************ mesage error : ");
-            Serial.println(error);
-        } else {
-            //  printMessageData(msg);
-            msg.dispatch("/d/repairs/switch_A/is-online", handleIsOnline);
-            msg.dispatch("/d/repairs/switch_A/is-error", handleIsError);
-            msg.dispatch("/d/repairs/switch_A/overload", handleOverload);
+        // if there's data available, read a packet
+        int packetSize = Udp.parsePacket();
+        if (packetSize) {
+            //  printPacketMetadata(packetSize);
+            while (packetSize--)
+                msg.fill(Udp.read());
+            if (msg.hasError()) {
+                error = msg.getError();
+                Serial.print("************ mesage error : ");
+                Serial.println(error);
+            } else {
+                //  printMessageData(msg);
+                msg.dispatch("/d/repairs/switch_A/is-online", handleIsOnline);
+                msg.dispatch("/d/repairs/switch_A/is-error", handleIsError);
+                msg.dispatch("/d/repairs/switch_A/overload", handleOverload);
+            }
         }
+        
+        applyStateToLeds();
+        delay(10);
     }
+}
 
-    applyStateToLeds();
-    delay(10);
+void eventFlicker() {
+    ledVal1 = !ledVal1;
+    digitalWrite(greenLed, ledVal1);
+ }
+
+void sendMessage(char msg[]){
+    Serial.println(Udp.remoteIP());
+    OSCMessage msgOut(msg);
+    Udp.beginPacket(Udp.remoteIP(), serverPort);
+    msgOut.send(Udp);
+    Udp.endPacket();
+    if (msgOut.hasError()){
+      Serial.println(msgOut.hasError());
+    }
+    msgOut.empty();
 }
 
 void printPacketMetadata(int packetSize) {
