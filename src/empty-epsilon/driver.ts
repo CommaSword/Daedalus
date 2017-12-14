@@ -199,9 +199,7 @@ return {${getQueue.map(req => req.luaJSONFields).join(',')}};`;
     }
 
     private requestFlush() {
-        /*if (Object.keys(this.pendingQueries).length >= HttpDriver.maxNumberOfResults) {
-            this.flush();
-        } else */if (!this.isFlushing) {
+        if (!this.isFlushing) {
             setTimeout(this.flush, this.timeBetweenFlushes);
             this.isFlushing = true;
         }

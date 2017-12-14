@@ -7,64 +7,61 @@
 
 #include <OSCMessage.h>        // https://github.com/CNMAT/OSC
 
+// print debug messages
+// #define DEBUG
+
+// ID of this switch
+#define ID "switch_A"
+
 //leds
 #define greenLed 4
 #define yellowLed 5
 #define blueLed 6
 //buttons
-#define buttonOn 8
 #define buttonOff 7
-//button functionality
-#define debounce 20 // ms debounce period to prevent flickering when pressing or releasing the button
-#define holdTime 2000 // ms hold period: how long to wait for press+hold event
+#define buttonOn 8
 //jack
 #define jack 9
+
 // server data
 #define serverPort 57121
 
-// Enter a MAC address and IP address for your controller below.
-// The IP address will be dependent on your local network:
-byte mac[] = {
-        0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
-};
+#define SHUTDOWN_DELAY 5000
+#define BLINK_INTERVAL 1000
+#define BLINK_STATE ((millis() / BLINK_INTERVAL) % 2)             // ledState used to set the LED
 
-IPAddress ip(192,168,1,10);
+#define localPort 57122
 
-unsigned int localPort = 57122;      // local port to listen on
+#ifdef DEBUG
+#define PRINT(...)  Serial.print(__VA_ARGS__)
+#define PRINT_LN(...)  Serial.println(__VA_ARGS__)
+#else
+#define PRINT(...)
+#define PRINT_LN(...)
+#endif
+// TODO ifdef serial port
+// TODO dhcp, mac address from chip
+
+byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
+
+char packetBuffer[UDP_TX_PACKET_MAX_SIZE]; //buffer to hold incoming packet,
+
 
 //the Arduino's IP
-IPAddress serverIp(0, 0, 0, 0);
-
-// buffers for receiving and sending data
-char packetBuffer[UDP_TX_PACKET_MAX_SIZE]; //buffer to hold incoming packet,
-char addressBuffer[100]; //buffer to hold incoming packet,
-
-char ReplyBuffer[] = "acknowledged";       // a string to send back
+IPAddress serverIp(255, 255, 255, 255);
 
 // An EthernetUDP instance to let us send and receive packets over UDP
-EthernetUDP Udp;
+EthernetUDP udp;
 
-boolean online = 0; // online state of the panel
+// STATE FLAGS
+boolean online = 0; // online state of the switch
 boolean error = 0; // mode of the panel
 float load = 0; // load of the panel
+unsigned long timeSinceOffPress = 0;        // will store last time LED was updated
 
-//state of buttons/jack
-long timeSinceOffPress; // time the button was pressed down
-int defaultTimeToWait = 30000; // 30 sec 
-boolean ignoreAll = false; // whether to ignore every other button press and command
-long flickerTime;
-
-int jackIn = 0;
-
-// LED variables
-boolean ledVal1 = false; // state of LED 1
-boolean ledVal2 = false; // state of LED 2
+OSCMessage msg;
 
 void setup() {
-    Serial.begin(9600);
-    // start the Ethernet and UDP:
-    Ethernet.begin(mac, ip);
-    Udp.begin(localPort);
 
     //set led pins as output
     pinMode(greenLed, OUTPUT);
@@ -72,154 +69,155 @@ void setup() {
     pinMode(blueLed, OUTPUT);
 
     //set button and jack pins as input
-
     pinMode(buttonOn, INPUT);
     pinMode(buttonOff, INPUT);
     pinMode(jack, INPUT);
-    Udp.remoteIP() = serverIp;
+
+    // reset leds state
     applyStateToLeds();
+
+#ifdef DEBUG
+    Serial.begin(9600);
+#endif
+
+    PRINT_LN("loading...");
+
+    if (Ethernet.begin(mac) == 0) {
+        PRINT_LN("Failed to configure Ethernet using DHCP");
+        // no point in carrying on, so do nothing forevermore:
+        for (;;);
+    }
+    PRINT("My IP address: ");
+    for (byte thisByte = 0; thisByte < 4; thisByte++) {
+        // print the value of each byte of the IP address:
+        PRINT(Ethernet.localIP()[thisByte], DEC);
+        PRINT(".");
+    }
+    // start the Ethernet and UDP:
+    // Ethernet.begin(mac, ip);
+    udp.begin(localPort);
+
+    //PRINT("server is at ");
+    //PRINT_LN(Ethernet.localIP());
+    // udp.remoteIP() = serverIp;
 }
 
 
-void loop() {
-    OSCErrorCode error;
-    //make an empty message to fill with the incoming data
-    OSCMessage msg;
-    // Read the state of the button
-    int buttonOffVal = digitalRead(buttonOff);
-    int buttonOnVal = digitalRead(buttonOn);
-    if (ignoreAll == true){
-        while ((millis() - timeSinceOffPress) > defaultTimeToWait){
-            
-            if ((millis() - flickerTime) > long(debounce)){
-                eventFlicker();
-                flickerTime = millis();
-            }
-        }
-        ignoreAll = false;
-    }else{
-        if (online == 1){ // We're online
-            if (buttonOffVal == LOW){
-                Serial.println("Button off is pressed");
-                timeSinceOffPress = millis();
-                sendMessage("/d/repairs/switch_A/shut-down");
-                ignoreAll = true;
-            }
-        }else{ // Offline
-            if (buttonOnVal == HIGH){
-                Serial.println("Button on is pressed");
-                sendMessage("/d/repairs/switch_A/start-up");
-            }
-        }
+void handlePacket(int packetSize) {
+    // PRINT_LN(packetSize);
+    serverIp = udp.remoteIP();
+    //  printPacketMetadata(packetSize);
 
-        // if there's data available, read a packet
-        int packetSize = Udp.parsePacket();
-        if (packetSize) {
-            //  printPacketMetadata(packetSize);
-            while (packetSize--)
-                msg.fill(Udp.read());
-            if (msg.hasError()) {
-                error = msg.getError();
-                Serial.print("************ mesage error : ");
-                Serial.println(error);
-            } else {
-                //  printMessageData(msg);
-                msg.dispatch("/d/repairs/switch_A/is-online", handleIsOnline);
-                msg.dispatch("/d/repairs/switch_A/is-error", handleIsError);
-                msg.dispatch("/d/repairs/switch_A/overload", handleOverload);
-            }
+    // read ahead first 2 characters to decide if this message should be parsed
+    packetSize = packetSize - 2;
+    udp.read(packetBuffer, 2);
+    if (packetBuffer[1] == 'd') {
+        msg.fill(packetBuffer, 2);
+        while (packetSize--) {
+            msg.fill(udp.read());
         }
-        
-        applyStateToLeds();
-        delay(10);
+        if (msg.hasError()) {
+            OSCErrorCode errorCode = msg.getError();
+            PRINT("************ mesage error code : ");
+            PRINT_LN(errorCode);
+        } else {
+            //   printMessageData(msg);
+            msg.dispatch("/d/repairs/" ID "/is-online", handleIsOnline);
+            msg.dispatch("/d/repairs/" ID "/is-error", handleIsError);
+            msg.dispatch("/d/repairs/" ID "/overload", handleOverload);
+        }
+        msg.empty();
     }
 }
 
-void eventFlicker() {
-    ledVal1 = !ledVal1;
-    digitalWrite(greenLed, ledVal1);
- }
+void handleButtons() {
+    // Read the state of the button
+    int buttonOffVal = digitalRead(buttonOff);
+    int buttonOnVal = digitalRead(buttonOn);
 
-void sendMessage(char msg[]){
-    Serial.println(Udp.remoteIP());
+    if (online) {
+        if (timeSinceOffPress) { // during shutdown
+            if (millis() > SHUTDOWN_DELAY + timeSinceOffPress) {
+                PRINT_LN("sending shutdown command");
+                sendMessage("/d/repairs/" ID "/shut-down");
+            }
+        } else if (buttonOffVal == LOW) {
+            PRINT_LN("Button OFF is pressed");
+            timeSinceOffPress = millis();
+        }
+    } else { // Offline
+        if (timeSinceOffPress) {
+            PRINT_LN("clear shutdown state");
+            timeSinceOffPress = 0;
+        }
+        if (buttonOnVal == HIGH) {
+            PRINT_LN("Button ON is pressed");
+            sendMessage("/d/repairs/" ID "/start-up");
+        }
+    }
+}
+
+void loop() {
+    //make an empty message to fill with the incoming data
+
+    // if there's data available, read a packet
+    int packetSize = udp.parsePacket();
+    if (packetSize) {
+        PRINT_LN("!");
+    }
+    while (packetSize) {
+        handlePacket(packetSize);
+        // delay(1);
+        packetSize = udp.parsePacket();
+    }
+
+    handleButtons();
+
+    applyStateToLeds();
+
+    PRINT("Zz");
+    delay(10);
+}
+
+void sendMessage(char msg[]) {
+    PRINT_LN(udp.remoteIP());
     OSCMessage msgOut(msg);
-    Udp.beginPacket(Udp.remoteIP(), serverPort);
-    msgOut.send(Udp);
-    Udp.endPacket();
-    if (msgOut.hasError()){
-      Serial.println(msgOut.hasError());
+    udp.beginPacket(udp.remoteIP(), serverPort);
+    msgOut.send(udp);
+    udp.endPacket();
+    if (msgOut.hasError()) {
+        PRINT_LN(msgOut.hasError());
     }
     msgOut.empty();
 }
 
-void printPacketMetadata(int packetSize) {
-    Serial.print("Received packet of size ");
-    Serial.println(packetSize);
-    Serial.print("From ");
-    IPAddress remote = Udp.remoteIP();
-    for (int i = 0; i < 4; i++) {
-        Serial.print(remote[i], DEC);
-        if (i < 3) {
-            Serial.print(".");
-        }
-    }
-    Serial.print(", port ");
-    Serial.println(Udp.remotePort());
-}
-
-void printMessageData(OSCMessage &msg) {
-    Serial.println("message!");
-    Serial.print("Address ");
-    msg.getAddress(addressBuffer);
-    Serial.println(addressBuffer);
-    Serial.print("Size: ");
-    Serial.println(msg.size());
-
-    for (int i = 0; i < msg.size(); i++) {
-        char type = msg.getType(i);
-
-        Serial.print(i);
-        Serial.print(" is ");
-        Serial.println(type);
-        //returns true if the data in the first position is an integer
-        if (msg.isFloat(i)) {
-            //get that integer
-            int data = msg.getFloat(i);
-
-            Serial.print(i);
-            Serial.print(" is float: ");
-            Serial.println(data);
-        } else if (msg.isString(i)) {
-            //get that string
-            msg.getString(i, addressBuffer, 100);
-
-            Serial.print(i);
-            Serial.print(" is string: ");
-            Serial.println(addressBuffer);
-        }
-    }
-}
 
 void handleIsOnline(OSCMessage &msg) {
+    // printMessageData(msg);
+
     online = msg.getInt(0) == 1;
-    Serial.print("online : ");
-    Serial.println(msg.getInt(0));
+    PRINT("online : ");
+    PRINT_LN(msg.getInt(0));
 }
 
 void handleIsError(OSCMessage &msg) {
+    //     printMessageData(msg);
+
     error = msg.getInt(0) == 1;
-    Serial.print("error : ");
-    Serial.println(msg.getInt(0));
+    PRINT("error : ");
+    PRINT_LN(msg.getInt(0));
 }
 
 void handleOverload(OSCMessage &msg) {
+    //       printMessageData(msg);
+
     load = msg.getFloat(0);
-    Serial.print("overload : ");
-    Serial.println(msg.getFloat(0));
+    PRINT("overload : ");
+    PRINT_LN(msg.getFloat(0));
 }
 
 void applyStateToLeds() {
-    digitalWrite(greenLed, online ? HIGH : LOW);
+    digitalWrite(greenLed, (online && (!timeSinceOffPress || BLINK_STATE)) ? HIGH : LOW);
     digitalWrite(yellowLed, error ? HIGH : LOW);
-    digitalWrite(blueLed, load > 0.0 && !error ? LOW : HIGH);
+    digitalWrite(blueLed, (!error && (load <= 0.0001)) ? HIGH : LOW);
 }

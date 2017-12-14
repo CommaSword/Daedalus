@@ -1,0 +1,59 @@
+
+
+void printPacketMetadata(int packetSize) {
+    PRINT("Received packet of size ");
+    PRINT_LN(packetSize);
+    PRINT("From ");
+    IPAddress remote = udp.remoteIP();
+    for (int i = 0; i < 4; i++) {
+        PRINT(remote[i], DEC);
+        if (i < 3) {
+            PRINT(".");
+        }
+    }
+    PRINT(", port ");
+    PRINT_LN("255.255.255.255");//udp.remotePort());
+}
+
+void printMessageData(OSCMessage &msg) {
+    char charBuffer[100]; //buffer to hold incoming strings,
+
+    PRINT_LN("message!");
+    PRINT("Address ");
+    msg.getAddress(charBuffer);
+    PRINT_LN(charBuffer);
+    PRINT("Size: ");
+    PRINT_LN(msg.size());
+
+    for (int i = 0; i < msg.size(); i++) {
+        char type = msg.getType(i);
+
+        PRINT(i);
+        PRINT(" is ");
+        PRINT_LN(type);
+        //returns true if the data in the first position is an integer
+        if (msg.isInt(i)) {
+            //get that integer
+            int data = msg.getInt(i);
+
+            PRINT(i);
+            PRINT(" is int: ");
+            PRINT_LN(data);
+        } else if (msg.isFloat(i)) {
+            //get that integer
+            float data = msg.getFloat(i);
+
+            PRINT(i);
+            PRINT(" is float: ");
+            PRINT_LN(data);
+        } else if (msg.isString(i)) {
+            //get that string
+            msg.getString(i, charBuffer, 100);
+
+            PRINT(i);
+            PRINT(" is string: ");
+            PRINT_LN(charBuffer);
+        }
+    }
+}
+
