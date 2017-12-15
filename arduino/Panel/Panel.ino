@@ -8,7 +8,7 @@
 #include <OSCMessage.h>        // https://github.com/CNMAT/OSC
 
 // print debug messages
-// #define DEBUG
+#define DEBUG
 
 // ID of this switch
 #define ID "switch_A"
@@ -26,7 +26,7 @@
 // server data
 #define serverPort 57121
 
-#define SHUTDOWN_DELAY 5000
+#define SHUTDOWN_DELAY 30000
 #define BLINK_INTERVAL 1000
 #define BLINK_STATE ((millis() / BLINK_INTERVAL) % 2)             // ledState used to set the LED
 
@@ -59,7 +59,22 @@ boolean error = 0; // mode of the panel
 float load = 0; // load of the panel
 unsigned long timeSinceOffPress = 0;        // will store last time LED was updated
 
-OSCMessage msg;
+void lightTest() {
+
+    for (int i = 0; i < 5; i++) {
+        delay(i * 100);
+        digitalWrite(greenLed, HIGH);
+        delay(i * 100);
+        digitalWrite(yellowLed, HIGH);
+        delay(i * 100);
+        digitalWrite(blueLed, HIGH);
+        digitalWrite(greenLed, LOW);
+        delay(i * 100);
+        digitalWrite(yellowLed, LOW);
+        delay(i * 100);
+        digitalWrite(blueLed, LOW);
+    }
+}
 
 void setup() {
 
@@ -73,6 +88,7 @@ void setup() {
     pinMode(buttonOff, INPUT);
     pinMode(jack, INPUT);
 
+    lightTest();
     // reset leds state
     applyStateToLeds();
 
@@ -93,18 +109,38 @@ void setup() {
         PRINT(Ethernet.localIP()[thisByte], DEC);
         PRINT(".");
     }
-    // start the Ethernet and UDP:
-    // Ethernet.begin(mac, ip);
+    // start the Ethernet and UDP
     udp.begin(localPort);
-
-    //PRINT("server is at ");
-    //PRINT_LN(Ethernet.localIP());
-    // udp.remoteIP() = serverIp;
 }
 
+OSCMessage msg;
+
+void loop() {
+    //make an empty message to fill with the incoming data
+
+    // if there's data available, read a packet
+    int packetSize = udp.parsePacket();
+
+    if (packetSize) {
+        PRINT_LN("");
+        // read all pending packets
+        while (packetSize) {
+            PRINT("!");
+            handlePacket(packetSize);
+            // delay(1);
+            packetSize = udp.parsePacket();
+        }
+    }
+
+    handleButtons();
+
+    applyStateToLeds();
+
+    PRINT("Zz");
+    delay(10);
+}
 
 void handlePacket(int packetSize) {
-    // PRINT_LN(packetSize);
     serverIp = udp.remoteIP();
     //  printPacketMetadata(packetSize);
 
@@ -157,29 +193,8 @@ void handleButtons() {
     }
 }
 
-void loop() {
-    //make an empty message to fill with the incoming data
-
-    // if there's data available, read a packet
-    int packetSize = udp.parsePacket();
-    if (packetSize) {
-        PRINT_LN("!");
-    }
-    while (packetSize) {
-        handlePacket(packetSize);
-        // delay(1);
-        packetSize = udp.parsePacket();
-    }
-
-    handleButtons();
-
-    applyStateToLeds();
-
-    PRINT("Zz");
-    delay(10);
-}
-
 void sendMessage(char msg[]) {
+    PRINT("sending to ");
     PRINT_LN(udp.remoteIP());
     OSCMessage msgOut(msg);
     udp.beginPacket(udp.remoteIP(), serverPort);
@@ -194,23 +209,20 @@ void sendMessage(char msg[]) {
 
 void handleIsOnline(OSCMessage &msg) {
     // printMessageData(msg);
-
     online = msg.getInt(0) == 1;
     PRINT("online : ");
     PRINT_LN(msg.getInt(0));
 }
 
 void handleIsError(OSCMessage &msg) {
-    //     printMessageData(msg);
-
+    // printMessageData(msg);
     error = msg.getInt(0) == 1;
     PRINT("error : ");
     PRINT_LN(msg.getInt(0));
 }
 
 void handleOverload(OSCMessage &msg) {
-    //       printMessageData(msg);
-
+    // printMessageData(msg);
     load = msg.getFloat(0);
     PRINT("overload : ");
     PRINT_LN(msg.getFloat(0));

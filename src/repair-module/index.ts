@@ -11,7 +11,7 @@ export class RepairModule {
     private subscription: Subscription;
     private readonly logic: RepairLogic;
     private readonly repairDriver: RepairDriver;
-    private pulse: Observable<any> = Observable.interval(477);
+    private pulse: Observable<any> = Observable.interval(1111);
 
     constructor(eeDriver: EEDriverWithHooks, private oscDriver: OscDriver) {
         this.repairDriver = new RepairDriver(eeDriver, this.pulse);
