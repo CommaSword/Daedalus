@@ -23,10 +23,14 @@ export class System1 implements System1Status {
     }
 
     get repairRate() {
-        if (this.supportingSystems.every(sys => !sys.isError)) {
-            return System1.repairRate;
-        } else {
-            return 0.5 * System1.repairRate;
+        const onlineNoErrorSystems = this.supportingSystems.filter(sys => sys.isOnline && !sys.isError).length;
+        switch(onlineNoErrorSystems){
+            case 0:
+                return System1.repairRate * 0.2;
+            case 1:
+                return System1.repairRate * 0.5;
+            default:
+                return System1.repairRate;
         }
     }
 
@@ -61,41 +65,42 @@ export interface System2Status {
     readonly id: InfraSystem;
     readonly isError: boolean;
     readonly isOnline: boolean;
-    readonly corruption: number;
-    readonly corruptionErrorThreshold: number;
+    readonly overload: number;
+    readonly overloadErrorThreshold: number;
 }
 
 export class System2 implements System2Status {
     // say it takes ~3 minutes of ~200% power to cause an error on average
-    // so it should take twice to reach maximum corruption (1).
-    // so corruption per milli :
+    // so it should take twice to reach maximum overload (1).
+    // so overload per milli :
     // 1 / 2 * 3 * 60 * 1000  = 1 / 180000 ~= 0.0000055
-    public static readonly corruptionPerMillisecond = 0.0000055;
-    public static readonly maxCorruption = 1;
+    public static readonly overloadPerMillisecond = 0.0000055;
+    public static readonly maxOverload = 1;
 
     public readonly name: string;
     public readonly supportedSystems: System1[] = [];
     public isError: boolean;
     public isOnline: boolean;
-    public corruption: number;
-    public corruptionErrorThreshold: number;
+    public overload: number;
+    public overloadErrorThreshold: number;
 
     constructor(public id: InfraSystem) {
         this.name = InfraSystem[id];
         this.shutdown();
+        this.startup();
     }
 
-    addCorruption(delta: number) {
+    addOverload(delta: number) {
         if (this.isOnline) {
-            this.corruption = this.corruption + delta;
+            this.overload = Math.min(System2.maxOverload, this.overload + delta);
         }
     }
 
     shutdown() {
         this.isOnline = false;
         this.isError = false;
-        this.corruption = 0;
-        this.corruptionErrorThreshold = Math.max(Math.random() * System2.maxCorruption, System2.corruptionPerMillisecond * 1000);
+        this.overload = 0;
+        this.overloadErrorThreshold = Math.max(Math.random() * System2.maxOverload, System2.overloadPerMillisecond * 1000);
     }
 
     startup() {

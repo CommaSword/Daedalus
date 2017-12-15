@@ -35,7 +35,7 @@ export class FugaziServices {
         const builder = new fugazi.ConnectorBuilder();
         builder.server()
         //	.host('0.0.0.0')
-            .folder(parse(resolve.sync('@fugazi/webclient/index.html')).dir)
+            .folder(parse(resolve.sync('daedalus-fugazi-webclient/index.html')).dir)
             .session({keygrip: ['abracadabra!']});
 
         initExcalibur(builder.module("excalibur"), this.entries);

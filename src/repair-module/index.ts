@@ -11,7 +11,7 @@ export class RepairModule {
     private subscription: Subscription;
     private readonly logic: RepairLogic;
     private readonly repairDriver: RepairDriver;
-    private pulse: Observable<any> = Observable.interval(500);
+    private pulse: Observable<any> = Observable.interval(1111);
 
     constructor(eeDriver: EEDriverWithHooks, private oscDriver: OscDriver) {
         this.repairDriver = new RepairDriver(eeDriver, this.pulse);
@@ -29,6 +29,7 @@ export class RepairModule {
                 const systemName = addressArr[3].toLowerCase();
                 const s2 = lowercaseInfraSystemNames.indexOf(systemName);
                 if (~s2) {
+                 //   console.log('*********MSG:', message.address);
                     switch (command) {
                         case 'error':
                             this.logic.setError(s2);
@@ -39,13 +40,13 @@ export class RepairModule {
                         case 'shut-down':
                             this.logic.shutdownSystem2(s2);
                             break;
-                        case 'corruption-threshold':
-                            const corruptionThreshold = (message.args as [MetaArgument])[0].value as number;
-                            this.logic.setCorruptionThreshold(s2, corruptionThreshold);
+                        case 'overload-threshold':
+                            const overloadThreshold = (message.args as [MetaArgument])[0].value as number;
+                            this.logic.setOverloadThreshold(s2, overloadThreshold);
                             break;
-                        case 'corruption':
-                            const corruption = (message.args as [MetaArgument])[0].value as number;
-                            this.logic.setCorruption(s2, corruption);
+                        case 'overload':
+                            const overload = (message.args as [MetaArgument])[0].value as number;
+                            this.logic.setOverload(s2, overload);
                             break;
                         default:
                             console.error('unknown command', command);
@@ -62,19 +63,19 @@ export class RepairModule {
     private broadcastSystemsState() {
         this.subscription = this.pulse.switchMap<any, OscMessage>(_ => {
             const result: OscMessage[] = [];
-            for (let s1 = 0; s1 < ESystem.COUNT; s1++) {
-                const system1 = this.logic.getSystem1Status(s1);
-                result.push({
-                    address: `/d/repairs/${ESystem[s1]}/repair-rate`,
-                    args: {type: 'f', value: system1.repairRate}
-                }, {
-                    address: `/d/repairs/${ESystem[s1]}/heat-rate`,
-                    args: {type: 'f', value: system1.heatRate}
-                }, {
-                    address: `/d/repairs/${ESystem[s1]}/max-power`,
-                    args: {type: 'f', value: system1.maxPower}
-                });
-            }
+            // for (let s1 = 0; s1 < ESystem.COUNT; s1++) {
+            //     const system1 = this.logic.getSystem1Status(s1);
+            //     result.push({
+            //         address: `/d/repairs/${ESystem[s1]}/repair-rate`,
+            //         args: {type: 'f', value: system1.repairRate}
+            //     }, {
+            //         address: `/d/repairs/${ESystem[s1]}/heat-rate`,
+            //         args: {type: 'f', value: system1.heatRate}
+            //     }, {
+            //         address: `/d/repairs/${ESystem[s1]}/max-power`,
+            //         args: {type: 'f', value: system1.maxPower}
+            //     });
+            // }
             for (let s2 = 0; s2 < InfraSystem.COUNT; s2++) {
                 const system2 = this.logic.getSystem2Status(s2);
                 result.push({
@@ -84,11 +85,11 @@ export class RepairModule {
                     address: `/d/repairs/${InfraSystem[s2]}/is-online`,
                     args: {type: 'i', value: system2.isOnline ? 1 : 0}
                 }, {
-                    address: `/d/repairs/${InfraSystem[s2]}/corruption`,
-                    args: {type: 'f', value: system2.corruption}
+                    address: `/d/repairs/${InfraSystem[s2]}/overload`,
+                    args: {type: 'f', value: system2.overload}
                 }, {
-                    address: `/d/repairs/${InfraSystem[s2]}/corruption-threshold`,
-                    args: {type: 'f', value: system2.corruptionErrorThreshold}
+                    address: `/d/repairs/${InfraSystem[s2]}/overload-threshold`,
+                    args: {type: 'f', value: system2.overloadErrorThreshold}
                 });
             }
             return result;

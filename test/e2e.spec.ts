@@ -100,7 +100,7 @@ describe('e2e', () => {
             });
         });
 
-        describe('repair module', () => {
+        xdescribe('repair module', () => {
             for (let s1 = 0; s1 < ESystem.COUNT; s1++) {
                 it(`read ${ESystem[s1]} via osc`, () => {
                     return Promise.all([(async () => {
@@ -125,8 +125,8 @@ describe('e2e', () => {
                         let isOnline = await getOscValue(`/d/repairs/${InfraSystem[s2]}/is-online`);
                         expect(isOnline).to.eql(0);
                     })(), (async () => {
-                        let corruption = await getOscValue(`/d/repairs/${InfraSystem[s2]}/corruption`);
-                        expect(corruption).to.eql(0);
+                        let overload = await getOscValue(`/d/repairs/${InfraSystem[s2]}/overload`);
+                        expect(overload).to.eql(0);
                     })()]);
                 });
                 it(`start up / error / shut down ${InfraSystem[s2]} via osc`, async () => {

@@ -28,8 +28,8 @@ export async function getLinearDeriviation(sample: ()=>Promise<number>, {iterati
     });
 }
 
-export async function getLinearCorruptionDeriviation(status: System2Status, graceFactor : number) {
-    return await getLinearDeriviation(async () => status.corruption, {iterations:3, graceFactor, tickInterval: RepairLogic.tickInterval});
+export async function getLinearOverloadDeriviation(status: System2Status, graceFactor : number) {
+    return await getLinearDeriviation(async () => status.overload, {iterations:3, graceFactor, tickInterval: RepairLogic.tickInterval});
 }
 
 /**

@@ -5,12 +5,12 @@ import {Observable} from "rxjs/Observable";
 
 export enum InfraSystem {
     None = -1,
-    zeroPointModule = 0,
-    activeCollector,
-    polaronLimiter,
-    nanowaveShiftEnergizer,
-    coaxialPlasmaCapacitor,
-    dilithiumParticleGenerator,
+    switch_A = 0,
+    switch_B,
+    switch_C,
+    switch_D,
+    switch_E,
+    switch_F,
     COUNT
 }
 export const InfraSystemNames : ReadonlyArray<string> = Array.from(Array(InfraSystem.COUNT)).map((_, i) => InfraSystem[i]);
@@ -31,12 +31,12 @@ export class RepairLogic {
 
     public static readonly tickInterval = 10;
     private static readonly second2firstMap: { [system2Name: number]: ESystem[] } = {
-        [InfraSystem.zeroPointModule]: [ESystem.Maneuver, ESystem.BeamWeapons],
-        [InfraSystem.activeCollector]: [ESystem.Impulse, ESystem.BeamWeapons, ESystem.MissileSystem],
-        [InfraSystem.polaronLimiter]: [ESystem.Maneuver, ESystem.Impulse, ESystem.JumpDrive],
-        [InfraSystem.nanowaveShiftEnergizer]: [ESystem.FrontShield, ESystem.RearShield, ESystem.Reactor],
-        [InfraSystem.coaxialPlasmaCapacitor]: [ESystem.MissileSystem, ESystem.FrontShield],
-        [InfraSystem.dilithiumParticleGenerator]: [ESystem.Warp, ESystem.JumpDrive, ESystem.RearShield],
+        [InfraSystem.switch_A]: [ESystem.Maneuver, ESystem.BeamWeapons],
+        [InfraSystem.switch_B]: [ESystem.Impulse, ESystem.BeamWeapons, ESystem.MissileSystem],
+        [InfraSystem.switch_C]: [ESystem.Maneuver, ESystem.Impulse, ESystem.JumpDrive],
+        [InfraSystem.switch_D]: [ESystem.FrontShield, ESystem.RearShield, ESystem.Reactor],
+        [InfraSystem.switch_E]: [ESystem.MissileSystem, ESystem.FrontShield],
+        [InfraSystem.switch_F]: [ESystem.Warp, ESystem.JumpDrive, ESystem.RearShield],
     };
 
     private readonly systems1: { [systemName: number]: System1 } = {};
@@ -88,7 +88,7 @@ export class RepairLogic {
             const system1 = this.systems1[s1];
             const overPowerFactor = system1.normalizedOverPower;
             if (overPowerFactor) {
-                system1.supportingSystems.forEach(system2 => this.addCorruptionToSystem2(system2.id, delta * System2.corruptionPerMillisecond * overPowerFactor))
+                system1.supportingSystems.forEach(system2 => this.addOverloadToSystem2(system2.id, delta * System2.overloadPerMillisecond * overPowerFactor))
             }
         }
     }
@@ -100,10 +100,10 @@ export class RepairLogic {
         }
     }
 
-    addCorruptionToSystem2(id: InfraSystem, corruption: number) {
+    addOverloadToSystem2(id: InfraSystem, overload: number) {
         const system2 = this.systems2[id];
-        system2.addCorruption(corruption);
-        if (system2.corruption > system2.corruptionErrorThreshold) {
+        system2.addOverload(overload);
+        if (system2.overload > system2.overloadErrorThreshold) {
             this.setError(system2.id);
         }
     }
@@ -116,18 +116,18 @@ export class RepairLogic {
         return this.systems2[id];
     }
 
-    setCorruption(id: InfraSystem, value:number) {
+    setOverload(id: InfraSystem, value:number) {
         const system2 = this.systems2[id];
-        system2.corruption = value;
-        if (system2.corruption > system2.corruptionErrorThreshold) {
+        system2.overload = value;
+        if (system2.overload > system2.overloadErrorThreshold) {
             this.setError(system2.id);
         }
     }
 
-    setCorruptionThreshold(id: InfraSystem, value:number) {
+    setOverloadThreshold(id: InfraSystem, value:number) {
         const system2 = this.systems2[id];
-        system2.corruptionErrorThreshold = value;
-        if (system2.corruption > system2.corruptionErrorThreshold) {
+        system2.overloadErrorThreshold = value;
+        if (system2.overload > system2.overloadErrorThreshold) {
             this.setError(system2.id);
         }
     }

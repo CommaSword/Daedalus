@@ -15,7 +15,9 @@ export class OscDriver {
     constructor(options: UdpOptions) {
         options = Object.assign({},
             {
-                remoteAddress: "0.0.0.0",
+             //   remoteAddress: "192.168.1.100",
+                remoteAddress: "255.255.255.255",
+                 broadcast : true,
                 metadata: true
             }, options);
         this.port = new UDPPort(options);
@@ -27,6 +29,7 @@ export class OscDriver {
                 return o;
             })
             .subscribe(msg => this.port.send(msg));
+//        this.port.on('message', (m: OscMessage) => console.log('#####MSG', m.address));
         this.inbox = Observable.fromEvent(this.port, 'message');
         console.info(`OSC server listening on ${options.localAddress}:${options.localPort}, sending to ${options.remoteAddress}:${options.remotePort}`)
     }

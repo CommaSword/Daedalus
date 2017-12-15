@@ -50,7 +50,7 @@ export function executeDriverCommands(pushRequests: Observable<OscMessage>, eeDr
 }
 
 export function loadOscEeApi(fs: FileSystem, eeDriver: HttpDriver, oscDriver: OscDriver) {
-    const pulse = Observable.interval(500);
+    const pulse = Observable.interval(1000);
 
     const monitoredAddresses = getMonitoredAddresses(fs);
     const pollRequests = pulse.switchMap<any, string>(_ => monitoredAddresses);

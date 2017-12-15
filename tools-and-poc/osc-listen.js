@@ -3,8 +3,9 @@ const osc = require('osc');
 // Create an osc.js UDP Port listening on port 57121.
 var udpPort = new osc.UDPPort({
     localAddress: "0.0.0.0",
-    localPort: 8000,
-    metadata : true,
+    localPort: 57121,
+    localPort: 8888,
+//    metadata : true,
 });
 
 // Listen for incoming OSC bundles.
