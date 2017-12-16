@@ -1,7 +1,6 @@
 import {OscMessage, UdpOptions, UDPPort} from "osc";
-import {Observable, Subject} from 'rxjs';
+import {Observable, Subject, Subscription} from 'rxjs';
 import {NextObserver} from "rxjs/Observer";
-import {Subscription} from "rxjs";
 
 
 export class OscDriver {
@@ -15,9 +14,9 @@ export class OscDriver {
     constructor(options: UdpOptions) {
         options = Object.assign({},
             {
-             //   remoteAddress: "192.168.1.100",
+                //   remoteAddress: "192.168.1.100",
                 remoteAddress: "255.255.255.255",
-                 broadcast : true,
+                broadcast: true,
                 metadata: true
             }, options);
         this.port = new UDPPort(options);
