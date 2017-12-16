@@ -87,7 +87,7 @@ const panelsTab = (sysname) => {
             "logScale": false,
             "value": ``,
             "preArgs": [],
-            "address": `${address}/overload`
+            "address": `${address}/load`
         },
         {
             "type": `push`,
@@ -131,10 +131,10 @@ const panelsTab = (sysname) => {
                 "type": "visualizer",
                 "top": 290,
                 "left": 70,
-                "id": `${label}_overload`,
+                "id": `${label}_load`,
                 "width": 360,
                 "height": "auto",
-                "label": "overload",
+                "label": "load",
                 "color": "auto",
                 "css": "",
                 "widgetId": "",
@@ -148,7 +148,7 @@ const panelsTab = (sysname) => {
                 "smooth": false,
                 "pips": false,
                 "value": "",
-                "address": `${address}/overload`,
+                "address": `${address}/load`,
                 "preArgs": []
             },
             {

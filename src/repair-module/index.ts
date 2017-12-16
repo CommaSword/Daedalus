@@ -44,7 +44,7 @@ export class RepairModule {
                             const overloadThreshold = (message.args as [MetaArgument])[0].value as number;
                             this.logic.setOverloadThreshold(s2, overloadThreshold);
                             break;
-                        case 'overload':
+                        case 'load':
                             const overload = (message.args as [MetaArgument])[0].value as number;
                             this.logic.setOverload(s2, overload);
                             break;
@@ -85,7 +85,7 @@ export class RepairModule {
                     address: `/d/repairs/${InfraSystem[s2]}/is-online`,
                     args: {type: 'i', value: system2.isOnline ? 1 : 0}
                 }, {
-                    address: `/d/repairs/${InfraSystem[s2]}/overload`,
+                    address: `/d/repairs/${InfraSystem[s2]}/load`,
                     args: {type: 'f', value: system2.overload}
                 }, {
                     address: `/d/repairs/${InfraSystem[s2]}/overload-threshold`,
