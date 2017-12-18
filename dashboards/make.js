@@ -3,12 +3,12 @@ const path = require('path');
 const naming = require('naming');
 
 const infraSystems = [
-    'switch_A',
-    'switch_B',
-    'switch_C',
-    'switch_D',
-    'switch_E',
-    'switch_F'
+    'A1',
+    'A2',
+    'A3',
+    'B1',
+    'B2',
+    'B3'
 ];
 
 const panelsTab = (sysname) => {

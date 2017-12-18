@@ -21,13 +21,13 @@ export type ServerOptions = Partial<Options> & {
 
 export class FugaziServices {
     private readonly logs: Logs;
-    private readonly users: Users;
+ //   private readonly users: Users;
     private readonly entries: Entries;
     private readonly connector: Connector;
 
     constructor(private fs: FileSystem) {
         // application BL modules
-        this.users = new Users(fs);
+    //    this.users = new Users(fs);
         this.entries = new Entries(fs);
         this.logs = new Logs(fs);
 
@@ -39,7 +39,7 @@ export class FugaziServices {
             .session({keygrip: ['abracadabra!']});
 
         initExcalibur(builder.module("excalibur"), this.entries);
-        initLogin(builder.module("session"), this.users);
+     //   initLogin(builder.module("session"), this.users);
         initLog(builder.module("log"), this.logs);
         this.connector = builder.build();
     }
@@ -86,8 +86,7 @@ export class SimulatorServices {
 export async function main(optionsArg: ServerOptions) {
     const options: Options = Object.assign({}, DEFAULT_OPTIONS, optionsArg);
     const fs: LocalFileSystem = await (new LocalFileSystem(optionsArg.resources)).init();
-
-    await new SimulatorServices(options, fs).init();
+    // await new SimulatorServices(options, fs).init();
     await new FugaziServices(fs).init();
 }
 

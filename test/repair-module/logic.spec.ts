@@ -69,7 +69,7 @@ describe('repair module', () => {
     it('A system1 can only be over-powered (more than 100% energy) when all of its supporting system2s are online', () => {
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, System1.maxOverPower);
         sideEffects.setMaxPower.reset();
-        repair.shutdownSystem2(InfraSystem.switch_B);
+        repair.shutdownSystem2(InfraSystem.A2);
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, match.number.and(match((n: number) => n <= System1.maxSupportedPower)));
         expect(sideEffects.setMaxPower).to.have.not.been.calledWith(ESystem.Impulse, System1.maxOverPower);
     });
@@ -77,23 +77,23 @@ describe('repair module', () => {
     it('When a supporting system2 is offline, the maximum level of a system1’s power will be at most: ' +
         '100%  * number of online supporting systems/ number of supporting systems', () => {
         sideEffects.setMaxPower.reset();
-        repair.shutdownSystem2(InfraSystem.switch_B);
+        repair.shutdownSystem2(InfraSystem.A2);
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, approx(System1.maxSupportedPower /2));
         sideEffects.setMaxPower.reset();
-        repair.shutdownSystem2(InfraSystem.switch_C);
+        repair.shutdownSystem2(InfraSystem.A3);
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, 0);
         sideEffects.setMaxPower.reset();
-        repair.startupSystem2(InfraSystem.switch_C);
+        repair.startupSystem2(InfraSystem.A3);
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, approx(System1.maxSupportedPower /2));
         sideEffects.setMaxPower.reset();
-        repair.startupSystem2(InfraSystem.switch_B);
+        repair.startupSystem2(InfraSystem.A2);
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, System1.maxOverPower);
     });
 
     describe('When a system1 is over-powered', () => {
         let activeCollectorStatus: System2Status;
         beforeEach(() => {
-            activeCollectorStatus = repair.getSystem2Status(InfraSystem.switch_B);
+            activeCollectorStatus = repair.getSystem2Status(InfraSystem.A2);
         });
 
         it('its supporting system2s accumulate overload', async () => {
@@ -117,38 +117,38 @@ describe('repair module', () => {
     });
 
     it('When a system2’s overload level reaches its overload threshold, it goes into error state', () => {
-        const system2 = repair.getSystem2Status(InfraSystem.switch_E) as System2;
+        const system2 = repair.getSystem2Status(InfraSystem.B2) as System2;
         expect(system2.isError).to.eql(false);
-        repair.addOverloadToSystem2(InfraSystem.switch_E, system2.overloadErrorThreshold);
+        repair.addOverloadToSystem2(InfraSystem.B2, system2.overloadErrorThreshold);
         expect(system2.isError).to.eql(false);
-        repair.addOverloadToSystem2(InfraSystem.switch_E, 0.00001);
+        repair.addOverloadToSystem2(InfraSystem.B2, 0.00001);
         expect(system2.isError).to.eql(true);
     });
 
     describe('When one or more supporting system2 is in error state', () => {
 
         it('the supported system1 begins accumulating heat (the rate does not change according to the amount of systems in error)', () => {
-            repair.setError(InfraSystem.switch_B);
+            repair.setError(InfraSystem.A2);
             expect(sideEffects.setHeatRate).to.have.been.calledWith(ESystem.Impulse, approx(System1.heatOnErrorRate));
             sideEffects.setRepairRate.reset();
-            repair.setError(InfraSystem.switch_C);
+            repair.setError(InfraSystem.A3);
             expect(sideEffects.setHeatRate).to.have.been.calledWith(ESystem.Impulse, approx(System1.heatOnErrorRate));
             sideEffects.setRepairRate.reset();
-            repair.shutdownSystem2(InfraSystem.switch_B);
-            repair.shutdownSystem2(InfraSystem.switch_C);
+            repair.shutdownSystem2(InfraSystem.A2);
+            repair.shutdownSystem2(InfraSystem.A3);
             expect(sideEffects.setHeatRate).to.have.been.calledWith(ESystem.Impulse, 0);
         });
 
         it('the repair rate of supported system1 is 50% the normal rate', () => {
             repair.startRepairingSystem1(ESystem.JumpDrive);
-            repair.setError(InfraSystem.switch_F);
+            repair.setError(InfraSystem.B3);
             expect(sideEffects.setRepairRate, `after 1st error`).to.have.been.calledWith(ESystem.JumpDrive, approx(System1.repairRate * 0.5));
             sideEffects.setRepairRate.reset();
-            repair.setError(InfraSystem.switch_C);
+            repair.setError(InfraSystem.A3);
             expect(sideEffects.setRepairRate, `after 2nd error`).to.have.been.calledWith(ESystem.JumpDrive, approx(System1.repairRate * 0.2));
             sideEffects.setRepairRate.reset();
-            repair.shutdownSystem2(InfraSystem.switch_F);
-            repair.shutdownSystem2(InfraSystem.switch_C);
+            repair.shutdownSystem2(InfraSystem.B3);
+            repair.shutdownSystem2(InfraSystem.A3);
             expect(sideEffects.setRepairRate, `after shutdowns`).to.have.been.calledWith(ESystem.JumpDrive, approx(System1.repairRate));
         });
     });

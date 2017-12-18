@@ -7,9 +7,9 @@
 
 #include <OSCMessage.h>        // https://github.com/CNMAT/OSC
 
-#define DEBUG
-#define ID "switch_A"
-byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
+// #define DEBUG
+#define ID "B3"
+byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xF0, 0x05};
 
 
 //leds

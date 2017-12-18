@@ -88,7 +88,7 @@ export class Entries {
                         if (entry.meta.status === Status.ENTRY) {
                             await this.copyToEntries(entry);
                         }
-                    } catch {
+                    } catch (e){
                     }
                 })
                 // wait for all loading

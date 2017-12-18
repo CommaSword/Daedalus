@@ -24,7 +24,7 @@ describe('test-driver', () => {
 
     it('getLinearOverloadDeriviation', async () => {
         const graceFactor = 0.1;
-        const status = new System2(InfraSystem.switch_B);
+        const status = new System2(InfraSystem.A2);
         let timer = setTimedInterval(delta => {
             status.overload = status.overload + (GAIN_PER_MILLISECOND * delta);
         }, RepairLogic.tickInterval);

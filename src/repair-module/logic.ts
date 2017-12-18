@@ -5,12 +5,12 @@ import {Observable} from "rxjs/Observable";
 
 export enum InfraSystem {
     None = -1,
-    switch_A = 0,
-    switch_B,
-    switch_C,
-    switch_D,
-    switch_E,
-    switch_F,
+    A1 = 0,
+    A2,
+    A3,
+    B1,
+    B2,
+    B3,
     COUNT
 }
 export const InfraSystemNames : ReadonlyArray<string> = Array.from(Array(InfraSystem.COUNT)).map((_, i) => InfraSystem[i]);
@@ -31,12 +31,12 @@ export class RepairLogic {
 
     public static readonly tickInterval = 10;
     private static readonly second2firstMap: { [system2Name: number]: ESystem[] } = {
-        [InfraSystem.switch_A]: [ESystem.Maneuver, ESystem.BeamWeapons],
-        [InfraSystem.switch_B]: [ESystem.Impulse, ESystem.BeamWeapons, ESystem.MissileSystem],
-        [InfraSystem.switch_C]: [ESystem.Maneuver, ESystem.Impulse, ESystem.JumpDrive],
-        [InfraSystem.switch_D]: [ESystem.FrontShield, ESystem.RearShield, ESystem.Reactor],
-        [InfraSystem.switch_E]: [ESystem.MissileSystem, ESystem.FrontShield],
-        [InfraSystem.switch_F]: [ESystem.Warp, ESystem.JumpDrive, ESystem.RearShield],
+        [InfraSystem.A1]: [ESystem.Maneuver, ESystem.BeamWeapons],
+        [InfraSystem.A2]: [ESystem.Impulse, ESystem.BeamWeapons, ESystem.MissileSystem],
+        [InfraSystem.A3]: [ESystem.Maneuver, ESystem.Impulse, ESystem.JumpDrive],
+        [InfraSystem.B1]: [ESystem.FrontShield, ESystem.RearShield, ESystem.Reactor],
+        [InfraSystem.B2]: [ESystem.MissileSystem, ESystem.FrontShield],
+        [InfraSystem.B3]: [ESystem.Warp, ESystem.JumpDrive, ESystem.RearShield],
     };
 
     private readonly systems1: { [systemName: number]: System1 } = {};
