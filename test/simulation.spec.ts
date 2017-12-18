@@ -1,6 +1,6 @@
 import config from './test-kit/config';
 import {eeTestServerLifecycle} from "./test-kit/empty-epsylon-server-manager";
-import {DEFAULT_OPTIONS, Options, SimulatorServices} from "../src/open-epsilon-server";
+import {DEFAULT_OPTIONS, Options, SimulatorServices} from "../src/simulation";
 import {MemoryFileSystem} from "kissfs";
 import {FILE_PATH} from "../src/osc-bridge/game-monitor";
 import {MetaArgument, OscMessage, UDPPort} from "osc";
@@ -8,8 +8,8 @@ import {HttpDriver} from "../src/empty-epsilon/driver";
 import {expect} from 'chai';
 import {retry} from "./test-kit/retry";
 import {ESystem} from "../src/empty-epsilon/model";
-import {InfraSystem} from "../src/repair-module/logic";
-import {System1} from "../src/repair-module/systems";
+import {ESwitchBoard} from "../src/ecr/logic";
+import {PrimarySystem} from "../src/ecr/systems";
 
 const udpHosts = {localAddress: '127.0.0.1', remoteAddress: '127.0.0.1'};
 const options: Options = {
@@ -105,7 +105,7 @@ describe('e2e', () => {
                 it(`read ${ESystem[s1]} via osc`, () => {
                     return Promise.all([(async () => {
                         let repairRate = await getOscValue(`/d/repairs/${ESystem[s1]}/repair-rate`);
-                        expect(repairRate).to.eql(System1.repairRate);
+                        expect(repairRate).to.eql(PrimarySystem.repairRate);
                     })(), (async () => {
                         let heatRate = await getOscValue(`/d/repairs/${ESystem[s1]}/heat-rate`);
                         expect(heatRate).to.eql(0);
@@ -116,35 +116,35 @@ describe('e2e', () => {
                 });
             }
 
-            for (let s2 = 0; s2 < InfraSystem.COUNT; s2++) {
-                it(`read ${InfraSystem[s2]} via osc`, async () => {
+            for (let s2 = 0; s2 < ESwitchBoard.COUNT; s2++) {
+                it(`read ${ESwitchBoard[s2]} via osc`, async () => {
                     return Promise.all([(async () => {
-                        let isErr = await getOscValue(`/d/repairs/${InfraSystem[s2]}/is-error`);
+                        let isErr = await getOscValue(`/d/repairs/${ESwitchBoard[s2]}/is-error`);
                         expect(isErr).to.eql(0);
                     })(), (async () => {
-                        let isOnline = await getOscValue(`/d/repairs/${InfraSystem[s2]}/is-online`);
+                        let isOnline = await getOscValue(`/d/repairs/${ESwitchBoard[s2]}/is-online`);
                         expect(isOnline).to.eql(0);
                     })(), (async () => {
-                        let overload = await getOscValue(`/d/repairs/${InfraSystem[s2]}/overload`);
+                        let overload = await getOscValue(`/d/repairs/${ESwitchBoard[s2]}/overload`);
                         expect(overload).to.eql(0);
                     })()]);
                 });
-                it(`start up / error / shut down ${InfraSystem[s2]} via osc`, async () => {
-                    oscClient.send({address: `/d/repairs/${InfraSystem[s2]}/start-up`, args: []});
-                 //   await new Promise(res => setTimeout(res, 250));
-                    let isOnline = await getOscValue(`/d/repairs/${InfraSystem[s2]}/is-online`);
+                it(`start up / error / shut down ${ESwitchBoard[s2]} via osc`, async () => {
+                    oscClient.send({address: `/d/repairs/${ESwitchBoard[s2]}/start-up`, args: []});
+                    //   await new Promise(res => setTimeout(res, 250));
+                    let isOnline = await getOscValue(`/d/repairs/${ESwitchBoard[s2]}/is-online`);
                     expect(isOnline).to.eql(1);
-                    oscClient.send({address: `/d/repairs/${InfraSystem[s2]}/error`, args: []});
-                //    await new Promise(res => setTimeout(res, 250));
-                    isOnline = await getOscValue(`/d/repairs/${InfraSystem[s2]}/is-error`);
+                    oscClient.send({address: `/d/repairs/${ESwitchBoard[s2]}/error`, args: []});
+                    //    await new Promise(res => setTimeout(res, 250));
+                    isOnline = await getOscValue(`/d/repairs/${ESwitchBoard[s2]}/is-error`);
                     expect(isOnline).to.eql(1);
-                    oscClient.send({address: `/d/repairs/${InfraSystem[s2]}/shut-down`, args: []});
-                 //   await new Promise(res => setTimeout(res, 250));
+                    oscClient.send({address: `/d/repairs/${ESwitchBoard[s2]}/shut-down`, args: []});
+                    //   await new Promise(res => setTimeout(res, 250));
                     Promise.all([(async () => {
-                        isOnline = await getOscValue(`/d/repairs/${InfraSystem[s2]}/is-online`);
+                        isOnline = await getOscValue(`/d/repairs/${ESwitchBoard[s2]}/is-online`);
                         expect(isOnline).to.eql(0);
                     })(), (async () => {
-                        isOnline = await getOscValue(`/d/repairs/${InfraSystem[s2]}/is-error`);
+                        isOnline = await getOscValue(`/d/repairs/${ESwitchBoard[s2]}/is-error`);
                         expect(isOnline).to.eql(0);
                     })()]);
                 });

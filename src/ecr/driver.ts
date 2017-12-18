@@ -11,7 +11,7 @@ export const min_reactor_health = -0.89;
 const powerQueries = ESystemNames.map((system) => `getPlayerShip(-1):getSystemPower('${system}')`);
 
 
-export class RepairDriver implements Driver {
+export class EcrDriver implements Driver {
 
     private queryPowerOfAllSystems = () => {
         return Observable.of(...powerQueries)

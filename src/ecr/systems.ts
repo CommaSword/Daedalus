@@ -1,7 +1,7 @@
 import {ESystem} from "../empty-epsilon/model";
-import {InfraSystem} from "./logic";
+import {ESwitchBoard} from "./logic";
 
-export interface System1Status {
+export interface PrimarySystemStatus {
 
     readonly id: ESystem;
     readonly repairRate : number;
@@ -10,14 +10,14 @@ export interface System1Status {
 }
 
 
-export class System1 implements System1Status {
+export class PrimarySystem implements PrimarySystemStatus {
     public static readonly maxOverPower = 3.0;
     public static readonly maxSupportedPower = 1.0;
     public static readonly heatOnErrorRate = 1.0;
     public static readonly repairRate = 1.0;
 
     public power: number = 0;
-    public supportingSystems: System2[] = [];
+    public supportingSystems: SwitchBoard[] = [];
 
     constructor(public id: ESystem) {
     }
@@ -26,11 +26,11 @@ export class System1 implements System1Status {
         const onlineNoErrorSystems = this.supportingSystems.filter(sys => sys.isOnline && !sys.isError).length;
         switch(onlineNoErrorSystems){
             case 0:
-                return System1.repairRate * 0.2;
+                return PrimarySystem.repairRate * 0.2;
             case 1:
-                return System1.repairRate * 0.5;
+                return PrimarySystem.repairRate * 0.5;
             default:
-                return System1.repairRate;
+                return PrimarySystem.repairRate;
         }
     }
 
@@ -38,16 +38,16 @@ export class System1 implements System1Status {
         if (this.supportingSystems.every(sys => !sys.isError)) {
             return 0;
         } else {
-            return System1.heatOnErrorRate;
+            return PrimarySystem.heatOnErrorRate;
         }
     }
 
     get maxPower() {
         let onlineSystems = this.supportingSystems.filter(sys => sys.isOnline).length;
         if (onlineSystems === this.supportingSystems.length) {
-            return System1.maxOverPower;
+            return PrimarySystem.maxOverPower;
         } else {
-            return System1.maxSupportedPower * onlineSystems / this.supportingSystems.length;
+            return PrimarySystem.maxSupportedPower * onlineSystems / this.supportingSystems.length;
         }
     }
 
@@ -55,21 +55,21 @@ export class System1 implements System1Status {
      * between 0 and 2,  the factor of over-power
      */
     get normalizedOverPower() {
-        return Math.max(0, (this.power - System1.maxSupportedPower) / System1.maxSupportedPower);
+        return Math.max(0, (this.power - PrimarySystem.maxSupportedPower) / PrimarySystem.maxSupportedPower);
     }
 }
 
 
-export interface System2Status {
+export interface SwitchBoardStatus {
 
-    readonly id: InfraSystem;
+    readonly id: ESwitchBoard;
     readonly isError: boolean;
     readonly isOnline: boolean;
     readonly overload: number;
     readonly overloadErrorThreshold: number;
 }
 
-export class System2 implements System2Status {
+export class SwitchBoard implements SwitchBoardStatus {
     // say it takes ~3 minutes of ~200% power to cause an error on average
     // so it should take twice to reach maximum overload (1).
     // so overload per milli :
@@ -78,21 +78,21 @@ export class System2 implements System2Status {
     public static readonly maxOverload = 1;
 
     public readonly name: string;
-    public readonly supportedSystems: System1[] = [];
+    public readonly supportedSystems: PrimarySystem[] = [];
     public isError: boolean;
     public isOnline: boolean;
     public overload: number;
     public overloadErrorThreshold: number;
 
-    constructor(public id: InfraSystem) {
-        this.name = InfraSystem[id];
+    constructor(public id: ESwitchBoard) {
+        this.name = ESwitchBoard[id];
         this.shutdown();
         this.startup();
     }
 
     addOverload(delta: number) {
         if (this.isOnline) {
-            this.overload = Math.min(System2.maxOverload, this.overload + delta);
+            this.overload = Math.min(SwitchBoard.maxOverload, this.overload + delta);
         }
     }
 
@@ -100,7 +100,7 @@ export class System2 implements System2Status {
         this.isOnline = false;
         this.isError = false;
         this.overload = 0;
-        this.overloadErrorThreshold = Math.max(Math.random() * System2.maxOverload, System2.overloadPerMillisecond * 1000);
+        this.overloadErrorThreshold = Math.max(Math.random() * SwitchBoard.maxOverload, SwitchBoard.overloadPerMillisecond * 1000);
     }
 
     startup() {

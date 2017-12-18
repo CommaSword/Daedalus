@@ -1,5 +1,5 @@
-import {RepairLogic} from "../../src/repair-module/logic";
-import {System2Status} from "../../src/repair-module/systems";
+import {EcrLogic} from "../../src/ecr/logic";
+import {SwitchBoardStatus} from "../../src/ecr/systems";
 import {expect} from 'chai';
 import {match} from "sinon";
 
@@ -28,8 +28,8 @@ export async function getLinearDeriviation(sample: ()=>Promise<number>, {iterati
     });
 }
 
-export async function getLinearOverloadDeriviation(status: System2Status, graceFactor : number) {
-    return await getLinearDeriviation(async () => status.overload, {iterations:3, graceFactor, tickInterval: RepairLogic.tickInterval});
+export async function getLinearOverloadDeriviation(status: SwitchBoardStatus, graceFactor : number) {
+    return await getLinearDeriviation(async () => status.overload, {iterations:3, graceFactor, tickInterval: EcrLogic.tickInterval});
 }
 
 /**

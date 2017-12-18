@@ -1,7 +1,7 @@
 import {expect} from 'chai';
 
-import {InfraSystem, RepairLogic} from "../../src/repair-module/logic";
-import {System2} from "../../src/repair-module/systems";
+import {ESwitchBoard, EcrLogic} from "../../src/ecr/logic";
+import {SwitchBoard} from "../../src/ecr/systems";
 import {setTimedInterval} from "../../src/core/timing";
 import {getLinearOverloadDeriviation, getLinearDeriviation} from "./test-kit";
 
@@ -24,10 +24,10 @@ describe('test-driver', () => {
 
     it('getLinearOverloadDeriviation', async () => {
         const graceFactor = 0.1;
-        const status = new System2(InfraSystem.A2);
+        const status = new SwitchBoard(ESwitchBoard.A2);
         let timer = setTimedInterval(delta => {
             status.overload = status.overload + (GAIN_PER_MILLISECOND * delta);
-        }, RepairLogic.tickInterval);
+        }, EcrLogic.tickInterval);
 
         try {
             expect(await getLinearOverloadDeriviation(status, graceFactor)).to.be.approximately(GAIN_PER_MILLISECOND, GAIN_PER_MILLISECOND * graceFactor);

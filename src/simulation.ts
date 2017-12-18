@@ -3,7 +3,7 @@ import {HttpDriver} from './empty-epsilon/driver';
 import {loadOscEeApi} from "./osc-bridge/game-monitor";
 import {OscDriver} from "./osc/osc-driver";
 import {UdpOptions} from "osc";
-import {RepairModule} from "./repair-module/index";
+import {EcrModule} from "./ecr/index";
 
 export type ServerOptions = Partial<Options> & {
     resources: string
@@ -13,24 +13,24 @@ export class SimulatorServices {
     disposer: () => void;
     private readonly eeDriver: HttpDriver;
     private readonly oscDriver: OscDriver;
-    private readonly repairModule: RepairModule;
+    private readonly ecrModule: EcrModule;
 
     constructor(options: Options, private fs: FileSystem) {
         this.oscDriver = new OscDriver(options.oscOptions);
         this.eeDriver = new HttpDriver(options.eeAddress);
-        this.repairModule = new RepairModule(this.eeDriver, this.oscDriver);
+        this.ecrModule = new EcrModule(this.eeDriver, this.oscDriver);
     }
 
     async init() {
         this.disposer = loadOscEeApi(this.fs, this.eeDriver, this.oscDriver);
         await this.oscDriver.open();
-        await this.repairModule.init();
+        await this.ecrModule.init();
     }
 
     close() {
         this.disposer();
         this.oscDriver.close();
-        this.repairModule.destroy();
+        this.ecrModule.destroy();
     }
 }
 

@@ -59,10 +59,11 @@
     "typescript": "2.5.3"
   },
   "dependencies": {
-    "daedalus-fugazi-webclient": "0.0.2",
     "axios": "0.15.3",
+    "daedalus-fugazi-webclient": "0.0.2",
     "eventemitter3": "2.0.2",
     "front-matter": "^2.2.0",
+    "json-rpc2": "1.0.2",
     "jsonschema": "^1.1.1",
     "kissfs": "^0.3.0",
     "lodash": "4.17.4",
@@ -72,6 +73,7 @@
     "rxjs": "^5.5.2",
     "socket.io-client": "1.7.3",
     "socketio-wildcard": "0.4.0",
-    "string-template": "^1.0.0"
+    "string-template": "^1.0.0",
+    "zeroconf": "0.1.4"
   }
 }
