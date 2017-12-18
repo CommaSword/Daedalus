@@ -3,11 +3,9 @@ import {Connector} from "@fugazi/connector";
 import {FileSystem, LocalFileSystem} from "kissfs";
 import initExcalibur from "./excalibur/commands";
 import initLogin from "./session/commands";
-import initLog from "./log/commands";
 import {parse} from "path";
 import {Users} from "./session/users";
 import {Entries} from "./excalibur/entries";
-import {Logs} from "./log/logs";
 import {HttpDriver} from './empty-epsilon/driver';
 import {loadOscEeApi} from "./osc-bridge/game-monitor";
 import {OscDriver} from "./osc/osc-driver";
@@ -19,8 +17,19 @@ export type ServerOptions = Partial<Options> & {
     resources: string
 }
 
+function hookIntoFugaziConnector() {
+    const sessionModule = require('@fugazi/connector/scripts/bin/middleware/session');
+    const oldMW = sessionModule.middleware;
+    sessionModule.middleware = (app: any, config: any) => {
+        // set 1 hour timeout
+        app.use(async (ctx: any, next: any) => {
+            ctx.req.setTimeout(60 * 60 * 1000);
+            await next();
+        });
+        return oldMW(app, config);
+    };
+}
 export class FugaziServices {
-    private readonly logs: Logs;
  //   private readonly users: Users;
     private readonly entries: Entries;
     private readonly connector: Connector;
@@ -29,7 +38,6 @@ export class FugaziServices {
         // application BL modules
     //    this.users = new Users(fs);
         this.entries = new Entries(fs);
-        this.logs = new Logs(fs);
 
         // connector API
         const builder = new fugazi.ConnectorBuilder();
@@ -40,8 +48,11 @@ export class FugaziServices {
 
         initExcalibur(builder.module("excalibur"), this.entries);
      //   initLogin(builder.module("session"), this.users);
-        initLog(builder.module("log"), this.logs);
         this.connector = builder.build();
+        (this.connector as any)._server.koa.use(async (ctx:any, next:any) => {
+            ctx.req.setTimeout(0);
+            await next();
+        });
     }
 
     async init() {
@@ -86,7 +97,8 @@ export class SimulatorServices {
 export async function main(optionsArg: ServerOptions) {
     const options: Options = Object.assign({}, DEFAULT_OPTIONS, optionsArg);
     const fs: LocalFileSystem = await (new LocalFileSystem(optionsArg.resources)).init();
-    // await new SimulatorServices(options, fs).init();
+    await new SimulatorServices(options, fs).init();
+    hookIntoFugaziConnector();
     await new FugaziServices(fs).init();
 }
 

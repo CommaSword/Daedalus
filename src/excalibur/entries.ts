@@ -35,7 +35,7 @@ export class Entry {
         return `---
 status : ${this.meta.status}
 securityClass : ${this.meta.securityClass}
-name : ${this.meta.name}
+name : '${this.meta.name}'
 ---
 ${this.content}`
     }
@@ -153,7 +153,7 @@ export class Entries {
                 securityClass: user.excaliburClearance,
                 name: search
             },
-            `This entry was created due to a query by ${user.name} at SD${Date.now()}`
+            `This entry was created due to a query by ${user.name} at ${Date.now()}`
         );
         await this.fs.saveFile(newPath, queryEntry.toString());
         const entry = await new Promise<Entry>((resolve: Function, reject: Function) => {
