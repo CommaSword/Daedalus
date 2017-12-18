@@ -1,6 +1,6 @@
 import config from './test-kit/config';
 import {eeTestServerLifecycle} from "./test-kit/empty-epsylon-server-manager";
-import {DEFAULT_OPTIONS, Options, SimulatorServices} from "../src/index";
+import {DEFAULT_OPTIONS, Options, SimulatorServices} from "../src/open-epsilon-server";
 import {MemoryFileSystem} from "kissfs";
 import {FILE_PATH} from "../src/osc-bridge/game-monitor";
 import {MetaArgument, OscMessage, UDPPort} from "osc";
