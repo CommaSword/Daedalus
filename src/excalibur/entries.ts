@@ -88,7 +88,7 @@ export class Entries {
                         if (entry.meta.status === Status.ENTRY) {
                             await this.copyToEntries(entry);
                         }
-                    } catch (e){
+                    } catch (e) {
                     }
                 })
                 // wait for all loading
@@ -139,10 +139,9 @@ export class Entries {
         return entry && entry.content;
     }
 
-    list(): string {
-        let allowedEntries = [... this.entries.values()]
-            .map(e => `${e.meta.name} (${ExcaliburSecClass[e.meta.securityClass]})`);
-        return allowedEntries.join(', ')
+    list(): string[] {
+        return [... this.entries.values()]
+            .map(e => e.meta.name);
     }
 
     async query(user: User, search: string): Promise<string | undefined> {
@@ -157,18 +156,31 @@ export class Entries {
             `This entry was created due to a query by ${user.name} at SD${Date.now()}`
         );
         await this.fs.saveFile(newPath, queryEntry.toString());
-        const entry = await new Promise<Entry>((resolve: Function) => {
-            const listener = (e: FileChangedEvent) => {
-                if (normalize(e.fullPath) === normalize(newPath)) {
-                    let entry = Entry.parse(e.newContent, e.fullPath);
-                    if (entry.meta.status === Status.ENTRY) {
-                        this.fs.events.removeListener('fileChanged', listener)
-                        resolve(entry);
+        const entry = await new Promise<Entry>((resolve: Function, reject: Function) => {
+                const cleanup = () => {
+                    this.fs.events.removeListener('fileDeleted', listener);
+                    this.fs.events.removeListener('fileChanged', listener);
+                };
+                const listener = (e: FileChangedEvent | FileDeletedEvent) => {
+                    if (normalize(e.fullPath) === normalize(newPath)) {
+                        switch (e.type) {
+                            case 'fileChanged':
+                                let entry = Entry.parse(e.newContent, e.fullPath);
+                                if (entry.meta.status === Status.ENTRY) {
+                                    cleanup();
+                                    resolve(entry);
+                                }
+                                break;
+                            case 'fileDeleted':
+                                cleanup();
+                                reject(new Error("Bad command or file name"));
+                                break;
+                        }
                     }
-                }
-            };
-            this.fs.events.on('fileChanged', listener);
-        });
+                };
+                this.fs.events.on('fileChanged', listener);
+                this.fs.events.on('fileDeleted', listener);
+            });
         return this.open(user, entry.meta.name);
     }
 

@@ -3,7 +3,13 @@ import {FileSystem} from "kissfs";
 export class Logs {
     static readonly logPath = 'logFile.md';
     static readonly resourcesPath = './';
-    static readonly logInitMetadata = "";
+    static readonly logInitMetadata = `
+---
+status : 2
+securityClass : 1
+name : log
+---
+`;
 
     constructor(private fs: FileSystem) {
         this.init();

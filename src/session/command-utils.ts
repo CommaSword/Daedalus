@@ -9,7 +9,7 @@ export type Session = {
 
 export type Request = { session: Session } & server.Request;
 
-export type HandlerImpl = (request: Request, user: User) => string | Promise<string>
+export type HandlerImpl<T> = (request: Request, user: User) => T | Promise<T>
 
 const DEFAULT_USER = new User({
     gender: "ADVANCED",
@@ -18,7 +18,10 @@ const DEFAULT_USER = new User({
     excaliburClearance: "TOP_SECRET"
 });
 
-export function withUser(h: HandlerImpl): CommandHandler {
+export function normInputString(input:string | undefined){
+    return input ? input.replace('\\\n', '') : '';
+}
+export function withUser<T = string>(h: HandlerImpl<T>): CommandHandler {
     return async (request: Request) => {
         try {
             const result = await h(request, DEFAULT_USER);
