@@ -1,4 +1,4 @@
-import {heat_per_second, repair_per_second, RepairDriver} from "../../src/repair-module/driver";
+import {heat_per_second, repair_per_second, EcrDriver} from "../../src/ecr/driver";
 import {Observable, Subscriber} from "rxjs";
 import {ESystem} from "../../src/empty-epsilon/model";
 import {eeTestServerLifecycle} from '../test-kit/empty-epsylon-server-manager'
@@ -6,19 +6,19 @@ import {HttpDriver} from '../../src/empty-epsilon/driver';
 import config from '../test-kit/config';
 import {expect} from 'chai';
 import {retry} from "../test-kit/retry";
-import {System1} from "../../src/repair-module/systems";
+import {PrimarySystem} from "../../src/ecr/model";
 import {getLinearDeriviation} from "./test-kit";
 
 
-describe('RepairDriver', async () => {
+describe('EcrDriver', async () => {
     let pulser: Subscriber<null>;
     let httpDriver: HttpDriver;
-    let repairDriver: RepairDriver;
+    let repairDriver: EcrDriver;
     eeTestServerLifecycle(config);
     beforeEach(async () => {
         let pulse: Observable<any> = new Observable<null>((s: Subscriber<null>) => pulser = s);
         httpDriver = new HttpDriver(config.serverAddress);
-        repairDriver = new RepairDriver(httpDriver, pulse);
+        repairDriver = new EcrDriver(httpDriver, pulse);
         await repairDriver.init();
     });
 
@@ -39,7 +39,7 @@ describe('RepairDriver', async () => {
 
         const expected = Array.from(Array(ESystem.COUNT)).map((_, i) => ({
             system: i,
-            power: System1.maxSupportedPower
+            power: PrimarySystem.maxSupportedPower
         }));
 
         expect(updates).to.eql(expected);
@@ -53,7 +53,7 @@ describe('RepairDriver', async () => {
         const updates = await powerUpdate();
         const expected = Array.from(Array(ESystem.COUNT)).map((_, i) => ({
             system: i,
-            power: i === SYSTEM ? MAX_POWER_TEST_VAL : System1.maxSupportedPower
+            power: i === SYSTEM ? MAX_POWER_TEST_VAL : PrimarySystem.maxSupportedPower
         }));
         expect(updates).to.eql(expected);
     });

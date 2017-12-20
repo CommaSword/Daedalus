@@ -1,6 +1,7 @@
 import {AxiosInstance, AxiosResponse, default as Axios} from "axios";
 import {ESystemNames} from "./model";
 import format = require("string-template");
+import Timer = NodeJS.Timer;
 
 class Command {
 
@@ -81,8 +82,9 @@ export class HttpDriver implements EEDriverWithHooks {
     private http: AxiosInstance;
     private pendingQueries: { [getter: string]: Query } = {};
     private pendingCommands: { [setter: string]: Command } = {};
-    private isFlushing = false;
+    private isShutdown = false;
     private timeBetweenFlushes = HttpDriver.minTimeBetweenFlushes;
+    private flushHandle: Timer | null = null;
 
     constructor(baseURL: string) {
         this.http = Axios.create({baseURL});
@@ -133,7 +135,7 @@ return {${getQueue.map(req => req.luaJSONFields).join(',')}};`;
                 this.pendingCommands[s] || (this.pendingCommands[s] = setMap[s])
             });
         } finally {
-            this.isFlushing = false;
+            this.flushHandle = null;
             if (Object.keys(this.pendingQueries).length || Object.keys(this.pendingCommands).length) {
                 this.requestFlush();
             }
@@ -199,9 +201,8 @@ return {${getQueue.map(req => req.luaJSONFields).join(',')}};`;
     }
 
     private requestFlush() {
-        if (!this.isFlushing) {
-            setTimeout(this.flush, this.timeBetweenFlushes);
-            this.isFlushing = true;
+        if (!this.isShutdown && !this.flushHandle) {
+            this.flushHandle = setTimeout(this.flush, this.timeBetweenFlushes);
         }
     }
 
@@ -238,6 +239,13 @@ ${ESystemNames.map((system) => `        ${logicFuncName}('${system}', ship['${sy
 end
 `);
         return null;
+    }
+
+    close() {
+        this.isShutdown = true;
+        if (this.flushHandle) {
+            clearTimeout(this.flushHandle);
+        }
     }
 }
 
