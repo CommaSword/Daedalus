@@ -1,5 +1,5 @@
 import {EcrLogic} from "../../src/ecr/logic";
-import {SwitchBoardStatus} from "../../src/ecr/systems";
+import {SwitchBoardStatus} from "../../src/ecr/model";
 import {expect} from 'chai';
 import {match} from "sinon";
 

@@ -8,8 +8,7 @@ import {HttpDriver} from "../src/empty-epsilon/driver";
 import {expect} from 'chai';
 import {retry} from "./test-kit/retry";
 import {ESystem} from "../src/empty-epsilon/model";
-import {ESwitchBoard} from "../src/ecr/logic";
-import {PrimarySystem} from "../src/ecr/systems";
+import {ESwitchBoard, PrimarySystem} from "../src/ecr/model";
 
 const udpHosts = {localAddress: '127.0.0.1', remoteAddress: '127.0.0.1'};
 const options: Options = {

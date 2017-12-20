@@ -6,7 +6,7 @@ import {HttpDriver} from '../../src/empty-epsilon/driver';
 import config from '../test-kit/config';
 import {expect} from 'chai';
 import {retry} from "../test-kit/retry";
-import {PrimarySystem} from "../../src/ecr/systems";
+import {PrimarySystem} from "../../src/ecr/model";
 import {getLinearDeriviation} from "./test-kit";
 
 

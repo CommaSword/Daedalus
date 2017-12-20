@@ -4,6 +4,7 @@ import {loadOscEeApi} from "./osc-bridge/game-monitor";
 import {OscDriver} from "./osc/osc-driver";
 import {UdpOptions} from "osc";
 import {EcrModule} from "./ecr/index";
+import {Persistence} from "./core/persistency";
 
 export type ServerOptions = Partial<Options> & {
     resources: string
@@ -18,7 +19,7 @@ export class SimulatorServices {
     constructor(options: Options, private fs: FileSystem) {
         this.oscDriver = new OscDriver(options.oscOptions);
         this.eeDriver = new HttpDriver(options.eeAddress);
-        this.ecrModule = new EcrModule(this.eeDriver, this.oscDriver);
+        this.ecrModule = new EcrModule(this.eeDriver, this.oscDriver, new Persistence('ECR', fs, 'ecr-state.json'));
     }
 
     async init() {
@@ -31,6 +32,7 @@ export class SimulatorServices {
         this.disposer();
         this.oscDriver.close();
         this.ecrModule.destroy();
+        this.eeDriver.close();
     }
 }
 

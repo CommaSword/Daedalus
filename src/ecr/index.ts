@@ -1,31 +1,33 @@
 import {EEDriverWithHooks} from "../empty-epsilon/driver";
 import {EcrDriver} from "./driver";
-import {EcrLogic, ESwitchBoard, lowercaseInfraSystemNames} from "./logic";
+import {EcrLogic, lowercaseInfraSystemNames} from "./logic";
 import {OscDriver} from "../osc/osc-driver";
 import {ESystem} from "../empty-epsilon/model";
 import {MetaArgument, OscMessage} from "osc";
 import {Observable, Subscription} from "rxjs";
 import {expose} from "./rpc";
 import * as net from "net";
+import {EcrModel, EcrState, ESwitchBoard} from "./model";
+import {Persistence} from "../core/persistency";
 
 
 export class EcrModule {
     private subscription: Subscription;
     private readonly logic: EcrLogic;
-    private readonly repairDriver: EcrDriver;
+    private readonly driver: EcrDriver;
     private pulse: Observable<any> = Observable.interval(1111);
     private rpcServer: net.Server;
+    private model: EcrModel;
 
-    constructor(eeDriver: EEDriverWithHooks, private oscDriver: OscDriver) {
-        this.repairDriver = new EcrDriver(eeDriver, this.pulse);
-        this.logic = new EcrLogic(this.repairDriver);
+    constructor(eeDriver: EEDriverWithHooks, private oscDriver: OscDriver, private persistence : Persistence<EcrState>) {
+        this.driver = new EcrDriver(eeDriver, this.pulse);
+        this.model = new EcrModel();
+        this.logic = new EcrLogic(this.driver, this.model);
     }
 
     async init() {
         this.rpcServer = expose(this);
-        await this.repairDriver.init();
-        await this.logic.init();
-        this.broadcastSystemsState();
+        this.persistence.init(this.model);
         this.oscDriver.inbox.filter(m => m.address.startsWith('/d/repairs')).subscribe(message => {
             const addressArr = message.address.split('/');
             if (addressArr.length === 5) {
@@ -62,24 +64,29 @@ export class EcrModule {
                 console.error('maleformed address', message.address);
             }
         });
+        this.broadcastSystemsState();
+        await this.driver.init();
+        await this.logic.init();
     }
 
     private broadcastSystemsState() {
         this.subscription = this.pulse.switchMap<any, OscMessage>(_ => {
             const result: OscMessage[] = [];
-            // for (let s1 = 0; s1 < ESystem.COUNT; s1++) {
-            //     const system1 = this.logic.getPrimarySystemStatus(s1);
-            //     result.push({
-            //         address: `/d/repairs/${ESystem[s1]}/repair-rate`,
-            //         args: {type: 'f', value: system1.repairRate}
-            //     }, {
-            //         address: `/d/repairs/${ESystem[s1]}/heat-rate`,
-            //         args: {type: 'f', value: system1.heatRate}
-            //     }, {
-            //         address: `/d/repairs/${ESystem[s1]}/max-power`,
-            //         args: {type: 'f', value: system1.maxPower}
-            //     });
-            // }
+            /*
+            for (let s1 = 0; s1 < ESystem.COUNT; s1++) {
+                const system1 = this.logic.getPrimarySystemStatus(s1);
+                result.push({
+                    address: `/d/repairs/${ESystem[s1]}/repair-rate`,
+                    args: {type: 'f', value: system1.repairRate}
+                }, {
+                    address: `/d/repairs/${ESystem[s1]}/heat-rate`,
+                    args: {type: 'f', value: system1.heatRate}
+                }, {
+                    address: `/d/repairs/${ESystem[s1]}/max-power`,
+                    args: {type: 'f', value: system1.maxPower}
+                });
+            }
+            */
             for (let s2 = 0; s2 < ESwitchBoard.COUNT; s2++) {
                 const system2 = this.logic.getSwitchBoardStatus(s2);
                 result.push({

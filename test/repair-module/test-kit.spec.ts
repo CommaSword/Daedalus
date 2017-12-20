@@ -1,7 +1,7 @@
 import {expect} from 'chai';
 
-import {ESwitchBoard, EcrLogic} from "../../src/ecr/logic";
-import {SwitchBoard} from "../../src/ecr/systems";
+import { EcrLogic} from "../../src/ecr/logic";
+import {ESwitchBoard, SwitchBoard} from "../../src/ecr/model";
 import {setTimedInterval} from "../../src/core/timing";
 import {getLinearOverloadDeriviation, getLinearDeriviation} from "./test-kit";
 

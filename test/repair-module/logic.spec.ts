@@ -1,8 +1,8 @@
 import {expect} from 'chai';
-import {ESwitchBoard, EcrLogic} from "../../src/ecr/logic";
+import {EcrLogic} from "../../src/ecr/logic";
 import {ESystem} from "../../src/empty-epsilon/model";
 import {match, spy} from 'sinon';
-import {PrimarySystem, SwitchBoard, SwitchBoardStatus} from "../../src/ecr/systems";
+import {EcrModel, ESwitchBoard, PrimarySystem, SwitchBoard, SwitchBoardStatus} from "../../src/ecr/model";
 import {approx, getLinearOverloadDeriviation} from "./test-kit";
 import {Subscriber} from "rxjs/Subscriber";
 import {Observable} from "rxjs/Observable";
@@ -23,7 +23,7 @@ describe('repair module', () => {
     let repair: EcrLogic;
 
     beforeEach('init module', () => {
-        repair = new EcrLogic(sideEffects);
+        repair = new EcrLogic(sideEffects, new EcrModel());
         repair.init();
         for (let s2 = 0; s2 < ESwitchBoard.COUNT; s2++) {
             repair.startupSwitchBoard(s2);
@@ -38,7 +38,6 @@ describe('repair module', () => {
     });
 
     it('exposes all the systems', () => {
-        const repair = new EcrLogic(sideEffects);
         for (let s1 = 0; s1 < ESystem.COUNT; s1++) {
             expect(repair.getPrimarySystemStatus(s1).id).to.eql(s1);
         }
@@ -78,13 +77,13 @@ describe('repair module', () => {
         '100%  * number of online supporting systems/ number of supporting systems', () => {
         sideEffects.setMaxPower.reset();
         repair.shutdownSwitchBoard(ESwitchBoard.A2);
-        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, approx(PrimarySystem.maxSupportedPower /2));
+        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, approx(PrimarySystem.maxSupportedPower / 2));
         sideEffects.setMaxPower.reset();
         repair.shutdownSwitchBoard(ESwitchBoard.A3);
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, 0);
         sideEffects.setMaxPower.reset();
         repair.startupSwitchBoard(ESwitchBoard.A3);
-        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, approx(PrimarySystem.maxSupportedPower /2));
+        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, approx(PrimarySystem.maxSupportedPower / 2));
         sideEffects.setMaxPower.reset();
         repair.startupSwitchBoard(ESwitchBoard.A2);
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, PrimarySystem.maxOverPower);
