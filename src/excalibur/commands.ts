@@ -10,6 +10,7 @@ export default function init(builder: RootModuleBuilder, entries: Entries) {
         })
         .command("open", {
             title: "open",
+            description: `Open an information entry for display only`,
             returns: "ui.markdown",
             syntax: "open (entryName string)"
         })
@@ -25,6 +26,7 @@ export default function init(builder: RootModuleBuilder, entries: Entries) {
         .parent()
         .command('list', {
             title: 'list',
+            description: `List all available information entries`,
             returns: 'list<string>',
             syntax: 'list'
         })
@@ -33,6 +35,7 @@ export default function init(builder: RootModuleBuilder, entries: Entries) {
         })).parent()
         .command('query', {
             title: 'query',
+            description: `Send a custom query to the Excalibur deep analysis subsystem`,
             returns: 'ui.markdown',
             syntax: 'query (queryData string)'
         })
