@@ -5,21 +5,21 @@ import {OscDriver} from "./osc/osc-driver";
 import {UdpOptions} from "osc";
 import {EcrModule} from "./ecr/index";
 import {Persistence} from "./core/persistency";
-
-export type ServerOptions = Partial<Options> & {
-    resources: string
-}
+import * as net from "net";
+import {expose} from "./ecr/rpc";
 
 export class SimulatorServices {
     disposer: () => void;
     private readonly eeDriver: HttpDriver;
     private readonly oscDriver: OscDriver;
     private readonly ecrModule: EcrModule;
+    private rpcServer: net.Server;
 
     constructor(options: Options, private fs: FileSystem) {
         this.oscDriver = new OscDriver(options.oscOptions);
         this.eeDriver = new HttpDriver(options.eeAddress);
         this.ecrModule = new EcrModule(this.eeDriver, this.oscDriver, new Persistence('ECR', fs, 'ecr-state.json'));
+        this.rpcServer = expose(this.ecrModule, {hostname: '0.0.0.0', port:options.rpcPort});
     }
 
     async init() {
@@ -33,6 +33,7 @@ export class SimulatorServices {
         this.oscDriver.close();
         this.ecrModule.destroy();
         this.eeDriver.close();
+        this.rpcServer.close();
     }
 }
 
@@ -42,7 +43,7 @@ process.on('uncaughtException', function (err) {
     console.error(err.stack);
 });
 
-export async function main(optionsArg: ServerOptions) {
+export async function main(optionsArg: Options) {
     const options: Options = Object.assign({}, DEFAULT_OPTIONS, optionsArg);
     const fs: LocalFileSystem = await (new LocalFileSystem(optionsArg.resources)).init();
     const simulatorServices = new SimulatorServices(options, fs);
@@ -53,16 +54,15 @@ export async function main(optionsArg: ServerOptions) {
     await simulatorServices.init();
 }
 
-
 export type Options = {
+    resources: string;
+    hostname:string;
+    rpcPort: number;
     eeAddress: string;
-    terminalsPort: number;
     oscOptions: UdpOptions;
 }
 
-export const DEFAULT_OPTIONS: Options = {
-    eeAddress: 'http://localhost:8081',
-    terminalsPort: 8888,
+export const DEFAULT_OPTIONS = {
     oscOptions: {
         localAddress: "0.0.0.0",
         localPort: 57121,

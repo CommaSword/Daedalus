@@ -101,6 +101,7 @@ export class EcrLogic {
         this.model.switchBoards[id].setError();
         this.model.switchBoards[id].supportedSystems.forEach(sys1 => {
             this.updateHeatRate(sys1.id);
+            this.updateMaxPower(sys1.id);
             this.updateRepairRate(sys1.id);
         });
     }
@@ -117,7 +118,9 @@ export class EcrLogic {
     startupSwitchBoard(id: ESwitchBoard) {
         this.model.switchBoards[id].startup();
         this.model.switchBoards[id].supportedSystems.forEach(sys1 => {
+            this.updateHeatRate(sys1.id);
             this.updateMaxPower(sys1.id);
+            this.updateRepairRate(sys1.id);
         });
     }
 
@@ -126,7 +129,8 @@ export class EcrLogic {
             this.model.repairing = id;
             this.updateRepairRate(id);
         } else if (this.model.repairing !== id) {
-            throw new Error(`currently repairing ${ESystem[this.model.repairing]}`)
+            console.log(`currently repairing ${ESystem[this.model.repairing]}`);
+            throw new Error(`currently repairing ${ESystem[this.model.repairing]}`);
         }
     }
 

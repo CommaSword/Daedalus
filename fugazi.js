@@ -1,7 +1,12 @@
 require('source-map-support').install();
-const path = require('path');
+const {parse} = require('cli');
 
-// require('./dist/src/index').main({
-require('./src/fugazi-server').main({
-    resources: path.join(__dirname, 'resources')
+const commandOptions = parse({
+    hostname : ['h', 'The hostname of the server', 'ip'],
+    ecrHost : [false, 'The hostname of the ECR server', 'ip'],
+    ecrPort : [false, 'The port of the ECR server', 'int', 56667],
+    port : ['p', 'The port of the server', 'int', 3333],
+    resources : ['r', 'The location of the resources root folder in the file system', 'file', process.cwd()],
 });
+
+require('./dist/src/fugazi').main(commandOptions);

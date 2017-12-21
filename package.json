@@ -6,9 +6,6 @@
   "scripts": {
     "osc": "/Applications/open-stage-control.app/Contents/MacOS/open-stage-control --osc-port 57122 --send 127.0.0.1:57121 --read--only --load /Users/amira/IdeaProjects/Daedalus/dashboards/panels.json ",
     "build:osc": "node dashboards/make.js",
-    "build:client": "tsc -p node_modules/@fugazi/webclient/scripts & tsc -p node_modules/@fugazi/webclient/modules/scripts & echo 'done'",
-    "reset:client": "yarn upgrade @fugazi/connector && yarn upgrade @fugazi/webclient && yarn prepublish",
-    "_prepublish": "yarn build:client",
     "clean": "rimraf ./dist",
     "build": "tsc -d",
     "pretest": "npm run clean && npm run build",
@@ -34,7 +31,8 @@
   },
   "homepage": "https://github.com/CommaSword/Daedalus#readme",
   "devDependencies": {
-    "@fugazi/connector": "^1.0.16",
+    "@types/cli": "^0.11.19",
+    "@fugazi/connector": "^1.0.17",
     "@types/autobahn": "^0.9.37",
     "@types/chai": "~4.0.4",
     "@types/lodash": "4.14.55",
@@ -60,7 +58,8 @@
   },
   "dependencies": {
     "axios": "0.15.3",
-    "daedalus-fugazi-webclient": "0.0.2",
+    "cli": "^1.0.1",
+    "daedalus-fugazi-webclient": "0.1.0",
     "eventemitter3": "2.0.2",
     "front-matter": "^2.2.0",
     "json-rpc2": "1.0.2",

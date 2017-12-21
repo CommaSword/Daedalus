@@ -32,11 +32,18 @@ export class PrimarySystem implements PrimarySystemStatus {
     }
 
     get heatRate() {
-        if (this.switchboards.every(sys => !sys.isError)) {
-            return 0;
-        } else {
+        const onlineNoErrorSystems = this.switchboards.filter(sys => sys.isOnline && !sys.isError).length;
+        const errorSystems = this.switchboards.filter(sys => sys.isError).length;
+        if (errorSystems && (errorSystems >= onlineNoErrorSystems)) {
             return PrimarySystem.heatOnErrorRate;
+        } else {
+            return 0;
         }
+        // if (this.switchboards.every(sys => !sys.isError)) {
+        //     return 0;
+        // } else {
+        //     return PrimarySystem.heatOnErrorRate;
+        // }
     }
 
     get maxPower() {
@@ -77,7 +84,7 @@ export interface SwitchBoardStatus {
     readonly overloadErrorThreshold: number;
 }
 
-interface SwitchBoardState {
+export interface SwitchBoardState {
     readonly name: string;
     readonly isError: boolean;
     readonly isOnline: boolean;
@@ -173,6 +180,7 @@ export class EcrModel {
         const connections: { [systemName: number]: Array<SwitchBoard> } = {};
         for (let s1 = 0; s1 < ESystem.COUNT; s1++) {
             connections[s1] = [];
+            this.primarySystems[s1] = new PrimarySystem(s1, connections[s1]);
         }
         for (let s2 = 0; s2 < ESwitchBoard.COUNT; s2++) {
             let sys2 = new SwitchBoard(s2);
@@ -182,9 +190,6 @@ export class EcrModel {
                 sys2.supportedSystems.push(system1);
             }
             this.switchBoards[s2] = sys2;
-        }
-        for (let s1 = 0; s1 < ESystem.COUNT; s1++) {
-            this.primarySystems[s1] = new PrimarySystem(s1, connections[s1]);
         }
     }
 
