@@ -9,7 +9,7 @@ import {EcrModuleClient} from "./ecr/rpc";
 import resolve = require("resolve");
 
 export type ServerOptions = {
-    hostname:string;
+    hostname: string;
     port: number;
     ecrPort: number;
     ecrHost: string;
@@ -32,14 +32,23 @@ function hookIntoFugaziConnector() {
 export class FugaziServices {
     //   private readonly users: Users;
     private readonly entries: Entries;
+    private readonly ecrCommands: Entries;
     private readonly ecr: EcrModuleClient;
     private readonly connector: Connector;
 
-    constructor(private fs: FileSystem, options:ServerOptions) {
+    constructor(private fs: FileSystem, options: ServerOptions) {
         // application BL modules
         //    this.users = new Users(fs);
         this.entries = new Entries(fs);
-        this.ecr = new EcrModuleClient({hostname:options.ecrHost, port:options.ecrPort});
+        this.ecrCommands = new Entries(fs, {
+            entriesPath: 'FAKE_PATH_IGNORE_WARNING_ITS_OK_IM_AN_ENGINEER',
+            queriesPath: 'commands',
+            queriesPrefix: 'command',
+            generateQueryBody() {
+                return `DONE!`;
+            }
+        });
+        this.ecr = new EcrModuleClient({hostname: options.ecrHost, port: options.ecrPort});
 
         // connector API
         const builder = new fugazi.ConnectorBuilder();
@@ -50,7 +59,7 @@ export class FugaziServices {
             .session({keygrip: ['abracadabra!']});
 
         initExcalibur(builder.module("excalibur"), this.entries);
-        initEcr(builder.module("ecr"), this.ecr);
+        initEcr(builder.module("ecr"), this.ecr, this.ecrCommands);
         //   initLogin(builder.module("session"), this.users);
         this.connector = builder.build();
         (this.connector as any)._server.koa.use(async (ctx: any, next: any) => {
@@ -62,13 +71,16 @@ export class FugaziServices {
 
     async init() {
         await this.entries.init();
+        await this.ecrCommands.init();
         await this.connector.start();
-       // await this.ecr.init();
+        // DONT INIT ECR RPC, KEEP IT IN HTTP MODE BECAUSE TCP DOES NOT RECONNECT
+        // await this.ecr.init();
         // connector.logger.info("started");
     }
 
     close() {
         this.entries.destroy();
+        this.ecrCommands.destroy();
         this.ecr.end();
         this.connector.stop();
     }

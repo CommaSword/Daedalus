@@ -53,17 +53,30 @@ type Dictionary<T> = {
     [k: string]: T
 }
 
+export interface Options {
+    entriesPath: string;
+    queriesPath: string;
+    queriesPrefix: string;
+
+    generateQueryBody(search: string): string;
+}
+
+const DEFAULT_OPTIONS: Options = {
+    entriesPath: 'entries',
+    queriesPath: 'queries',
+    queriesPrefix: 'query',
+    generateQueryBody() {
+        return `This entry was created due to an anonymous query at ${Date.now()}`;
+    }
+};
 
 export class Entries {
-    static readonly entriesPath = 'entries';
-    static readonly queriesPath = 'queries';
-
     private watchdog: NodeJS.Timer;
-
+    private hasEntries = true;
     private entries = new Map<string, Entry>();
     private fileHandler = (e: FileChangedEvent | FileCreatedEvent) => {
         // Handle all new files found in the folder
-        if (e.fullPath.startsWith(Entries.entriesPath) || e.fullPath.startsWith(Entries.queriesPath)) {
+        if (e.fullPath.startsWith(this.options.entriesPath) || e.fullPath.startsWith(this.options.queriesPath)) {
             let entry = Entry.parse(e.newContent, e.fullPath);
             if (entry.meta.status === Status.ENTRY) {
                 this.entries.set(e.fullPath, entry);
@@ -73,13 +86,13 @@ export class Entries {
         }
     };
     private fileDeleteHandler = (e: FileDeletedEvent) => {
-        if (e.fullPath.startsWith(Entries.entriesPath) || e.fullPath.startsWith(Entries.queriesPath)) {
+        if (e.fullPath.startsWith(this.options.entriesPath) || e.fullPath.startsWith(this.options.queriesPath)) {
             this.entries.delete(e.fullPath);
         }
     };
     private scanQueries = async () => {
         try {
-            const queries = await this.fs.loadDirectoryChildren(Entries.queriesPath);
+            const queries = await this.fs.loadDirectoryChildren(this.options.queriesPath);
             await queries.filter(isFile)
             // load file
                 .map(async file => {
@@ -102,12 +115,28 @@ export class Entries {
         }
     };
 
-    constructor(private fs: FileSystem) {
+    constructor(private fs: FileSystem, private options: Options = DEFAULT_OPTIONS) {
     }
 
     async init() {
-        const fsItems = await this.fs.loadDirectoryChildren(Entries.entriesPath);
+        this.fs.events.on('fileChanged', this.fileHandler);
+        this.fs.events.on('fileCreated', this.fileHandler);
+        this.fs.events.on('fileDeleted', this.fileDeleteHandler);
 
+        await this.scanEntries();
+        await this.scanQueries();
+    }
+
+    private async scanEntries() {
+        let fsItems;
+        try {
+            fsItems = await this.fs.loadDirectoryChildren(this.options.entriesPath);
+            this.hasEntries = true;
+        } catch (e) {
+            console.warn(`Path ${this.options.entriesPath} does not exist. entries will not be scanned`);
+            this.hasEntries = false;
+            return;
+        }
         // process all files
         await fsItems.filter(isFile)
         // load file
@@ -120,11 +149,6 @@ export class Entries {
                 await r;
                 await p;
             }, {});
-
-        this.fs.events.on('fileChanged', this.fileHandler);
-        this.fs.events.on('fileCreated', this.fileHandler);
-        this.fs.events.on('fileDeleted', this.fileDeleteHandler);
-        await this.scanQueries();
     }
 
     destroy() {
@@ -147,48 +171,50 @@ export class Entries {
     }
 
     async query(user: User, search: string): Promise<string | undefined> {
-        let queryFileName = `query_${Date.now().toString()}.md`;
+        let queryFileName = `${this.options.queriesPrefix}_${Date.now().toString()}.md`;
 
-        let newPath = join(Entries.queriesPath, queryFileName);
+        let newPath = join(this.options.queriesPath, queryFileName);
         let queryEntry = new Entry(newPath, {
                 status: Status.QUERY,
                 securityClass: user.excaliburClearance,
                 name: search
             },
-            `This entry was created due to a query by ${user.name} at ${Date.now()}`
+            this.options.generateQueryBody(search)
         );
         await this.fs.saveFile(newPath, queryEntry.toString());
         const entry = await new Promise<Entry>((resolve: Function, reject: Function) => {
-                const cleanup = () => {
-                    this.fs.events.removeListener('fileDeleted', listener);
-                    this.fs.events.removeListener('fileChanged', listener);
-                };
-                const listener = (e: FileChangedEvent | FileDeletedEvent) => {
-                    if (normalize(e.fullPath) === normalize(newPath)) {
-                        switch (e.type) {
-                            case 'fileChanged':
-                                let entry = Entry.parse(e.newContent, e.fullPath);
-                                if (entry.meta.status === Status.ENTRY) {
-                                    cleanup();
-                                    resolve(entry);
-                                }
-                                break;
-                            case 'fileDeleted':
+            const cleanup = () => {
+                this.fs.events.removeListener('fileDeleted', listener);
+                this.fs.events.removeListener('fileChanged', listener);
+            };
+            const listener = (e: FileChangedEvent | FileDeletedEvent) => {
+                if (normalize(e.fullPath) === normalize(newPath)) {
+                    switch (e.type) {
+                        case 'fileChanged':
+                            let entry = Entry.parse(e.newContent, e.fullPath);
+                            if (entry.meta.status === Status.ENTRY) {
                                 cleanup();
-                                reject(new Error("Bad command or file name"));
-                                break;
-                        }
+                                resolve(entry);
+                            }
+                            break;
+                        case 'fileDeleted':
+                            cleanup();
+                            reject(new Error("Bad command or file name"));
+                            break;
                     }
-                };
-                this.fs.events.on('fileChanged', listener);
-                this.fs.events.on('fileDeleted', listener);
-            });
+                }
+            };
+            this.fs.events.on('fileChanged', listener);
+            this.fs.events.on('fileDeleted', listener);
+        });
         return this.open(user, entry.meta.name);
     }
 
     private async copyToEntries(entry: Entry) {
-        let entriesPath = join(Entries.entriesPath, basename(entry.path));
-        await this.fs.saveFile(entriesPath, entry.toString());
+        if (this.hasEntries) {
+            let entriesPath = join(this.options.entriesPath, basename(entry.path));
+            await this.fs.saveFile(entriesPath, entry.toString());
+        }
         await this.fs.deleteFile(entry.path);
     }
 
