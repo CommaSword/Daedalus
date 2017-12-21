@@ -129,7 +129,6 @@ export class EcrLogic {
             this.model.repairing = id;
             this.updateRepairRate(id);
         } else if (this.model.repairing !== id) {
-            console.log(`currently repairing ${ESystem[this.model.repairing]}`);
             throw new Error(`currently repairing ${ESystem[this.model.repairing]}`);
         }
     }
