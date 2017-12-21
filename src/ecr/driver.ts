@@ -5,12 +5,11 @@ import {EEDriverWithHooks} from "../empty-epsilon/driver";
 
 export const heat_sanity_factor = 0.28;
 export const repair_per_second = 0.007;
-export const heat_per_second = 0.0014;
+export const heat_per_second = 0.05;
 export const damage_per_second_on_overheat = 0.08;
 export const min_reactor_health = -0.89;
 
 const powerQueries = ESystemNames.map((system) => `getPlayerShip(-1):getSystemPower('${system}')`);
-
 
 export class EcrDriver implements Driver {
 

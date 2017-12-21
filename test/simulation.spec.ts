@@ -1,3 +1,4 @@
+/*
 import config from './test-kit/config';
 import {eeTestServerLifecycle} from "./test-kit/empty-epsylon-server-manager";
 import {DEFAULT_OPTIONS, Options, SimulatorServices} from "../src/simulation";
@@ -11,7 +12,7 @@ import {ESystem} from "../src/empty-epsilon/model";
 import {ESwitchBoard, PrimarySystem} from "../src/ecr/model";
 
 const udpHosts = {localAddress: '127.0.0.1', remoteAddress: '127.0.0.1'};
-const options: Options = {
+const options = {
     ...DEFAULT_OPTIONS,
     eeAddress: config.serverAddress,
     oscOptions: {
@@ -151,3 +152,4 @@ describe('e2e', () => {
         });
     });
 });
+*/

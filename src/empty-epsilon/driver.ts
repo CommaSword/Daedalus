@@ -201,7 +201,9 @@ return {${getQueue.map(req => req.luaJSONFields).join(',')}};`;
     }
 
     private requestFlush() {
-        if (!this.isShutdown && !this.flushHandle) {
+        if (this.isShutdown) {
+            console.log('ignoring flush for EE driver');
+        } else if (!this.flushHandle) {
             this.flushHandle = setTimeout(this.flush, this.timeBetweenFlushes);
         }
     }
@@ -242,6 +244,7 @@ end
     }
 
     close() {
+        console.log('closing EE driver');
         this.isShutdown = true;
         if (this.flushHandle) {
             clearTimeout(this.flushHandle);

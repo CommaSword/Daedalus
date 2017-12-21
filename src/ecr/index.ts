@@ -5,8 +5,6 @@ import {OscDriver} from "../osc/osc-driver";
 import {ESystem} from "../empty-epsilon/model";
 import {MetaArgument, OscMessage} from "osc";
 import {Observable, Subscription} from "rxjs";
-import {expose} from "./rpc";
-import * as net from "net";
 import {EcrModel, EcrState, ESwitchBoard} from "./model";
 import {Persistence} from "../core/persistency";
 
@@ -16,7 +14,6 @@ export class EcrModule {
     private readonly logic: EcrLogic;
     private readonly driver: EcrDriver;
     private pulse: Observable<any> = Observable.interval(1111);
-    private rpcServer: net.Server;
     private model: EcrModel;
 
     constructor(eeDriver: EEDriverWithHooks, private oscDriver: OscDriver, private persistence : Persistence<EcrState>) {
@@ -26,7 +23,6 @@ export class EcrModule {
     }
 
     async init() {
-        this.rpcServer = expose(this);
         this.persistence.init(this.model);
         this.oscDriver.inbox.filter(m => m.address.startsWith('/d/repairs')).subscribe(message => {
             const addressArr = message.address.split('/');
@@ -118,6 +114,5 @@ export class EcrModule {
     destroy() {
         this.subscription.unsubscribe();
         this.logic.destroy();
-        this.rpcServer.close();
     }
 }

@@ -24,6 +24,7 @@ export class Entry {
         if (this.meta.name === undefined) {
             this.meta.name = "unknown";
         }
+        this.meta.name = this.meta.name.substr(0, 1).toUpperCase() + this.meta.name.substr(1);
     }
 
     static parse(rawContent: string, path: string): Entry {
@@ -70,7 +71,7 @@ export class Entries {
                 this.entries.delete(e.fullPath);
             }
         }
-    }
+    };
     private fileDeleteHandler = (e: FileDeletedEvent) => {
         if (e.fullPath.startsWith(Entries.entriesPath) || e.fullPath.startsWith(Entries.queriesPath)) {
             this.entries.delete(e.fullPath);
@@ -141,7 +142,8 @@ export class Entries {
 
     list(): string[] {
         return [... this.entries.values()]
-            .map(e => e.meta.name);
+            .map(e => e.meta.name)
+            .sort();
     }
 
     async query(user: User, search: string): Promise<string | undefined> {

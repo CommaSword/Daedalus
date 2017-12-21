@@ -9,7 +9,10 @@ import {EcrModuleClient} from "./ecr/rpc";
 import resolve = require("resolve");
 
 export type ServerOptions = {
-    port?: number;
+    hostname:string;
+    port: number;
+    ecrPort: number;
+    ecrHost: string;
     resources: string;
 }
 
@@ -32,17 +35,17 @@ export class FugaziServices {
     private readonly ecr: EcrModuleClient;
     private readonly connector: Connector;
 
-    constructor(private fs: FileSystem, port: number) {
+    constructor(private fs: FileSystem, options:ServerOptions) {
         // application BL modules
         //    this.users = new Users(fs);
         this.entries = new Entries(fs);
-        this.ecr = new EcrModuleClient();
+        this.ecr = new EcrModuleClient({hostname:options.ecrHost, port:options.ecrPort});
 
         // connector API
         const builder = new fugazi.ConnectorBuilder();
         builder.server()
-            .port(port)
-            //	.host('0.0.0.0')
+            .port(options.port)
+            .host(options.hostname)
             .folder(parse(resolve.sync('daedalus-fugazi-webclient/index.html')).dir)
             .session({keygrip: ['abracadabra!']});
 
@@ -60,7 +63,7 @@ export class FugaziServices {
     async init() {
         await this.entries.init();
         await this.connector.start();
-        await this.ecr.init();
+       // await this.ecr.init();
         // connector.logger.info("started");
     }
 
@@ -79,13 +82,10 @@ process.on('uncaughtException', function (err) {
 export async function main(optionsArg: ServerOptions) {
     const fs: LocalFileSystem = await (new LocalFileSystem(optionsArg.resources)).init();
     hookIntoFugaziConnector();
-    const fugaziServices = new FugaziServices(fs, optionsArg.port || 3333);
+    const fugaziServices = new FugaziServices(fs, optionsArg);
     const exit = fugaziServices.close.bind(fugaziServices);
     process.once('exit', exit);
     process.once('SIGINT', exit.bind(null, true, 2));
     process.once('SIGTERM', exit.bind(null, true, 15));
     await fugaziServices.init();
 }
-
-
-//TODO:  zeroconf && noice-json-rpc
