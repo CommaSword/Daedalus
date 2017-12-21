@@ -1,6 +1,6 @@
 {
   "name": "Daedalus",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Empty Epsilon - Maintainence, Repair and Operations extension",
   "main": "main.js",
   "scripts": {
