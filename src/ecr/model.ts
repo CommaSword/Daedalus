@@ -158,11 +158,11 @@ export class SwitchBoard implements SwitchBoardStatus {
 
 const switchboardstMap: { [switchId: number]: ESystem[] } = {
     [ESwitchBoard.A1]: [ESystem.MissileSystem, ESystem.FrontShield, ESystem.Reactor],
-    [ESwitchBoard.A2]: [ESystem.BeamWeapons, ESystem.Warp, ESystem.Reactor, ESystem.Impulse],
-    [ESwitchBoard.A3]: [ESystem.Maneuver, ESystem.Impulse, ESystem.RearShield],
-    [ESwitchBoard.B1]: [ESystem.FrontShield, ESystem.BeamWeapons, ESystem.Reactor],
-    [ESwitchBoard.B2]: [ESystem.Warp, ESystem.Impulse, ESystem.RearShield],
-    [ESwitchBoard.B3]: [ESystem.MissileSystem, ESystem.Maneuver, ESystem.Impulse, ESystem.Reactor],
+    [ESwitchBoard.A2]: [ESystem.BeamWeapons, ESystem.Warp, ESystem.Reactor],
+    [ESwitchBoard.A3]: [ESystem.Maneuver, ESystem.Impulse, ESystem.RearShield, ESystem.Reactor],
+    [ESwitchBoard.B1]: [ESystem.FrontShield,  ESystem.Impulse, ESystem.BeamWeapons, ESystem.RearShield],
+    [ESwitchBoard.B2]: [],
+    [ESwitchBoard.B3]: [ESystem.MissileSystem, ESystem.Maneuver, ESystem.Warp, ESystem.Reactor],
 };
 
 export interface EcrState {

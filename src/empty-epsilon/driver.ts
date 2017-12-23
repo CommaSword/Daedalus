@@ -196,6 +196,7 @@ return {${getQueue.map(req => req.luaJSONFields).join(',')}};`;
         });
         if (res.data.ERROR) {
             console.error('error from game server: ' + res.data.ERROR);
+            this.exec(script);
         }
         return res.data;
     }

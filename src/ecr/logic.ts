@@ -50,10 +50,12 @@ export class EcrLogic {
      */
     tick(delta: number) {
         for (let s1 = 0; s1 < ESystem.COUNT; s1++) {
-            const system1 = this.model.primarySystems[s1];
-            const overPowerFactor = system1.normalizedOverPower;
-            if (overPowerFactor) {
-                system1.switchboards.forEach(system2 => this.addOverloadToSwitchBoard(system2.id, delta * SwitchBoard.overloadPerMillisecond * overPowerFactor))
+            if (s1 !== ESystem.Reactor) {
+                const system1 = this.model.primarySystems[s1];
+                const overPowerFactor = system1.normalizedOverPower;
+                if (overPowerFactor) {
+                    system1.switchboards.forEach(system2 => this.addOverloadToSwitchBoard(system2.id, delta * SwitchBoard.overloadPerMillisecond * overPowerFactor / system1.switchboards.length))
+                }
             }
         }
     }

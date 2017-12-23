@@ -42,11 +42,11 @@ if value > 0 then
     local newHeat = ship:getSystemHeat(system) + (value * ${heat_per_second} * delta)
     if newHeat > 1 then
         ${
-/*
-// Heat damage is specified as damage per second while overheating.
-// Calculate the amount of overheat back to a time, and use that to
-// calculate the actual damage taken.
- */''}
+                /*
+                // Heat damage is specified as damage per second while overheating.
+                // Calculate the amount of overheat back to a time, and use that to
+                // calculate the actual damage taken.
+                 */''}
         local newHealth = ship:getSystemHealth(system) - (newHeat -1) * ${damage_per_second_on_overheat / heat_per_second}
         if system == '${ESystem[ESystem.Reactor]}' and newHealth < ${min_reactor_health} then 
             newHealth = ${min_reactor_health}
