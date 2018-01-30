@@ -80,7 +80,7 @@ describe('excalibur module', () => {
                 await fs.saveFile('entries/foo4.md', makeEntryFile(Status.ENTRY, ExcaliburSecClass.SECRET, 'foo4', 'bar'));
 
                 const result = entries.list();
-                expect(result.map(s => s.trim()).sort()).to.eql(['foo3', 'foo4']);
+                expect(result.map(s => s.trim()).sort()).to.eql(['Foo3', 'Foo4']);
             });
         });
     });
@@ -174,9 +174,9 @@ describe('excalibur module', () => {
                 expect(entryInEntries.content).to.eql(entry.content);
             });
 
-            it('entry immediately appears in list, opens in open', async () => {
+            it('entry immediately appears in list', async () => {
                 const result = entries.list();
-                expect(result).to.eql('foo (CONFIDENTIAL)');
+                expect(result).to.eql(['Foo']);
             });
 
         });

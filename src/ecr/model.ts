@@ -156,21 +156,21 @@ export class SwitchBoard implements SwitchBoardStatus {
     }
 }
 
-const switchboardstMap: { [switchId: number]: ESystem[] } = {
-    [ESwitchBoard.A1]: [ESystem.MissileSystem, ESystem.FrontShield, ESystem.Reactor],
-    [ESwitchBoard.A2]: [ESystem.BeamWeapons, ESystem.Warp, ESystem.Reactor],
-    [ESwitchBoard.A3]: [ESystem.Maneuver, ESystem.Impulse, ESystem.RearShield, ESystem.Reactor],
-    [ESwitchBoard.B1]: [ESystem.FrontShield,  ESystem.Impulse, ESystem.BeamWeapons, ESystem.RearShield],
-    [ESwitchBoard.B2]: [],
-    [ESwitchBoard.B3]: [ESystem.MissileSystem, ESystem.Maneuver, ESystem.Warp, ESystem.Reactor],
-};
-
 export interface EcrState {
     repairing: ESystem | null;
     switchBoards: Array<SwitchBoardState>;
 }
 
 export class EcrModel {
+
+    static readonly switchboardstMap: { [switchId: number]: ESystem[] } = {
+        [ESwitchBoard.A1]: [ESystem.MissileSystem, ESystem.FrontShield, ESystem.Reactor],
+        [ESwitchBoard.A2]: [ESystem.BeamWeapons, ESystem.Warp, ESystem.Reactor],
+        [ESwitchBoard.A3]: [ESystem.Maneuver, ESystem.Impulse, ESystem.RearShield, ESystem.Reactor],
+        [ESwitchBoard.B1]: [ESystem.FrontShield,  ESystem.Impulse, ESystem.BeamWeapons, ESystem.RearShield],
+        [ESwitchBoard.B2]: [],
+        [ESwitchBoard.B3]: [ESystem.MissileSystem, ESystem.Maneuver, ESystem.Warp, ESystem.Reactor],
+    };
 
     readonly primarySystems: { [systemName: number]: PrimarySystem } = {};
     readonly switchBoards: { [systemName: number]: SwitchBoard } = {};
@@ -184,7 +184,7 @@ export class EcrModel {
         }
         for (let s2 = 0; s2 < ESwitchBoard.COUNT; s2++) {
             let sys2 = new SwitchBoard(s2);
-            for (let s1 of switchboardstMap[s2]) {
+            for (let s1 of EcrModel.switchboardstMap[s2]) {
                 const system1 = this.primarySystems[s1];
                 connections[s1].push(sys2);
                 sys2.supportedSystems.push(system1);

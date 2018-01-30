@@ -48,7 +48,7 @@ describe('repair module', () => {
 
     it('.startRepairingPrimarySystem(x), .stopRepairingPrimarySystem() affect side effects repair rate and the value of .repairing', () => {
         repair.startRepairingPrimarySystem(ESystem.JumpDrive);
-        expect(sideEffects.setRepairRate).to.have.been.calledWith(ESystem.JumpDrive, approx(PrimarySystem.repairRate));
+        expect(sideEffects.setRepairRate).to.have.been.calledWith(ESystem.JumpDrive, approx(repair.getPrimarySystemStatus(ESystem.JumpDrive).repairRate));
         expect(repair.repairing).to.eql(ESystem.JumpDrive);
         repair.stopRepairingPrimarySystem();
         expect(sideEffects.setRepairRate).to.have.been.calledWith(ESystem.JumpDrive, 0);
@@ -69,49 +69,51 @@ describe('repair module', () => {
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, PrimarySystem.maxOverPower);
         sideEffects.setMaxPower.reset();
         repair.shutdownSwitchBoard(ESwitchBoard.A2);
-        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, match.number.and(match((n: number) => n <= PrimarySystem.maxSupportedPower)));
-        expect(sideEffects.setMaxPower).to.have.not.been.calledWith(ESystem.Impulse, PrimarySystem.maxOverPower);
+        const dependant = EcrModel.switchboardstMap[ESwitchBoard.A2][0];
+        expect(sideEffects.setMaxPower).to.have.been.calledWith(dependant, match.number.and(match((n: number) => n <= PrimarySystem.maxSupportedPower)));
+        expect(sideEffects.setMaxPower).to.have.not.been.calledWith(dependant, PrimarySystem.maxOverPower);
     });
 
-    it('When a supporting system2 is offline, the maximum level of a system1’s power will be at most: ' +
-        '100%  * number of online supporting systems/ number of supporting systems', () => {
+    it('When a supporting system2 is offline, the maximum level of a system1’s power will decrease', () => {
+        const dependant = EcrModel.switchboardstMap[ESwitchBoard.A2][0];
+        const dependantStatus = repair.getPrimarySystemStatus(dependant);
+        expect(dependantStatus.maxPower).to.equal(PrimarySystem.maxOverPower);
+
         sideEffects.setMaxPower.reset();
         repair.shutdownSwitchBoard(ESwitchBoard.A2);
-        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, approx(PrimarySystem.maxSupportedPower / 2));
-        sideEffects.setMaxPower.reset();
-        repair.shutdownSwitchBoard(ESwitchBoard.A3);
-        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, 0);
-        sideEffects.setMaxPower.reset();
-        repair.startupSwitchBoard(ESwitchBoard.A3);
-        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, approx(PrimarySystem.maxSupportedPower / 2));
-        sideEffects.setMaxPower.reset();
-        repair.startupSwitchBoard(ESwitchBoard.A2);
-        expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, PrimarySystem.maxOverPower);
+        expect(dependantStatus.maxPower).to.be.lessThan(PrimarySystem.maxSupportedPower);
+        expect(sideEffects.setMaxPower).to.have.been.calledWith(dependant, approx(dependantStatus.maxPower));
     });
 
     describe('When a system1 is over-powered', () => {
         let activeCollectorStatus: SwitchBoardStatus;
+        const dependant = EcrModel.switchboardstMap[ESwitchBoard.A2][0];
+
         beforeEach(() => {
             activeCollectorStatus = repair.getSwitchBoardStatus(ESwitchBoard.A2);
         });
 
         it('its supporting system2s accumulate overload', async () => {
-            sideEffects.powerInput.next({system: ESystem.Impulse, power: PrimarySystem.maxSupportedPower});
+            sideEffects.powerInput.next({system: dependant, power: PrimarySystem.maxSupportedPower});
             expect(await getLinearOverloadDeriviation(activeCollectorStatus, graceFactor)).to.eql(0);
-            sideEffects.powerInput.next({system: ESystem.Impulse, power: PrimarySystem.maxSupportedPower * 2});
+            sideEffects.powerInput.next({system: dependant, power: PrimarySystem.maxSupportedPower * 2});
             expect(await getLinearOverloadDeriviation(activeCollectorStatus, graceFactor)).to.be.gt(0);
         }).timeout(10 * 1000);
 
         it('The overload rate is linear to the level of extra energy', async () => {
-            sideEffects.powerInput.next({system: ESystem.Impulse, power: PrimarySystem.maxSupportedPower * 1.5});
-            expect(await getLinearOverloadDeriviation(activeCollectorStatus, graceFactor), '1.5 power').to.be.approximately(SwitchBoard.overloadPerMillisecond * 0.5, SwitchBoard.overloadPerMillisecond * graceFactor);
-            sideEffects.powerInput.next({system: ESystem.Impulse, power: PrimarySystem.maxSupportedPower * 2});
+            sideEffects.powerInput.next({system: dependant, power: PrimarySystem.maxSupportedPower * 2});
+            const overPower100Percent = await getLinearOverloadDeriviation(activeCollectorStatus, graceFactor);
+            expect(overPower100Percent).to.be.greaterThan(0);
+
+            sideEffects.powerInput.next({system: dependant, power: PrimarySystem.maxSupportedPower * 1.5});
+            expect(await getLinearOverloadDeriviation(activeCollectorStatus, graceFactor), '1.5 power').to.be.approximately(overPower100Percent * 0.5, overPower100Percent * graceFactor);
+            sideEffects.powerInput.next({system: dependant, power: PrimarySystem.maxSupportedPower * 2});
             await Promise.resolve();
-            expect(await getLinearOverloadDeriviation(activeCollectorStatus, graceFactor), '2 power').to.be.approximately(SwitchBoard.overloadPerMillisecond, SwitchBoard.overloadPerMillisecond * graceFactor);
-            sideEffects.powerInput.next({system: ESystem.Impulse, power: PrimarySystem.maxSupportedPower * 2.5});
-            expect(await getLinearOverloadDeriviation(activeCollectorStatus, graceFactor), '2.5 power').to.be.approximately(SwitchBoard.overloadPerMillisecond * 1.5, SwitchBoard.overloadPerMillisecond * graceFactor);
-            sideEffects.powerInput.next({system: ESystem.Impulse, power: PrimarySystem.maxSupportedPower * 3});
-            expect(await getLinearOverloadDeriviation(activeCollectorStatus, graceFactor), '3 power').to.be.approximately(SwitchBoard.overloadPerMillisecond * 2, SwitchBoard.overloadPerMillisecond * graceFactor);
+            expect(await getLinearOverloadDeriviation(activeCollectorStatus, graceFactor), '2 power').to.be.approximately(overPower100Percent, overPower100Percent * graceFactor);
+            sideEffects.powerInput.next({system: dependant, power: PrimarySystem.maxSupportedPower * 2.5});
+            expect(await getLinearOverloadDeriviation(activeCollectorStatus, graceFactor), '2.5 power').to.be.approximately(overPower100Percent * 1.5, overPower100Percent * graceFactor);
+            sideEffects.powerInput.next({system: dependant, power: PrimarySystem.maxSupportedPower * 3});
+            expect(await getLinearOverloadDeriviation(activeCollectorStatus, graceFactor), '3 power').to.be.approximately(overPower100Percent* 2, overPower100Percent * graceFactor);
         }).timeout(20 * 1000);
     });
 
@@ -125,30 +127,26 @@ describe('repair module', () => {
     });
 
     describe('When one or more supporting system2 is in error state', () => {
+        const dependant = EcrModel.switchboardstMap[ESwitchBoard.A2][0];
 
         it('the supported system1 begins accumulating heat (the rate does not change according to the amount of systems in error)', () => {
             repair.setError(ESwitchBoard.A2);
-            expect(sideEffects.setHeatRate).to.have.been.calledWith(ESystem.Impulse, approx(PrimarySystem.heatOnErrorRate));
+            expect(sideEffects.setHeatRate).to.have.been.calledWith(dependant, approx(PrimarySystem.heatOnErrorRate));
             sideEffects.setRepairRate.reset();
             repair.setError(ESwitchBoard.A3);
-            expect(sideEffects.setHeatRate).to.have.been.calledWith(ESystem.Impulse, approx(PrimarySystem.heatOnErrorRate));
+            expect(sideEffects.setHeatRate).to.have.been.calledWith(dependant, approx(PrimarySystem.heatOnErrorRate));
             sideEffects.setRepairRate.reset();
             repair.shutdownSwitchBoard(ESwitchBoard.A2);
             repair.shutdownSwitchBoard(ESwitchBoard.A3);
-            expect(sideEffects.setHeatRate).to.have.been.calledWith(ESystem.Impulse, 0);
+            expect(sideEffects.setHeatRate).to.have.been.calledWith(dependant, 0);
         });
 
-        it('the repair rate of supported system1 is 50% the normal rate', () => {
-            repair.startRepairingPrimarySystem(ESystem.JumpDrive);
-            repair.setError(ESwitchBoard.B3);
-            expect(sideEffects.setRepairRate, `after 1st error`).to.have.been.calledWith(ESystem.JumpDrive, approx(PrimarySystem.repairRate * 0.5));
-            sideEffects.setRepairRate.reset();
-            repair.setError(ESwitchBoard.A3);
-            expect(sideEffects.setRepairRate, `after 2nd error`).to.have.been.calledWith(ESystem.JumpDrive, approx(PrimarySystem.repairRate * 0.2));
-            sideEffects.setRepairRate.reset();
-            repair.shutdownSwitchBoard(ESwitchBoard.B3);
-            repair.shutdownSwitchBoard(ESwitchBoard.A3);
-            expect(sideEffects.setRepairRate, `after shutdowns`).to.have.been.calledWith(ESystem.JumpDrive, approx(PrimarySystem.repairRate));
+        it('the repair rate of supported system1 is lower than the normal rate', () => {
+            const depRepairRate = repair.getPrimarySystemStatus(dependant).repairRate;
+            repair.startRepairingPrimarySystem(dependant);
+            repair.setError(ESwitchBoard.A2);
+            expect(repair.getPrimarySystemStatus(dependant).repairRate).to.be.lessThan(depRepairRate);
+            expect(sideEffects.setRepairRate).to.have.been.calledWith(dependant, approx(repair.getPrimarySystemStatus(dependant).repairRate));
         });
     });
 });

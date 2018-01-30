@@ -62,7 +62,7 @@ const addresses = [
     "/ee/player-ship/-1/system-coolant/Rear-shield"
 ];
 
-xdescribe('monitorByAddress e2e', function(){
+describe('monitorByAddress e2e', function(){
     this.timeout(4 * 1000);
     eeTestServerLifecycle(config);
     let httpDriver = new HttpDriver(config.serverAddress);
