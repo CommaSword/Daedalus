@@ -1,7 +1,7 @@
 import {normInputString, Request, withUser} from "../session/command-utils";
 import {RootModuleBuilder} from "@fugazi/connector/scripts/bin/components";
 import {EcrModuleClient} from "./rpc";
-import {ESystem} from "../empty-epsilon/model";
+import {ESystem} from "empty-epsilon-js";
 import {Entries} from "../excalibur/entries";
 import {User} from "../session/users";
 

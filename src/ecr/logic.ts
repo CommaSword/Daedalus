@@ -1,5 +1,5 @@
-import {PrimarySystem, PrimarySystemStatus, EcrModel, SwitchBoard, SwitchBoardStatus, ESwitchBoard} from "./model";
-import {ESystem} from "../empty-epsilon/model";
+import {PrimarySystemStatus, EcrModel, SwitchBoard, SwitchBoardStatus, ESwitchBoard} from "./model";
+import {ESystem} from "empty-epsilon-js";
 import {setTimedInterval} from "../core/timing";
 import {Observable} from "rxjs/Observable";
 

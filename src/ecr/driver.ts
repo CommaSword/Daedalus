@@ -1,7 +1,6 @@
 import {Driver} from "./logic";
-import {ESystem, ESystemNames} from "../empty-epsilon/model";
+import {ESystem, ESystemNames, EEDriverWithHooks} from "empty-epsilon-js";
 import {Observable} from "rxjs";
-import {EEDriverWithHooks} from "../empty-epsilon/driver";
 
 export const repair_per_second = 0.007;
 export const heat_per_second = 0.05 * /* heat_sanity_factor */ 0.28;

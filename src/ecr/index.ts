@@ -1,8 +1,7 @@
-import {EEDriverWithHooks} from "../empty-epsilon/driver";
+import {EEDriverWithHooks, ESystem} from "empty-epsilon-js";
 import {EcrDriver} from "./driver";
 import {EcrLogic, lowercaseInfraSystemNames} from "./logic";
-import {OscDriver} from "../osc/osc-driver";
-import {ESystem} from "../empty-epsilon/model";
+import {OscDriver} from "open-epsilon";
 import {MetaArgument, OscMessage} from "osc";
 import {Observable, Subscription} from "rxjs";
 import {EcrModel, EcrState, ESwitchBoard} from "./model";

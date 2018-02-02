@@ -1,6 +1,6 @@
 import * as  rpc from 'json-rpc2';
 import * as net from "net";
-import {ESystem} from "../empty-epsilon/model";
+import {ESystem} from "empty-epsilon-js";
 import {EcrModule} from "./index";
 
 export type Options = {

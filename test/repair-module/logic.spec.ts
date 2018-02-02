@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import {EcrLogic} from "../../src/ecr/logic";
-import {ESystem} from "../../src/empty-epsilon/model";
+import {ESystem} from "empty-epsilon-js";
 import {match, spy} from 'sinon';
 import {EcrModel, ESwitchBoard, PrimarySystem, SwitchBoard, SwitchBoardStatus} from "../../src/ecr/model";
 import {approx, getLinearOverloadDeriviation} from "./test-kit";
@@ -113,7 +113,7 @@ describe('repair module', () => {
             sideEffects.powerInput.next({system: dependant, power: PrimarySystem.maxSupportedPower * 2.5});
             expect(await getLinearOverloadDeriviation(activeCollectorStatus, graceFactor), '2.5 power').to.be.approximately(overPower100Percent * 1.5, overPower100Percent * graceFactor);
             sideEffects.powerInput.next({system: dependant, power: PrimarySystem.maxSupportedPower * 3});
-            expect(await getLinearOverloadDeriviation(activeCollectorStatus, graceFactor), '3 power').to.be.approximately(overPower100Percent* 2, overPower100Percent * graceFactor);
+            expect(await getLinearOverloadDeriviation(activeCollectorStatus, graceFactor), '3 power').to.be.approximately(overPower100Percent * 2, overPower100Percent * graceFactor);
         }).timeout(20 * 1000);
     });
 

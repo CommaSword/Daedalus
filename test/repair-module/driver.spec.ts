@@ -1,11 +1,8 @@
 import {heat_per_second, repair_per_second, EcrDriver} from "../../src/ecr/driver";
 import {Observable, Subscriber} from "rxjs";
-import {ESystem} from "../../src/empty-epsilon/model";
-import {eeTestServerLifecycle} from '../test-kit/empty-epsylon-server-manager'
-import {HttpDriver} from '../../src/empty-epsilon/driver';
+import {ESystem, retry, eeTestServerLifecycle, HttpDriver} from "empty-epsilon-js";
 import config from '../test-kit/config';
 import {expect} from 'chai';
-import {retry} from "../test-kit/retry";
 import {PrimarySystem} from "../../src/ecr/model";
 import {getLinearDeriviation} from "./test-kit";
 

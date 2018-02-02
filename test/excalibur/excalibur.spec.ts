@@ -3,7 +3,7 @@ import {Entries, Entry, Status} from "../../src/excalibur/entries";
 import {User} from "../../src/session/users";
 import {ExcaliburSecClass} from "../../src/excalibur/clearence";
 import {expect} from 'chai';
-import {retry} from "../test-kit/retry";
+import {retry} from "empty-epsilon-js";
 
 
 function makeUser(clearence: ExcaliburSecClass): User {

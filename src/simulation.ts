@@ -1,35 +1,61 @@
 import {FileSystem, LocalFileSystem} from "kissfs";
-import {HttpDriver} from './empty-epsilon/driver';
-import {loadOscEeApi} from "./osc-bridge/game-monitor";
-import {OscDriver} from "./osc/osc-driver";
+import {HttpDriver} from 'empty-epsilon-js';
+import {OpenEpsilon, OscUdpDriver} from "open-epsilon";
 import {UdpOptions} from "osc";
 import {EcrModule} from "./ecr/index";
 import {Persistence} from "./core/persistency";
 import * as net from "net";
 import {expose} from "./ecr/rpc";
 
+export const FILE_PATH = 'game-monitor.json';
+
+export function getMonitoredAddresses(fs: FileSystem): Array<string>{
+
+    const result: Array<string> = [];
+
+    function handleFileContent(fileContent: string) {
+        try {
+            const addresses: Array<string> = JSON.parse(fileContent.toLowerCase());
+            result.splice(0, result.length, ...addresses);
+        } catch (e) {
+            console.error(`failed parsing ${FILE_PATH} : ${fileContent}`);
+        }
+    }
+
+    fs.events.on('fileChanged', ({newContent, fullPath}) => {
+        if (fullPath === FILE_PATH) {
+            handleFileContent(newContent);
+        }
+    });
+    fs.loadTextFile(FILE_PATH).then(handleFileContent);
+
+    return result;
+}
+
 export class SimulatorServices {
-    disposer: () => void;
     private readonly eeDriver: HttpDriver;
-    private readonly oscDriver: OscDriver;
+    private readonly oscDriver: OscUdpDriver;
     private readonly ecrModule: EcrModule;
+    private openEpsilon: OpenEpsilon;
     private rpcServer: net.Server;
 
     constructor(options: Options, private fs: FileSystem) {
-        this.oscDriver = new OscDriver(options.oscOptions);
+        this.oscDriver = new OscUdpDriver(options.oscOptions);
         this.eeDriver = new HttpDriver(options.eeAddress);
         this.ecrModule = new EcrModule(this.eeDriver, this.oscDriver, new Persistence('ECR', fs, 'ecr-state.json'));
         this.rpcServer = expose(this.ecrModule, {hostname: '0.0.0.0', port:options.rpcPort});
+        this.openEpsilon = new OpenEpsilon(this.eeDriver, this.oscDriver);
+        this.openEpsilon.monitoredAddresses = getMonitoredAddresses(fs);
     }
 
     async init() {
-        this.disposer = loadOscEeApi(this.fs, this.eeDriver, this.oscDriver);
         await this.oscDriver.open();
         await this.ecrModule.init();
+        this.openEpsilon.init();
     }
 
     close() {
-        this.disposer();
+        this.openEpsilon.destroy();
         this.oscDriver.close();
         this.ecrModule.destroy();
         this.eeDriver.close();

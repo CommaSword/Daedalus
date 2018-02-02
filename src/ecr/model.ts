@@ -1,4 +1,4 @@
-import {ESystem} from "../empty-epsilon/model";
+import {ESystem} from "empty-epsilon-js";
 
 export interface PrimarySystemStatus {
 
