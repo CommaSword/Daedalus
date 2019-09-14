@@ -1,5 +1,5 @@
 import {OscBundle, OscMessage, SenderInfo, UDPPort} from "osc";
-import {Observable} from "rxjs";
+import {interval} from "rxjs";
 
 const oscServer = new UDPPort({
     localAddress: "0.0.0.0",
@@ -23,7 +23,7 @@ oscServer.on("message", function (message: OscMessage, timeTag: number | undefin
 });
 oscServer.open();
 
-Observable.interval(500).subscribe(i => {
+interval(500).subscribe(i => {
     console.log(i);
     oscServer.send({
         address: '/hello',

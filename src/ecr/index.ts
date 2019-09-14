@@ -3,7 +3,8 @@ import {EcrDriver} from "./driver";
 import {EcrLogic, lowercaseInfraSystemNames} from "./logic";
 import {OscDriver} from "open-epsilon";
 import {MetaArgument, OscMessage} from "osc";
-import {Observable, Subscription} from "rxjs";
+import {Observable, Subscription, interval} from "rxjs";
+import { switchMap } from 'rxjs/operators';
 import {EcrModel, EcrState, ESwitchBoard} from "./model";
 import {Persistence} from "../core/persistency";
 
@@ -12,7 +13,7 @@ export class EcrModule {
     private subscription: Subscription;
     private readonly logic: EcrLogic;
     private readonly driver: EcrDriver;
-    private pulse: Observable<any> = Observable.interval(1111);
+    private pulse: Observable<any> = interval(1111);
     private model: EcrModel;
 
     constructor(eeDriver: EEDriverWithHooks, private oscDriver: OscDriver, private persistence : Persistence<EcrState>) {
@@ -65,7 +66,7 @@ export class EcrModule {
     }
 
     private broadcastSystemsState() {
-        this.subscription = this.pulse.switchMap<any, OscMessage>(_ => {
+        this.subscription = this.pulse.pipe(switchMap<any, OscMessage[]>(_ => {
             const result: OscMessage[] = [];
             /*
             for (let s1 = 0; s1 < ESystem.COUNT; s1++) {
@@ -99,7 +100,7 @@ export class EcrModule {
                 });
             }
             return result;
-        }).subscribe(this.oscDriver.outbox);
+        })).subscribe(this.oscDriver.outbox);
     }
 
     beginRepair(id: ESystem) {

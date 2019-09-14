@@ -32,9 +32,9 @@ describe('repair module', () => {
 
     afterEach(`reset sideEffects`, () => {
         repair.destroy();
-        sideEffects.setRepairRate.reset();
-        sideEffects.setHeatRate.reset();
-        sideEffects.setMaxPower.reset();
+        sideEffects.setRepairRate = spy();
+        sideEffects.setHeatRate = spy();
+        sideEffects.setMaxPower = spy();
     });
 
     it('exposes all the systems', () => {
@@ -67,7 +67,7 @@ describe('repair module', () => {
 
     it('A system1 can only be over-powered (more than 100% energy) when all of its supporting system2s are online', () => {
         expect(sideEffects.setMaxPower).to.have.been.calledWith(ESystem.Impulse, PrimarySystem.maxOverPower);
-        sideEffects.setMaxPower.reset();
+        sideEffects.setMaxPower = spy();
         repair.shutdownSwitchBoard(ESwitchBoard.A2);
         const dependant = EcrModel.switchboardstMap[ESwitchBoard.A2][0];
         expect(sideEffects.setMaxPower).to.have.been.calledWith(dependant, match.number.and(match((n: number) => n <= PrimarySystem.maxSupportedPower)));
@@ -79,7 +79,7 @@ describe('repair module', () => {
         const dependantStatus = repair.getPrimarySystemStatus(dependant);
         expect(dependantStatus.maxPower).to.equal(PrimarySystem.maxOverPower);
 
-        sideEffects.setMaxPower.reset();
+        sideEffects.setMaxPower = spy();
         repair.shutdownSwitchBoard(ESwitchBoard.A2);
         expect(dependantStatus.maxPower).to.be.lessThan(PrimarySystem.maxSupportedPower);
         expect(sideEffects.setMaxPower).to.have.been.calledWith(dependant, approx(dependantStatus.maxPower));
@@ -132,10 +132,10 @@ describe('repair module', () => {
         it('the supported system1 begins accumulating heat (the rate does not change according to the amount of systems in error)', () => {
             repair.setError(ESwitchBoard.A2);
             expect(sideEffects.setHeatRate).to.have.been.calledWith(dependant, approx(PrimarySystem.heatOnErrorRate));
-            sideEffects.setRepairRate.reset();
+            sideEffects.setRepairRate = spy();
             repair.setError(ESwitchBoard.A3);
             expect(sideEffects.setHeatRate).to.have.been.calledWith(dependant, approx(PrimarySystem.heatOnErrorRate));
-            sideEffects.setRepairRate.reset();
+            sideEffects.setRepairRate = spy();
             repair.shutdownSwitchBoard(ESwitchBoard.A2);
             repair.shutdownSwitchBoard(ESwitchBoard.A3);
             expect(sideEffects.setHeatRate).to.have.been.calledWith(dependant, 0);

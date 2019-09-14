@@ -1,6 +1,7 @@
 import {Driver} from "./logic";
 import {ESystem, ESystemNames, EEDriverWithHooks} from "empty-epsilon-js";
-import {Observable} from "rxjs";
+import {Observable, of, from} from "rxjs";
+import { mergeMap, map} from 'rxjs/operators';
 
 export const repair_per_second = 0.007;
 export const heat_per_second = 0.05 * /* heat_sanity_factor */ 0.28;
@@ -12,15 +13,15 @@ const powerQueries = ESystemNames.map((system) => `getPlayerShip(-1):getSystemPo
 export class EcrDriver implements Driver {
 
     private queryPowerOfAllSystems = () => {
-        return Observable.of(...powerQueries)
-            .map(async (query, system) => ({system, power: await this.eeDriver.query(query)}))
-            .mergeMap(msg => Observable.fromPromise(msg));
+        return of(...powerQueries)
+            .pipe(map(async (query, system) => ({system, power: await this.eeDriver.query(query) as number})))
+            .pipe(mergeMap(msg => from(msg)));
     };
 
     powerUpdates: Observable<{ system: ESystem; power: number; }>;
 
     constructor(private eeDriver: EEDriverWithHooks, private pulse: Observable<any>) {
-        this.powerUpdates = this.pulse.mergeMap<any, { system: ESystem, power: number }>(this.queryPowerOfAllSystems)
+        this.powerUpdates = this.pulse.pipe(mergeMap<any,  Observable<{ system: ESystem, power: number }>>(this.queryPowerOfAllSystems))
     }
 
     async init() {
