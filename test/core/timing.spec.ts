@@ -11,11 +11,11 @@ describe('setTimedInterval', () => {
         const deltas: number[] = [];
         let timer = setTimedInterval(delta => deltas.push(delta), 10);
         try {
-            await new Promise(res => setTimeout(res, 111));
-            expect(deltas.length).to.be.gte(9);
+            await new Promise(res => setTimeout(res, 100));
+            expect(deltas.length).to.be.gte(5);
             deltas.forEach((delta) => {
-                expect(delta).to.be.gt(8);
-                expect(delta).to.be.lt(15);
+                expect(delta).to.be.gt(5);
+                expect(delta).to.be.lt(20);
             });
         } finally {
             clearInterval(timer);

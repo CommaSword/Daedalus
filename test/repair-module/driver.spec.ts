@@ -45,14 +45,16 @@ describe('EcrDriver', async () => {
     it('setMaxPower', async () => {
         const MAX_POWER_TEST_VAL = 0.3;
         const SYSTEM = ESystem.MissileSystem;
-
+        const sysPredicate = s => s.system === SYSTEM;
         await repairDriver.setMaxPower(SYSTEM, MAX_POWER_TEST_VAL);
         const updates = await powerUpdate();
         const expected = Array.from(Array(ESystem.COUNT)).map((_, i) => ({
             system: i,
             power: i === SYSTEM ? MAX_POWER_TEST_VAL : PrimarySystem.maxSupportedPower
         }));
-        expect(updates).to.eql(expected);
+        expect(updates.filter(i => !sysPredicate(i))).to.eql(expected.filter(i => !sysPredicate(i)));
+        expect(updates.find(sysPredicate).power).to.be.gt(MAX_POWER_TEST_VAL - 0.01);
+        expect(updates.find(sysPredicate).power).to.be.lt(MAX_POWER_TEST_VAL + 0.01);
     });
 
     it('setRepairRate', async function () {
