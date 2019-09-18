@@ -8,6 +8,9 @@ by simulating the spaceship's need for [Maintenance, Repair and Operations](http
 We use [yarn](https://yarnpkg.com/en/) to manage this project's lifecycle. Install yarn by running `npm i -g yarn` and then follow the instructions in the [developer documentation](./resources/entries/daedalus-developer.md)
 in addition, Copy the files in this project's `lua` directory into empty epsilon's `Contents/Resources/scripts` directory
  
+### how to run
+I use `npm run go -- -r C:\workspace\Daedalus\resources` to run. where `C:\workspace\Daedalus\resources`is a folder containing the `game-monitor.json` and  `ecr-state.json` (if exists) files
+
 ### what to expect
 TL;DR : a mess
 

@@ -48,7 +48,7 @@ export class Persistence<T extends object> {
         if (serializedState !== this.lastKnownFileContent) {
             this.lastKnownFileContent = serializedState;
             this.fs.saveFile(this.statePath, serializedState)
-                .then(() => console.log(` ${this.name} state file saved at ${this.fs.baseUrl}/${this.statePath}`));
+                // .then(() => console.log(` ${this.name} state file saved at ${this.fs.baseUrl}/${this.statePath}`));
         }
     }
 

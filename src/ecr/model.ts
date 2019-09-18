@@ -161,6 +161,9 @@ export interface EcrState {
     switchBoards: Array<SwitchBoardState>;
 }
 
+// const allSystems = [ESystem.Reactor, ESystem.BeamWeapons, ESystem.MissileSystem,
+//     ESystem.Maneuver, ESystem.Impulse, ESystem.Warp,
+//     ESystem.JumpDrive, ESystem.FrontShield, ESystem.RearShield, ESystem.Docks, ESystem.Drones];
 export class EcrModel {
 
     static readonly switchboardstMap: { [switchId: number]: ESystem[] } = {
@@ -171,6 +174,15 @@ export class EcrModel {
         [ESwitchBoard.B2]: [],
         [ESwitchBoard.B3]: [ESystem.MissileSystem, ESystem.Maneuver, ESystem.Warp, ESystem.Reactor],
     };
+
+    // static readonly switchboardstMap: { [switchId: number]: ESystem[] } = {
+    //     [ESwitchBoard.A1]: allSystems,
+    //     [ESwitchBoard.A2]: allSystems,
+    //     [ESwitchBoard.A3]: [],
+    //     [ESwitchBoard.B1]: [],
+    //     [ESwitchBoard.B2]: [],
+    //     [ESwitchBoard.B3]: [],
+    // };
 
     readonly primarySystems: { [systemName: number]: PrimarySystem } = {};
     readonly switchBoards: { [systemName: number]: SwitchBoard } = {};

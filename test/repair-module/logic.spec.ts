@@ -7,7 +7,7 @@ import {approx, getLinearOverloadDeriviation} from "./test-kit";
 import {Subscriber} from "rxjs/Subscriber";
 import {Observable} from "rxjs/Observable";
 
-const graceFactor = 0.1;
+const graceFactor = 0.3;
 describe('repair module', () => {
 
     const sideEffects = {
