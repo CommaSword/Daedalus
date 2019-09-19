@@ -4,7 +4,8 @@
   "description": "Empty Epsilon - Maintainence, Repair and Operations extension",
   "main": "main.js",
   "scripts": {
-    "osc": "C:\\workspace\\open-stage-control-0.48.0-win32-x64\\open-stage-control.exe --osc-port 57122 --send 127.0.0.1:57121 --read--only --load C:\\workspace\\Daedalus\\dashboards\\panels.json ",
+    "screen:gm": "C:\\workspace\\open-stage-control-0.48.0-win32-x64\\open-stage-control.exe --port 5667 --osc-port 57122 --send 127.0.0.1:57121 --read--only --load C:\\workspace\\Daedalus\\dashboards\\gm.json",
+    "screen:ecr": "C:\\workspace\\open-stage-control-0.48.0-win32-x64\\open-stage-control.exe --port 8100 ---osc-port 57122 --read--only --theme C:\\workspace\\Daedalus\\dashboards\\no-sidepanel.css --load C:\\workspace\\Daedalus\\dashboards\\ecr.json",
     "build:osc": "node dashboards/make.js",
     "clean": "rimraf ./dist",
     "build": "tsc",

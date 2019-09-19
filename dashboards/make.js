@@ -29,104 +29,104 @@ const panelsTab = (sysname) => {
         "target": [],
         "variables": `@{parent.variables}`,
         "widgets": [
-        {
-            "type": `led`,
-            "top": 60,
-            "left": 80,
-            "id": `${label}_led_1`,
-            "width": `auto`,
-            "height": `auto`,
-            "label": `ONLINE`,
-            "color": `green`,
-            "css": ``,
-            "widgetId": ``,
-            "range": {
-                "min": 0,
-                "max": 1
+            {
+                "type": `led`,
+                "top": 60,
+                "left": 80,
+                "id": `${label}_led_1`,
+                "width": `auto`,
+                "height": `auto`,
+                "label": `ONLINE`,
+                "color": `green`,
+                "css": ``,
+                "widgetId": ``,
+                "range": {
+                    "min": 0,
+                    "max": 1
+                },
+                "logScale": false,
+                "value": ``,
+                "preArgs": [],
+                "address": `${address}/is-online`
             },
-            "logScale": false,
-            "value": ``,
-            "preArgs": [],
-            "address": `${address}/is-online`
-        },
-        {
-            "type": `led`,
-            "top": 60,
-            "left": 200,
-            "id": `${label}_led_2`,
-            "width": `auto`,
-            "height": `auto`,
-            "label": `ERROR`,
-            "color": `yellow`,
-            "css": ``,
-            "widgetId": ``,
-            "range": {
-                "min": 0,
-                "max": 1
+            {
+                "type": `led`,
+                "top": 60,
+                "left": 200,
+                "id": `${label}_led_2`,
+                "width": `auto`,
+                "height": `auto`,
+                "label": `ERROR`,
+                "color": `yellow`,
+                "css": ``,
+                "widgetId": ``,
+                "range": {
+                    "min": 0,
+                    "max": 1
+                },
+                "logScale": false,
+                "value": ``,
+                "preArgs": [],
+                "address": `${address}/is-error`
             },
-            "logScale": false,
-            "value": ``,
-            "preArgs": [],
-            "address": `${address}/is-error`
-        },
-        {
-            "type": `led`,
-            "top": 60,
-            "left": 320,
-            "id": `${label}_led_3`,
-            "width": `auto`,
-            "height": `auto`,
-            "label": `STABLE`,
-            "color": `blue`,
-            "css": ``,
-            "widgetId": ``,
-            "range": {
-                "min": 0.001,
-                "max": 0
+            {
+                "type": `led`,
+                "top": 60,
+                "left": 320,
+                "id": `${label}_led_3`,
+                "width": `auto`,
+                "height": `auto`,
+                "label": `STABLE`,
+                "color": `blue`,
+                "css": ``,
+                "widgetId": ``,
+                "range": {
+                    "min": 0.001,
+                    "max": 0
+                },
+                "logScale": false,
+                "value": ``,
+                "preArgs": [],
+                "address": `${address}/load`
             },
-            "logScale": false,
-            "value": ``,
-            "preArgs": [],
-            "address": `${address}/load`
-        },
-        {
-            "type": `push`,
-            "top": 200,
-            "left": 190,
-            "id": `${label}_off_button`,
-            "linkId": ``,
-            "width": `auto`,
-            "height": `auto`,
-            "label": `OFF`,
-            "color": `auto`,
-            "css": ``,
-            "on": 1,
-            "off": 0,
-            "norelease": false,
-            "precision": 2,
-            "address": `${address}/shut-down`,
-            "preArgs": [],
-            "target": []
-        },
-        {
-            "type": `push`,
-            "top": 200,
-            "left": 330,
-            "id": `${label}_on_button`,
-            "width": `auto`,
-            "height": `auto`,
-            "label": `ON`,
-            "color": `auto`,
-            "css": ``,
-            "on": 1,
-            "off": 0,
-            "norelease": false,
-            "precision": 2,
-            "address": `${address}/start-up`,
-            "preArgs": [],
-            "target": [],
-            "linkId": ``
-        },
+            {
+                "type": `push`,
+                "top": 200,
+                "left": 190,
+                "id": `${label}_off_button`,
+                "linkId": ``,
+                "width": `auto`,
+                "height": `auto`,
+                "label": `OFF`,
+                "color": `auto`,
+                "css": ``,
+                "on": 1,
+                "off": 0,
+                "norelease": false,
+                "precision": 2,
+                "address": `${address}/shut-down`,
+                "preArgs": [],
+                "target": []
+            },
+            {
+                "type": `push`,
+                "top": 200,
+                "left": 330,
+                "id": `${label}_on_button`,
+                "width": `auto`,
+                "height": `auto`,
+                "label": `ON`,
+                "color": `auto`,
+                "css": ``,
+                "on": 1,
+                "off": 0,
+                "norelease": false,
+                "precision": 2,
+                "address": `${address}/start-up`,
+                "preArgs": [],
+                "target": [],
+                "linkId": ``
+            },
             {
                 "type": "visualizer",
                 "top": 290,
@@ -198,12 +198,12 @@ const panelsTab = (sysname) => {
                 "compact": true,
                 "input": false
             }
-    ],
+        ],
         "tabs": [],
         "scroll": true
     };
 };
-const panels = [
+const gm = [
     {
         "type": `root`,
         "tabs": infraSystems.map(panelsTab),
@@ -220,4 +220,115 @@ const panels = [
         "label": false
     }
 ];
-fs.writeFileSync(path.resolve(__dirname, 'panels.json'), JSON.stringify(panels, null, 4), 'utf8');
+fs.writeFileSync(path.resolve(__dirname, 'gm.json'), JSON.stringify(panels, null, 4), 'utf8');
+
+const ecr = {
+    "type": "root",
+    "id": "root",
+    "linkId": "",
+    "color": "auto",
+    "css": "",
+    "default": "",
+    "value": "",
+    "precision": 2,
+    "address": "/root",
+    "preArgs": "",
+    "target": "",
+    "bypass": false,
+    "traversing": false,
+    "variables": {},
+    "tabs": [
+        {
+            "type": "tab",
+            "id": "panels",
+            "linkId": "",
+            "label": "auto",
+            "color": "auto",
+            "css": "",
+            "default": "",
+            "value": "",
+            "precision": 2,
+            "address": "/tab_1",
+            "preArgs": "",
+            "target": "",
+            "bypass": false,
+            "variables": "@{parent.variables}",
+            "widgets": [], // placeholder
+            "tabs": [],
+            "scroll": true
+        }
+    ],
+    "scroll": true,
+    "label": false
+};
+ecr.tabs[0].widgets = infraSystems.flatMap((sysname, idx) => {
+    const label = naming(sysname, 'kebab');
+    const name = label.split('_').join(' ');
+    const address = `/d/repairs/${sysname}`;
+    const top = 60 + 120 * (idx % 3);
+    const left = 60 + 420 * Math.floor(idx / 3);
+    return [
+        {
+            "type": `led`,
+            "top": top,
+            "left": left,
+            "id": `${label}_online`,
+            "width": `auto`,
+            "height": `auto`,
+            "label": `${name} ONLINE`,
+            "color": `green`,
+            "css": ``,
+            "widgetId": ``,
+            "range": {
+                "min": 0,
+                "max": 1
+            },
+            "logScale": false,
+            "value": ``,
+            "preArgs": [],
+            "address": `${address}/is-online`
+        },
+        {
+            "type": `led`,
+            "top": top,
+            "left": left + 120,
+            "id": `${label}_error`,
+            "width": `auto`,
+            "height": `auto`,
+            "label": `${name} ERROR`,
+            "color": `yellow`,
+            "css": ``,
+            "widgetId": ``,
+            "range": {
+                "min": 0,
+                "max": 1
+            },
+            "logScale": false,
+            "value": ``,
+            "preArgs": [],
+            "address": `${address}/is-error`
+        },
+        {
+            "type": `led`,
+            "top": top,
+            "left": left + 120 * 2,
+            "id": `${label}_stable`,
+            "width": `auto`,
+            "height": `auto`,
+            "label": `${name} STABLE`,
+            "color": `blue`,
+            "css": ``,
+            "widgetId": ``,
+            "range": {
+                "min": 0.001,
+                "max": 0
+            },
+            "logScale": false,
+            "value": ``,
+            "preArgs": [],
+            "address": `${address}/load`
+        }
+    ];
+});
+
+fs.writeFileSync(path.resolve(__dirname, 'ecr.json'), JSON.stringify(ecr, null, 4), 'utf8');

@@ -1,0 +1,10 @@
+/* no-sidepanel.css */
+.navigation.main li:last-child, #sidepanel {
+    display: none;
+  }
+  .navigation.main li:nth-last-child(2) {
+    margin-right: 0;
+  }
+  #container {
+    right: 0!important;
+  }

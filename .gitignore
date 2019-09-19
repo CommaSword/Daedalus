@@ -46,3 +46,4 @@ test/**/*.js
 resources/**/logFile.md
 resources/**/*-state.json
 dashboards/*.json
+ecr-state.json
