@@ -7,7 +7,7 @@ import {Observable, Subscription, interval} from "rxjs";
 import { switchMap } from 'rxjs/operators';
 import {EcrModel, EcrState, ESwitchBoard} from "./model";
 import {Persistence} from "../core/persistency";
-
+import {HttpCommandsDriver} from "../core/http-commands";
 
 export class EcrModule {
     private subscription: Subscription;
@@ -16,7 +16,7 @@ export class EcrModule {
     private pulse: Observable<any> = interval(1111);
     private model: EcrModel;
 
-    constructor(eeDriver: EEDriverWithHooks, private oscDriver: OscDriver, private persistence : Persistence<EcrState>) {
+    constructor(eeDriver: EEDriverWithHooks, private oscDriver: OscDriver, private httpCommandsDriver: HttpCommandsDriver, private persistence : Persistence<EcrState>) {
         this.driver = new EcrDriver(eeDriver, this.pulse);
         this.model = new EcrModel();
         this.logic = new EcrLogic(this.driver, this.model);
@@ -33,8 +33,8 @@ export class EcrModule {
                 if (~s2) {
                     //   console.log('*********MSG:', message.address);
                     switch (command) {
-                        case 'error':
-                            this.logic.setError(s2);
+                        case 'complex-error':
+                            this.logic.setHardError(s2);
                             break;
                         case 'start-up':
                             this.logic.startupSwitchBoard(s2);
@@ -58,6 +58,16 @@ export class EcrModule {
                 }
             } else {
                 console.error('maleformed address', message.address);
+            }
+        });
+        this.httpCommandsDriver.observable.subscribe(e => {
+            for (const switchIdStr in ESwitchBoard) {
+                const switchId = Number(switchIdStr);
+                if (!isNaN(switchId) && e.url.pathname == '/fixeverything/' + ESwitchBoard[switchId]) {
+                    this.logic.fixEverything(switchId);
+                    e.accept(JSON.stringify(this.model.switchBoards[switchId].toJSON(), null, 2));
+                    return;
+                }
             }
         });
         this.broadcastSystemsState();
@@ -102,7 +112,7 @@ export class EcrModule {
             return result;
         })).subscribe(this.oscDriver.outbox);
     }
-
+    
     beginRepair(id: ESystem) {
         this.logic.startRepairingPrimarySystem(id);
     }

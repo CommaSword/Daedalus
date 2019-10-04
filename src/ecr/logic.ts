@@ -99,31 +99,30 @@ export class EcrLogic {
         }
     }
 
+    /* private */
     setError(id: ESwitchBoard) {
         this.model.switchBoards[id].setError();
-        this.model.switchBoards[id].supportedSystems.forEach(sys1 => {
-            this.updateHeatRate(sys1.id);
-            this.updateMaxPower(sys1.id);
-            this.updateRepairRate(sys1.id);
-        });
+        this.updateSupportedSystems(id);
+    }
+
+    setHardError(id: ESwitchBoard) {
+        this.model.switchBoards[id].setHardError();
+        this.updateSupportedSystems(id);
+    }
+
+    fixEverything(id: ESwitchBoard) {
+        this.model.switchBoards[id].fixEverything();
+        this.updateSupportedSystems(id);
     }
 
     shutdownSwitchBoard(id: ESwitchBoard) {
         this.model.switchBoards[id].shutdown();
-        this.model.switchBoards[id].supportedSystems.forEach(sys1 => {
-            this.updateHeatRate(sys1.id);
-            this.updateMaxPower(sys1.id);
-            this.updateRepairRate(sys1.id);
-        });
+        this.updateSupportedSystems(id);
     }
 
     startupSwitchBoard(id: ESwitchBoard) {
         this.model.switchBoards[id].startup();
-        this.model.switchBoards[id].supportedSystems.forEach(sys1 => {
-            this.updateHeatRate(sys1.id);
-            this.updateMaxPower(sys1.id);
-            this.updateRepairRate(sys1.id);
-        });
+        this.updateSupportedSystems(id);
     }
 
     startRepairingPrimarySystem(id: ESystem) {
@@ -140,6 +139,14 @@ export class EcrLogic {
             this.driver.setRepairRate(this.model.repairing, 0);
             this.model.repairing = null;
         }
+    }
+
+    private updateSupportedSystems(id: ESwitchBoard) {
+        this.model.switchBoards[id].supportedSystems.forEach(sys1 => {
+            this.updateHeatRate(sys1.id);
+            this.updateMaxPower(sys1.id);
+            this.updateRepairRate(sys1.id);
+        });
     }
 
     private async updateHeatRate(id: ESystem) {

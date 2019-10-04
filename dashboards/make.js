@@ -159,14 +159,14 @@ const panelsTab = (sysname) => {
                 "linkId": "",
                 "width": "auto",
                 "height": "auto",
-                "label": "ERROR",
+                "label": "COMPLEX\nERROR",
                 "color": "auto",
                 "css": "",
                 "on": 1,
                 "off": 0,
                 "norelease": false,
                 "precision": 2,
-                "address": `${address}/error`,
+                "address": `${address}/complex-error`,
                 "preArgs": [],
                 "target": []
             },
@@ -220,7 +220,7 @@ const gm = [
         "label": false
     }
 ];
-fs.writeFileSync(path.resolve(__dirname, 'gm.json'), JSON.stringify(panels, null, 4), 'utf8');
+fs.writeFileSync(path.resolve(__dirname, 'gm.json'), JSON.stringify(gm, null, 4), 'utf8');
 
 const ecr = {
     "type": "root",

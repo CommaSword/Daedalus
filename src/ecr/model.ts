@@ -87,6 +87,7 @@ export interface SwitchBoardStatus {
 export interface SwitchBoardState {
     readonly name: string;
     readonly isError: boolean;
+    readonly isHardError: boolean;
     readonly isOnline: boolean;
     readonly overload: number;
     readonly overloadErrorThreshold: number;
@@ -101,7 +102,8 @@ export class SwitchBoard implements SwitchBoardStatus {
     public static readonly maxOverload = 1;
 
     public readonly supportedSystems: PrimarySystem[] = [];
-    public isError: boolean;
+    private error: boolean;
+    private hardError: boolean;
     public isOnline: boolean;
     public overload: number;
     public overloadErrorThreshold: number;
@@ -115,6 +117,10 @@ export class SwitchBoard implements SwitchBoardStatus {
         return ESwitchBoard[this.id];
     }
 
+    get isError(){
+        return this.error || this.hardError;
+    }
+
     addOverload(delta: number) {
         if (this.isOnline) {
             this.overload = Math.min(SwitchBoard.maxOverload, this.overload + delta);
@@ -123,7 +129,7 @@ export class SwitchBoard implements SwitchBoardStatus {
 
     shutdown() {
         this.isOnline = false;
-        this.isError = false;
+        this.error = false;
         this.overload = 0;
         this.overloadErrorThreshold = Math.max(Math.random() * SwitchBoard.maxOverload, SwitchBoard.overloadPerMillisecond * 1000);
     }
@@ -134,14 +140,25 @@ export class SwitchBoard implements SwitchBoardStatus {
 
     setError() {
         if (this.isOnline) {
-            this.isError = true;
+            this.error = true;
         }
+    }
+
+    setHardError() {
+        this.hardError = true;
+    }
+
+    fixEverything() {
+        this.hardError = false;
+        this.error = false;
+        this.overload = 0;
     }
 
     toJSON(): SwitchBoardState {
         return {
             name: this.name,
-            isError: this.isError,
+            isError: this.error,
+            isHardError: this.hardError,
             isOnline: this.isOnline,
             overload: this.overload,
             overloadErrorThreshold: this.overloadErrorThreshold,
@@ -149,7 +166,8 @@ export class SwitchBoard implements SwitchBoardStatus {
     }
 
     fromJSON(state: SwitchBoardState) {
-        this.isError = state.isError;
+        this.error = state.isError;
+        this.hardError = state.isHardError;
         this.isOnline = state.isOnline;
         this.overload = state.overload;
         this.overloadErrorThreshold = state.overloadErrorThreshold;

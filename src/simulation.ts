@@ -5,7 +5,8 @@ import {UdpOptions} from "osc";
 import {EcrModule} from "./ecr/index";
 import {Persistence} from "./core/persistency";
 import * as net from "net";
-import {expose} from "./ecr/rpc";
+import {expose as exposeRpc} from "./ecr/rpc";
+import {HttpCommandsDriver, createHttpCommandsDriver} from "./core/http-commands";
 
 export const FILE_PATH = 'game-monitor.json';
 
@@ -33,6 +34,7 @@ export function getMonitoredAddresses(fs: FileSystem): Array<string>{
 }
 
 export class SimulatorServices {
+    private readonly httpCommandsDriver: HttpCommandsDriver;
     private readonly eeDriver: HttpDriver;
     private readonly oscDriver: OscUdpDriver;
     private readonly ecrModule: EcrModule;
@@ -41,9 +43,10 @@ export class SimulatorServices {
 
     constructor(options: Options, private fs: FileSystem) {
         this.oscDriver = new OscUdpDriver(options.oscOptions);
+        this.httpCommandsDriver = createHttpCommandsDriver({port:options.httpPort || 56667});
         this.eeDriver = new HttpDriver(options.eeAddress);
-        this.ecrModule = new EcrModule(this.eeDriver, this.oscDriver, new Persistence('ECR', fs, 'ecr-state.json'));
-        this.rpcServer = expose(this.ecrModule, {hostname: '0.0.0.0', port:options.rpcPort});
+        this.ecrModule = new EcrModule(this.eeDriver, this.oscDriver, this.httpCommandsDriver, new Persistence('ECR', fs, 'ecr-state.json'));
+        this.rpcServer = exposeRpc(this.ecrModule, {hostname: '0.0.0.0', port:options.rpcPort || 56666});
         this.openEpsilon = new OpenEpsilon(this.eeDriver, this.oscDriver);
         this.openEpsilon.monitoredAddresses = getMonitoredAddresses(fs);
     }
@@ -56,6 +59,7 @@ export class SimulatorServices {
 
     close() {
         this.openEpsilon.destroy();
+        this.httpCommandsDriver.destroy();
         this.oscDriver.close();
         this.ecrModule.destroy();
         this.eeDriver.close();
@@ -84,6 +88,7 @@ export type Options = {
     resources: string;
     hostname:string;
     rpcPort: number;
+    httpPort: number;
     eeAddress: string;
     oscOptions: UdpOptions;
 }

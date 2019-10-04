@@ -5,7 +5,7 @@ import {EcrModule} from "./index";
 
 export type Options = {
     hostname: string;
-    port?: number;
+    port: number;
 }
 
 export function expose(module: EcrModule, options: Options): net.Server {
@@ -28,9 +28,8 @@ export function expose(module: EcrModule, options: Options): net.Server {
         }
     });
 
-    const port = options.port || 56667;
-    console.log(`providing RPC of ECR in port ${port} and host ${options.hostname}`);
-    return server.listen(port, options.hostname);
+    console.log(`providing RPC of ECR in port ${options.port} and host ${options.hostname}`);
+    return server.listen(options.port, options.hostname);
 }
 
 export class EcrModuleClient {
