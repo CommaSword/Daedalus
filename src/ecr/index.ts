@@ -25,6 +25,7 @@ export class EcrModule {
     async init() {
         this.persistence.init(this.model);
         this.oscDriver.inbox.filter(m => m.address.startsWith('/d/repairs')).subscribe(message => {
+            // console.log(message);
             const addressArr = message.address.split('/');
             if (addressArr.length === 5) {
                 const command = addressArr[4];
@@ -33,6 +34,9 @@ export class EcrModule {
                 if (~s2) {
                     //   console.log('*********MSG:', message.address);
                     switch (command) {
+                        case 'fix-everything':
+                            this.logic.fixEverything(s2);
+                            break;
                         case 'complex-error':
                             this.logic.setHardError(s2);
                             break;

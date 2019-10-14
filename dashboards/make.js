@@ -171,6 +171,25 @@ const panelsTab = (sysname) => {
                 "target": []
             },
             {
+                "type": "push",
+                "top": 200,
+                "left": 470,
+                "id": `${label}_fix_everything`,
+                "linkId": "",
+                "width": "auto",
+                "height": "auto",
+                "label": "FIX\nEVERYTHING",
+                "color": "auto",
+                "css": "",
+                "on": 1,
+                "off": 0,
+                "norelease": false,
+                "precision": 2,
+                "address": `${address}/fix-everything`,
+                "preArgs": [],
+                "target": []
+            },
+            {
                 "type": "fader",
                 "top": 290,
                 "left": 430,

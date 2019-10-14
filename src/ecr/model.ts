@@ -185,12 +185,12 @@ export interface EcrState {
 export class EcrModel {
 
     static readonly switchboardstMap: { [switchId: number]: ESystem[] } = {
-        [ESwitchBoard.A1]: [ESystem.MissileSystem, ESystem.FrontShield, ESystem.Reactor],
-        [ESwitchBoard.A2]: [ESystem.BeamWeapons, ESystem.Warp, ESystem.Reactor],
-        [ESwitchBoard.A3]: [ESystem.Maneuver, ESystem.Impulse, ESystem.RearShield, ESystem.Reactor],
-        [ESwitchBoard.B1]: [ESystem.FrontShield,  ESystem.Impulse, ESystem.BeamWeapons, ESystem.RearShield],
-        [ESwitchBoard.B2]: [],
-        [ESwitchBoard.B3]: [ESystem.MissileSystem, ESystem.Maneuver, ESystem.Warp, ESystem.Reactor],
+        [ESwitchBoard.A1]: [ESystem.BeamWeapons, ESystem.Impulse, ESystem.Warp, ESystem.FrontShield],
+        [ESwitchBoard.A2]: [ESystem.Reactor, ESystem.MissileSystem, ESystem.Impulse, ESystem.FrontShield],
+        [ESwitchBoard.A3]: [ESystem.Reactor, ESystem.Maneuver, ESystem.RearShield, ESystem.Drones],
+        [ESwitchBoard.B1]: [ESystem.Reactor, ESystem.MissileSystem, ESystem.Impulse, ESystem.RearShield, ESystem.Drones],
+        [ESwitchBoard.B2]: [ESystem.Reactor, ESystem.BeamWeapons, ESystem.Maneuver, ESystem.RearShield, ESystem.Docks],
+        [ESwitchBoard.B3]: [ESystem.MissileSystem, ESystem.Maneuver, ESystem.Warp, ESystem.FrontShield, ESystem.Docks],
     };
 
     // static readonly switchboardstMap: { [switchId: number]: ESystem[] } = {
