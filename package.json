@@ -58,7 +58,7 @@
     "typescript": "3.6.3"
   },
   "dependencies": {
-    "axios": "0.19.0",
+    "axios": "0.21.1",
     "cli": "^1.0.1",
     "daedalus-fugazi-webclient": "0.1.0",
     "empty-epsilon-js": "2.0.0",
