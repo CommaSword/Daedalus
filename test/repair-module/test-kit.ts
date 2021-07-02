@@ -1,13 +1,26 @@
+import {ESwitchBoard, EcrModel, SwitchBoardStatus} from "../../src/ecr/model";
+
+import { ESystem } from "empty-epsilon-js";
 import {EcrLogic} from "../../src/ecr/logic";
-import {SwitchBoardStatus} from "../../src/ecr/model";
 import {expect} from 'chai';
 import {match} from "sinon";
-
 
 export type Options = {
     iterations : number,
     graceFactor : number,
     tickInterval : number,
+}
+
+export function getDependantSyatemNotReactor(board : ESwitchBoard){
+    return EcrModel.switchboardstMap[board].find(e => e !== ESystem.Reactor);
+}
+
+export function *getSwitchboards(system : ESystem){
+    for (let sb = 0; sb < ESwitchBoard.COUNT; sb++) {
+        if (~EcrModel.switchboardstMap[sb].indexOf(system)){
+            yield sb;
+        }
+    }
 }
 
 export async function getLinearDeriviation(sample: ()=>Promise<number>, {iterations, graceFactor, tickInterval}: Options) {

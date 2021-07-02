@@ -1,8 +1,8 @@
 {
-  "runServer mac" : "/Applications/EmptyEpsilon.app/Contents/MacOS/EmptyEpsilon httpserver=8081 headless=scenario_00_basic.lua headless_name=Federation",
+  "runServer mac" : "/Applications/EmptyEpsilon.app/Contents/MacOS/EmptyEpsilon httpserver=8081 headless=scenario_00_0_dev.lua headless_name=Federation",
 
-  "runServer wsl" : "cd /mnt/c/workspace/EmptyEpsilon-latest-helios && ./EmptyEpsilon.exe httpserver=8081 headless=scenario_00_basic.lua headless_name=Federation",
-  "runServer" : "cd c:\\workspace\\EmptyEpsilon-latest-helios && EmptyEpsilon.exe httpserver=8081 headless=scenario_00_basic.lua headless_name=Federation",
+  "runServer wsl" : "cd /mnt/c/workspace/EmptyEpsilon-latest-helios && ./EmptyEpsilon.exe httpserver=8081 headless=scenario_00_0_dev.lua headless_name=Federation",
+  "runServer" : "cd c:\\workspace\\EmptyEpsilon-latest-helios && EmptyEpsilon.exe httpserver=8081 headless=scenario_00_0_dev.lua headless_name=Federation",
   "runServer_" : ":",
   "killServer wsl" : "killall EmptyEpsilon & echo EE server killed",
   "killServer" : "taskkill /IM \"EmptyEpsilon.exe\" /F & echo EE server killed",

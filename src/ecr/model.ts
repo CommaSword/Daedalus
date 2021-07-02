@@ -103,7 +103,7 @@ export class SwitchBoard implements SwitchBoardStatus {
 
     public readonly supportedSystems: PrimarySystem[] = [];
     private error: boolean;
-    private hardError: boolean;
+    private hardError = false;
     public isOnline: boolean;
     public overload: number;
     public overloadErrorThreshold: number;

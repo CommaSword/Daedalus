@@ -5,7 +5,7 @@ This project extends the [Empty Epsilon](http://daid.github.io/EmptyEpsilon/) sp
 by simulating the spaceship's need for [Maintenance, Repair and Operations](https://en.wikipedia.org/wiki/Maintenance,_repair_and_operations) during the game.
 
 ### how to build
-We use [yarn](https://yarnpkg.com/en/) to manage this project's lifecycle. Install yarn by running `npm i -g yarn` and then follow the instructions in the [developer documentation](./resources/entries/daedalus-developer.md)
+Follow the instructions in the [developer documentation](./resources/entries/daedalus-developer.md)
 in addition, Copy the files in this project's `lua` directory into empty epsilon's `Contents/Resources/scripts` directory
  
 ### how to run

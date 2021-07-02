@@ -1,7 +1,6 @@
 import {expect} from 'chai';
 import {setTimedInterval} from "../../src/core/timing";
 
-
 function delay(timeout: number) {
     return new Promise(r => setTimeout(r, timeout));
 }
@@ -15,7 +14,7 @@ describe('setTimedInterval', () => {
             expect(deltas.length).to.be.gte(5);
             deltas.forEach((delta) => {
                 expect(delta).to.be.gt(5);
-                expect(delta).to.be.lt(20);
+                expect(delta).to.be.lt(30);
             });
         } finally {
             clearInterval(timer);

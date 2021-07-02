@@ -1,8 +1,9 @@
-import {User} from "../session/users";
 import {FileChangedEvent, FileCreatedEvent, FileDeletedEvent, FileSystem, isFile} from "kissfs";
-import {ExcaliburSecClass} from "./clearence";
 import {basename, join, normalize} from "path";
-import fm = require('front-matter');
+
+import {ExcaliburSecClass} from "./clearence";
+import {User} from "../session/users";
+import fm  from 'front-matter';
 
 export enum Status {
     DRAFT = 0,

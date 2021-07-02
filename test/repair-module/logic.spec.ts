@@ -1,13 +1,14 @@
-import {expect} from 'chai';
-import {EcrLogic} from "../../src/ecr/logic";
-import {ESystem} from "empty-epsilon-js";
+import {ESwitchBoard, EcrModel, PrimarySystem, SwitchBoard, SwitchBoardStatus} from "../../src/ecr/model";
+import {approx, getDependantSyatemNotReactor, getLinearOverloadDeriviation, getSwitchboards as getSupportingSwitchboards} from "./test-kit";
 import {match, spy} from 'sinon';
-import {EcrModel, ESwitchBoard, PrimarySystem, SwitchBoard, SwitchBoardStatus} from "../../src/ecr/model";
-import {approx, getLinearOverloadDeriviation} from "./test-kit";
-import {Subscriber} from "rxjs/Subscriber";
-import {Observable} from "rxjs/Observable";
 
-const graceFactor = 0.3;
+import {ESystem} from "empty-epsilon-js";
+import {EcrLogic} from "../../src/ecr/logic";
+import {Observable} from "rxjs/Observable";
+import {Subscriber} from "rxjs/Subscriber";
+import {expect} from 'chai';
+
+const graceFactor = 0.5;
 describe('repair module', () => {
 
     const sideEffects = {
@@ -87,7 +88,7 @@ describe('repair module', () => {
 
     describe('When a system1 is over-powered', () => {
         let activeCollectorStatus: SwitchBoardStatus;
-        const dependant = EcrModel.switchboardstMap[ESwitchBoard.A2][0];
+        const dependant = getDependantSyatemNotReactor(ESwitchBoard.A2);
 
         beforeEach(() => {
             activeCollectorStatus = repair.getSwitchBoardStatus(ESwitchBoard.A2);
@@ -126,25 +127,36 @@ describe('repair module', () => {
         expect(system2.isError).to.eql(true);
     });
 
-    describe('When one or more supporting system2 is in error state', () => {
-        const dependant = EcrModel.switchboardstMap[ESwitchBoard.A2][0];
+    describe('When half of supporting system2 is in error state', () => {
+        const dependant = ESystem.Impulse;
+        const supporting = [...getSupportingSwitchboards(dependant)];
+        const almostHalfOfSupporting = supporting.slice(0, Math.floor(supporting.length / 2));
+        const restOfSupporing = supporting.slice(Math.floor(supporting.length / 2));
 
         it('the supported system1 begins accumulating heat (the rate does not change according to the amount of systems in error)', () => {
-            repair.setError(ESwitchBoard.A2);
-            expect(sideEffects.setHeatRate).to.have.been.calledWith(dependant, approx(PrimarySystem.heatOnErrorRate));
-            sideEffects.setRepairRate = spy();
-            repair.setError(ESwitchBoard.A3);
-            expect(sideEffects.setHeatRate).to.have.been.calledWith(dependant, approx(PrimarySystem.heatOnErrorRate));
-            sideEffects.setRepairRate = spy();
-            repair.shutdownSwitchBoard(ESwitchBoard.A2);
-            repair.shutdownSwitchBoard(ESwitchBoard.A3);
+            for (let sb of almostHalfOfSupporting){
+                repair.setError(sb);
+                expect(sideEffects.setHeatRate).to.have.been.calledWith(dependant, 0);
+                sideEffects.setRepairRate = spy();
+            }
+            for (let sb of restOfSupporing){
+                repair.setError(sb);
+                expect(sideEffects.setHeatRate).to.have.been.calledWith(dependant, approx(PrimarySystem.heatOnErrorRate));
+                sideEffects.setRepairRate = spy();
+            }
+            
+            for (let sb of getSupportingSwitchboards(dependant)){
+                repair.shutdownSwitchBoard(sb);
+            }
             expect(sideEffects.setHeatRate).to.have.been.calledWith(dependant, 0);
         });
 
         it('the repair rate of supported system1 is lower than the normal rate', () => {
             const depRepairRate = repair.getPrimarySystemStatus(dependant).repairRate;
             repair.startRepairingPrimarySystem(dependant);
-            repair.setError(ESwitchBoard.A2);
+            for (let sb of supporting){
+                repair.setError(sb);
+            }
             expect(repair.getPrimarySystemStatus(dependant).repairRate).to.be.lessThan(depRepairRate);
             expect(sideEffects.setRepairRate).to.have.been.calledWith(dependant, approx(repair.getPrimarySystemStatus(dependant).repairRate));
         });
