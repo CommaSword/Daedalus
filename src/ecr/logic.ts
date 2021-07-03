@@ -85,6 +85,7 @@ export class EcrLogic {
     }
 
     setOverload(id: ESwitchBoard, value: number) {
+        console.log('setOverload', ESwitchBoard[id], value);
         const system2 = this.model.switchBoards[id];
         system2.overload = value;
         if (system2.overload > system2.overloadErrorThreshold) {
@@ -93,6 +94,7 @@ export class EcrLogic {
     }
 
     setOverloadThreshold(id: ESwitchBoard, value: number) {
+        console.log('setOverloadThreshold', ESwitchBoard[id], value);
         const system2 = this.model.switchBoards[id];
         system2.overloadErrorThreshold = value;
         if (system2.overload > system2.overloadErrorThreshold) {
@@ -107,21 +109,25 @@ export class EcrLogic {
     }
 
     setHardError(id: ESwitchBoard) {
+        console.log('setHardError', ESwitchBoard[id]);
         this.model.switchBoards[id].setHardError();
         this.updateSupportedSystems(id);
     }
 
     fixEverything(id: ESwitchBoard) {
+        console.log('fixeverything', ESwitchBoard[id]);
         this.model.switchBoards[id].fixEverything();
         this.updateSupportedSystems(id);
     }
 
     shutdownSwitchBoard(id: ESwitchBoard) {
+        console.log('shutdownSwitchBoard', ESwitchBoard[id]);
         this.model.switchBoards[id].shutdown();
         this.updateSupportedSystems(id);
     }
 
     startupSwitchBoard(id: ESwitchBoard) {
+        console.log('startupSwitchBoard', ESwitchBoard[id]);
         this.model.switchBoards[id].startup();
         this.updateSupportedSystems(id);
     }

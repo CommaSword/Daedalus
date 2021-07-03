@@ -69,7 +69,6 @@ export class EcrModule {
             for (const switchIdStr in ESwitchBoard) {
                 const switchId = Number(switchIdStr);
                 if (!isNaN(switchId) && e.url.pathname == '/fixeverything/' + ESwitchBoard[switchId]) {
-                    console.log('fixeverything', ESwitchBoard[switchId]);
                     this.logic.fixEverything(switchId);
                     e.accept(JSON.stringify(this.model.switchBoards[switchId].toJSON(), null, 2));
                     return;

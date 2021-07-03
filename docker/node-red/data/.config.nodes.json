@@ -430,5 +430,24 @@
                 "file": "/usr/src/node-red/node_modules/node-red-node-tail/28-tail.js"
             }
         }
+    },
+    "node-red-contrib-osc": {
+        "name": "node-red-contrib-osc",
+        "version": "1.1.0",
+        "local": true,
+        "user": true,
+        "nodes": {
+            "osc": {
+                "name": "osc",
+                "types": [
+                    "osc"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-osc",
+                "file": "/data/node_modules/node-red-contrib-osc/osc.js"
+            }
+        }
     }
 }
