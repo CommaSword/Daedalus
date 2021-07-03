@@ -13,7 +13,7 @@
     "reset": "rimraf node_modules dist && npm install && npm test",
     "test": "mocha --require test-setup.js --reporter list \"dist/test/**/*.spec.js\"",
     "start": "rimraf dist && npm run build && node ./main.js",
-    "go": "ts-node ./simulation.js",
+    "go": "ts-node ./src/main.ts",
     "debug": "rimraf dist && npm run build && concurrently --kill-others --success first \"npm run build -- -w\" \"node --inspect-brk ./main.js\""
   },
   "repository": {
