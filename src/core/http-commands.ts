@@ -16,7 +16,7 @@ export function createHttpCommandsDriver(options: Options): HttpCommandsDriver
     const server = createServer((req, res) => {
         let result: string | null = null;
         subject.next({ url: parse(req.url), accept: (resStr:string)=> result = resStr });
-        if (result == null ){
+        if (result === null || result === undefined ){
             res.writeHead(404, {'Content-Type': 'text/plain'});
             res.end();
         } else {
