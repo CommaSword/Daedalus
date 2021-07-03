@@ -1,9 +1,10 @@
-import {PrimarySystemStatus, EcrModel, SwitchBoard, SwitchBoardStatus, ESwitchBoard} from "./model";
-import {ESystem} from "empty-epsilon-js";
-import {setTimedInterval} from "../core/timing";
-import {Observable} from "rxjs/Observable";
+import {ESwitchBoard, EcrModel, PrimarySystemStatus, SwitchBoard, SwitchBoardStatus} from "./model";
 
-export const InfraSystemNames: ReadonlyArray<string> = Array.from(Array(ESwitchBoard.COUNT)).map((_, i) => ESwitchBoard[i]);
+import {ESystem} from "empty-epsilon-js";
+import {Observable} from "rxjs/Observable";
+import {setTimedInterval} from "../core/timing";
+
+const InfraSystemNames: ReadonlyArray<string> = Array.from(Array(ESwitchBoard.COUNT)).map((_, i) => ESwitchBoard[i]);
 export const lowercaseInfraSystemNames: ReadonlyArray<string> = InfraSystemNames.map((_, i) => ESwitchBoard[i].toLowerCase());
 
 export interface Driver {

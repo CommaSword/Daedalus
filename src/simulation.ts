@@ -1,14 +1,13 @@
 import {FileSystem, LocalFileSystem} from "kissfs";
-import {HttpDriver} from 'empty-epsilon-js';
-import {OpenEpsilon, OscUdpDriver} from "open-epsilon";
-import {UdpOptions} from "osc";
-import {EcrModule} from "./ecr/index";
-import {Persistence} from "./core/persistency";
-import * as net from "net";
-import {expose as exposeRpc} from "./ecr/rpc";
 import {HttpCommandsDriver, createHttpCommandsDriver} from "./core/http-commands";
+import {OpenEpsilon, OscUdpDriver} from "open-epsilon";
 
-export const FILE_PATH = 'game-monitor.json';
+import {EcrModule} from "./ecr/index";
+import {HttpDriver} from 'empty-epsilon-js';
+import {Persistence} from "./core/persistency";
+import {UdpOptions} from "osc";
+
+const FILE_PATH = 'game-monitor.json';
 
 export function getMonitoredAddresses(fs: FileSystem): Array<string>{
 
@@ -33,20 +32,18 @@ export function getMonitoredAddresses(fs: FileSystem): Array<string>{
     return result;
 }
 
-export class SimulatorServices {
+class SimulatorServices {
     private readonly httpCommandsDriver: HttpCommandsDriver;
     private readonly eeDriver: HttpDriver;
     private readonly oscDriver: OscUdpDriver;
     private readonly ecrModule: EcrModule;
     private openEpsilon: OpenEpsilon;
-    private rpcServer: net.Server;
 
     constructor(options: Options, private fs: FileSystem) {
         this.oscDriver = new OscUdpDriver(options.oscOptions);
         this.httpCommandsDriver = createHttpCommandsDriver({port:options.httpPort || 56667});
         this.eeDriver = new HttpDriver(options.eeAddress);
         this.ecrModule = new EcrModule(this.eeDriver, this.oscDriver, this.httpCommandsDriver, new Persistence('ECR', fs, 'ecr-state.json'));
-        this.rpcServer = exposeRpc(this.ecrModule, {hostname: '0.0.0.0', port:options.rpcPort || 56666});
         this.openEpsilon = new OpenEpsilon(this.eeDriver, this.oscDriver);
         this.openEpsilon.monitoredAddresses = getMonitoredAddresses(fs);
     }
@@ -63,10 +60,8 @@ export class SimulatorServices {
         this.oscDriver.close();
         this.ecrModule.destroy();
         this.eeDriver.close();
-        this.rpcServer.close();
     }
 }
-
 
 process.on('uncaughtException', function (err) {
     console.error(err.message);
@@ -84,16 +79,14 @@ export async function main(optionsArg: Options) {
     await simulatorServices.init();
 }
 
-export type Options = {
+type Options = {
     resources: string;
-    hostname:string;
-    rpcPort: number;
     httpPort: number;
     eeAddress: string;
     oscOptions: UdpOptions;
 }
 
-export const DEFAULT_OPTIONS = {
+const DEFAULT_OPTIONS = {
     oscOptions: {
         localAddress: "0.0.0.0",
         localPort: 57121,

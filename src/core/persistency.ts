@@ -1,6 +1,6 @@
 import {FileChangedEvent, FileSystem} from "kissfs";
 
-export interface Model<T extends object> {
+interface Model<T extends object> {
     toJSON(): T;
 
     fromJSON(state: T): void;

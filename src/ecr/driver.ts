@@ -1,12 +1,13 @@
+import {EEDriverWithHooks, ESystem, ESystemNames} from "empty-epsilon-js";
+import {Observable, from, of} from "rxjs";
+import { map, mergeMap } from 'rxjs/operators';
+
 import {Driver} from "./logic";
-import {ESystem, ESystemNames, EEDriverWithHooks} from "empty-epsilon-js";
-import {Observable, of, from} from "rxjs";
-import { mergeMap, map} from 'rxjs/operators';
 
 export const repair_per_second = 0.007;
 export const heat_per_second = 0.05 * /* heat_sanity_factor */ 0.28;
-export const damage_per_second_on_overheat = 0.08;
-export const min_reactor_health = -0.89;
+const damage_per_second_on_overheat = 0.08;
+const min_reactor_health = -0.89;
 
 const powerQueries = ESystemNames.map((system) => `getPlayerShip(-1):getSystemPower('${system}')`);
 

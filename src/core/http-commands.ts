@@ -1,12 +1,13 @@
-import {createServer} from "http";
-import {parse, UrlWithStringQuery} from "url";
-import {Observable, Subject} from "rxjs";
+import { Observable, Subject } from "rxjs";
+import { UrlWithStringQuery, parse } from "url";
 
-export type Options = {
+import { createServer } from "http";
+
+type Options = {
     port: number;
 }
 
-export type HttpMessage = {url: UrlWithStringQuery, accept: (res:string)=>void};
+type HttpMessage = {url: UrlWithStringQuery, accept: (res:string)=>void};
 export type HttpCommandsDriver = {observable: Observable<HttpMessage>, destroy: ()=>void}
 export function createHttpCommandsDriver(options: Options): HttpCommandsDriver
 {

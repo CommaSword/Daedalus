@@ -1,13 +1,14 @@
 import {EEDriverWithHooks, ESystem} from "empty-epsilon-js";
-import {EcrDriver} from "./driver";
+import {ESwitchBoard, EcrModel, EcrState} from "./model";
 import {EcrLogic, lowercaseInfraSystemNames} from "./logic";
-import {OscDriver} from "open-epsilon";
 import {MetaArgument, OscMessage} from "osc";
 import {Observable, Subscription, interval} from "rxjs";
-import { switchMap } from 'rxjs/operators';
-import {EcrModel, EcrState, ESwitchBoard} from "./model";
-import {Persistence} from "../core/persistency";
+
+import {EcrDriver} from "./driver";
 import {HttpCommandsDriver} from "../core/http-commands";
+import {OscDriver} from "open-epsilon";
+import {Persistence} from "../core/persistency";
+import { switchMap } from 'rxjs/operators';
 
 export class EcrModule {
     private subscription: Subscription;

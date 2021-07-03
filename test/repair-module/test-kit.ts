@@ -5,7 +5,7 @@ import {EcrLogic} from "../../src/ecr/logic";
 import {expect} from 'chai';
 import {match} from "sinon";
 
-export type Options = {
+type Options = {
     iterations : number,
     graceFactor : number,
     tickInterval : number,

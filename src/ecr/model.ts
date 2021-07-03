@@ -84,7 +84,7 @@ export interface SwitchBoardStatus {
     readonly overloadErrorThreshold: number;
 }
 
-export interface SwitchBoardState {
+interface SwitchBoardState {
     readonly name: string;
     readonly isError: boolean;
     readonly isHardError: boolean;
