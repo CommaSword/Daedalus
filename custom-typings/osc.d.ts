@@ -134,5 +134,26 @@ declare module "osc" {
         listen(): void;
 
     }
+    
+    /**
+     * Writes an OSC message.
+     *
+     * @param {Object} msg a message object containing "address" and "args" properties
+     * @param {Object} [options] write options
+     * @return {Uint8Array} an array of bytes containing the OSC message
+     */
+    export function writeMessage(msg: OscMessage, options: typeof defaults) : Uint8Array;
+    export function isValidMessage(msg: unknown) : msg is OscMessage;
+
+    export type Data = Uint8Array | ArrayBuffer | Iterable<number>;
+
+    /**
+     * Reads an OSC packet, which may consist of either a bundle or a message.
+     *
+     * @param {Data} data an array of bytes to read from
+     * @param {Object} [options] read options
+     * @return {Object} a bundle or message object
+     */
+    export function readPacket (data : Data, options: typeof defaults) : OscMessage;
 }
 

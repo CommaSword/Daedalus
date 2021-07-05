@@ -4,6 +4,8 @@
     "version": "0.0.1",
     "private": true,
     "dependencies": {
-        "node-red-contrib-osc": "~1.1.0"
+        "node-red-contrib-osc": "~1.1.0",
+        "node-red-contrib-ui-led": "~0.4.9",
+        "node-red-dashboard": "~2.29.3"
     }
 }

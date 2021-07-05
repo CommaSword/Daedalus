@@ -1,13 +1,12 @@
-import {EEDriverWithHooks, ESystem} from "empty-epsilon-js";
-import {ESwitchBoard, EcrModel, EcrState} from "./model";
-import {EcrLogic, lowercaseInfraSystemNames} from "./logic";
-import {MetaArgument, OscMessage} from "osc";
-import {Observable, Subscription, interval} from "rxjs";
+import { EEDriverWithHooks, ESystem } from "empty-epsilon-js";
+import { ESwitchBoard, EcrModel, EcrState } from "./model";
+import { EcrLogic, lowercaseInfraSystemNames } from "./logic";
+import { NetworkDriver, NetworkMessage } from "../mqtt-driver";
+import { Observable, Subscription, interval } from "rxjs";
 
-import {EcrDriver} from "./driver";
-import {HttpCommandsDriver} from "../core/http-commands";
-import {OscDriver} from "open-epsilon";
-import {Persistence} from "../core/persistency";
+import { EcrDriver } from "./driver";
+import { HttpCommandsDriver } from "../core/http-commands";
+import { Persistence } from "../core/persistency";
 import { switchMap } from 'rxjs/operators';
 
 export class EcrModule {
@@ -17,7 +16,7 @@ export class EcrModule {
     private pulse: Observable<any> = interval(1111);
     private model: EcrModel;
 
-    constructor(eeDriver: EEDriverWithHooks, private oscDriver: OscDriver, private httpCommandsDriver: HttpCommandsDriver, private persistence : Persistence<EcrState>) {
+    constructor(eeDriver: EEDriverWithHooks, private netDriver: NetworkDriver, private httpCommandsDriver: HttpCommandsDriver, private persistence : Persistence<EcrState>) {
         this.driver = new EcrDriver(eeDriver, this.pulse);
         this.model = new EcrModel();
         this.logic = new EcrLogic(this.driver, this.model);
@@ -25,44 +24,31 @@ export class EcrModule {
 
     async init() {
         this.persistence.init(this.model);
-        this.oscDriver.inbox.filter(m => m.address.startsWith('/d/repairs')).subscribe(message => {
-            // console.log(message);
-            const addressArr = message.address.split('/');
-            if (addressArr.length === 5) {
-                const command = addressArr[4];
-                const systemName = addressArr[3].toLowerCase();
-                const s2 = lowercaseInfraSystemNames.indexOf(systemName);
-                if (~s2) {
-                    //   console.log('*********MSG:', message.address);
-                    switch (command) {
-                        case 'fix-everything':
-                            this.logic.fixEverything(s2);
-                            break;
-                        case 'complex-error':
-                            this.logic.setHardError(s2);
-                            break;
-                        case 'start-up':
-                            this.logic.startupSwitchBoard(s2);
-                            break;
-                        case 'shut-down':
-                            this.logic.shutdownSwitchBoard(s2);
-                            break;
-                        case 'overload-threshold':
-                            const overloadThreshold = (message.args as [MetaArgument])[0].value as number;
-                            this.logic.setOverloadThreshold(s2, overloadThreshold);
-                            break;
-                        case 'load':
-                            const overload = (message.args as [MetaArgument])[0].value as number;
-                            this.logic.setOverload(s2, overload);
-                            break;
-                        default:
-                            console.error('unknown command', command);
-                    }
-                } else {
-                    console.error('unknown system', systemName);
-                }
-            } else {
-                console.error('maleformed address', message.address);
+        this.netDriver.inbox.subscribe(({target, property, payload}) => {
+            const s2 = lowercaseInfraSystemNames.indexOf(target);
+            switch (property) {
+                case 'fix-everything':
+                    this.logic.fixEverything(s2);
+                    break;
+                case 'complex-error':
+                    this.logic.setHardError(s2);
+                    break;
+                case 'start-up':
+                    this.logic.startupSwitchBoard(s2);
+                    break;
+                case 'shut-down':
+                    this.logic.shutdownSwitchBoard(s2);
+                    break;
+                case 'overload-threshold':
+                    const overloadThreshold = Number(payload);
+                    this.logic.setOverloadThreshold(s2, overloadThreshold);
+                    break;
+                case 'load':
+                    const overload = Number(payload);
+                    this.logic.setOverload(s2, overload);
+                    break;
+                default:
+                    console.error('unknown command', property);
             }
         });
         this.httpCommandsDriver.observable.subscribe(e => {
@@ -81,8 +67,8 @@ export class EcrModule {
     }
 
     private broadcastSystemsState() {
-        this.subscription = this.pulse.pipe(switchMap<any, OscMessage[]>(_ => {
-            const result: OscMessage[] = [];
+        this.subscription = this.pulse.pipe(switchMap<any, NetworkMessage[]>(_ => {
+            const result: NetworkMessage[] = [];
             /*
             for (let s1 = 0; s1 < ESystem.COUNT; s1++) {
                 const system1 = this.logic.getPrimarySystemStatus(s1);
@@ -100,22 +86,27 @@ export class EcrModule {
             */
             for (let s2 = 0; s2 < ESwitchBoard.COUNT; s2++) {
                 const system2 = this.logic.getSwitchBoardStatus(s2);
+                const target = ESwitchBoard[s2];
                 result.push({
-                    address: `/d/repairs/${ESwitchBoard[s2]}/is-error`,
-                    args: {type: 'i', value: system2.isError ? 1 : 0}
+                    target,
+                    property: `is-error`,
+                    payload: system2.isError ? `1` : `0`
                 }, {
-                    address: `/d/repairs/${ESwitchBoard[s2]}/is-online`,
-                    args: {type: 'i', value: system2.isOnline ? 1 : 0}
+                    target,
+                    property: `is-online`,
+                    payload: system2.isOnline ? `1` : `0`
                 }, {
-                    address: `/d/repairs/${ESwitchBoard[s2]}/load`,
-                    args: {type: 'f', value: system2.overload}
+                    target,
+                    property: `load`,
+                    payload: system2.overload.toFixed(2)
                 }, {
-                    address: `/d/repairs/${ESwitchBoard[s2]}/overload-threshold`,
-                    args: {type: 'f', value: system2.overloadErrorThreshold}
+                    target,
+                    property: `overload-threshold`,
+                    payload: system2.overloadErrorThreshold.toFixed(2)
                 });
             }
             return result;
-        })).subscribe(this.oscDriver.outbox);
+        })).subscribe(this.netDriver.outbox);
     }
     
     beginRepair(id: ESystem) {

@@ -1,11 +1,10 @@
 import {FileSystem, LocalFileSystem} from "kissfs";
 import {HttpCommandsDriver, createHttpCommandsDriver} from "./core/http-commands";
-import {OpenEpsilon, OscUdpDriver} from "open-epsilon";
+import { MqttDriver, NetworkDriver } from "./mqtt-driver";
 
 import {EcrModule} from "./ecr/index";
 import {HttpDriver} from 'empty-epsilon-js';
 import {Persistence} from "./core/persistency";
-import {UdpOptions} from "osc";
 
 const FILE_PATH = 'game-monitor.json';
 
@@ -35,29 +34,29 @@ export function getMonitoredAddresses(fs: FileSystem): Array<string>{
 class SimulatorServices {
     private readonly httpCommandsDriver: HttpCommandsDriver;
     private readonly eeDriver: HttpDriver;
-    private readonly oscDriver: OscUdpDriver;
+    private readonly netDriver: MqttDriver;
     private readonly ecrModule: EcrModule;
-    private openEpsilon: OpenEpsilon;
+    // private openEpsilon: OpenEpsilon;
 
-    constructor(options: Options, private fs: FileSystem) {
-        this.oscDriver = new OscUdpDriver(options.oscOptions);
+    constructor(options: Options, fs: FileSystem) {
+        this.netDriver = new MqttDriver();
         this.httpCommandsDriver = createHttpCommandsDriver({port:options.httpPort || 56667});
         this.eeDriver = new HttpDriver(options.eeAddress);
-        this.ecrModule = new EcrModule(this.eeDriver, this.oscDriver, this.httpCommandsDriver, new Persistence('ECR', fs, 'ecr-state.json'));
-        this.openEpsilon = new OpenEpsilon(this.eeDriver, this.oscDriver);
-        this.openEpsilon.monitoredAddresses = getMonitoredAddresses(fs);
+        this.ecrModule = new EcrModule(this.eeDriver, this.netDriver, this.httpCommandsDriver, new Persistence('ECR', fs, 'ecr-state.json'));
+        // this.openEpsilon = new OpenEpsilon(this.eeDriver, this.oscDriver);
+        // this.openEpsilon.monitoredAddresses = getMonitoredAddresses(fs);
     }
 
     async init() {
-        await this.oscDriver.open();
+        await this.netDriver.open();
         await this.ecrModule.init();
-        this.openEpsilon.init();
+        // this.openEpsilon.init();
     }
 
     close() {
-        this.openEpsilon.destroy();
+        // this.openEpsilon.destroy();
         this.httpCommandsDriver.destroy();
-        this.oscDriver.close();
+        this.netDriver.close();
         this.ecrModule.destroy();
         this.eeDriver.close();
     }
@@ -83,13 +82,6 @@ type Options = {
     resources: string;
     httpPort: number;
     eeAddress: string;
-    oscOptions: UdpOptions;
 }
 
-const DEFAULT_OPTIONS = {
-    oscOptions: {
-        localAddress: "0.0.0.0",
-        localPort: 57121,
-        remotePort: 57122
-    }
-};
+const DEFAULT_OPTIONS = {};

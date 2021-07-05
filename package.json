@@ -49,15 +49,13 @@
     "typescript": "^4.3.5"
   },
   "dependencies": {
+    "async-mqtt": "^2.6.1",
     "cli": "^1.0.1",
     "empty-epsilon-js": "2.0.1",
     "kissfs": "^0.7.1",
     "naming": "^1.0.6",
-    "open-epsilon": "1.0.1",
-    "osc": "^2.4.1",
     "rxjs": "^6.5.3",
     "rxjs-compat": "^6.5.3",
-    "source-map-support": "~0.5.19",
     "tslib": "~2.3.0"
   }
 }
