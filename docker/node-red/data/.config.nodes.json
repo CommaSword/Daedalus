@@ -433,7 +433,7 @@
     },
     "node-red-dashboard": {
         "name": "node-red-dashboard",
-        "version": "2.29.3",
+        "version": "2.30.0",
         "local": true,
         "user": true,
         "nodes": {
