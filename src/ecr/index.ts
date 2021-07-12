@@ -43,9 +43,8 @@ export class EcrModule {
                     const overloadThreshold = Number(payload);
                     this.logic.setOverloadThreshold(s2, overloadThreshold);
                     break;
-                case 'load':
-                    const overload = Number(payload);
-                    this.logic.setOverload(s2, overload);
+                case 'reset-load':
+                    this.logic.setOverload(s2, 0);
                     break;
                 default:
                     console.error('unknown command', property);

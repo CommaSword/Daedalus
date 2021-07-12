@@ -1,15 +1,14 @@
-#include <SPI.h>         // needed for Arduino versions later than 0018
-#include <Ethernet2.h>
-#include <EthernetUdp2.h>     // UDP library from: bjoern@cs.stanford.edu 12/30/2008
-
-#include <OSCMessage.h>        // https://github.com/CNMAT/OSC
 /*
  Panel
  */
+#include <SPI.h>         // needed for Arduino versions later than 0018
+#include <Ethernet2.h>
+#include <PubSubClient.h> // https://github.com/knolleary/pubsubclient
+#include <stdlib.h>
 
 // #define DEBUG
 #define ID "B3"
-byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xF0, 0x05};
+byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xF0, 0x01};
 
 
 //leds
@@ -23,12 +22,8 @@ byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xF0, 0x05};
 #define jack 9
 
 // server data
-#define serverPort 57121
-
 #define BLINK_INTERVAL 1000
 #define BLINK_STATE ((millis() / BLINK_INTERVAL) % 2)            // ledState used to set the LED
-
-#define localPort 57122
 
 #define ZERO_LOAD 0.0001
 
@@ -52,14 +47,13 @@ enum PowerState {
     OFFLINE
 };
 
-uint8_t packetBuffer[UDP_TX_PACKET_MAX_SIZE]; //buffer to hold incoming packet,
+char packetBuffer[UDP_TX_PACKET_MAX_SIZE]; //buffer to hold incoming packet,
 
 
 //the Arduino's IP
-IPAddress serverIp(255, 255, 255, 255);
-
-// An EthernetUDP instance to let us send and receive packets over UDP
-EthernetUDP udp;
+IPAddress serverIp(192, 168, 1, 173);
+EthernetClient ethClient;
+PubSubClient client(serverIp, 1883, onMessage, ethClient);
 
 // STATE FLAGS
 boolean online = 0; // online state of the switch
@@ -82,6 +76,46 @@ void lightTest() {
         digitalWrite(yellowLed, LOW);
         delay(i * 50);
         digitalWrite(blueLed, LOW);
+    }
+}
+
+void applyStateToLeds() {
+    digitalWrite(greenLed, (currentState == ONLINE || (BLINK_STATE && (currentState != OFFLINE))) ? HIGH : LOW);
+    digitalWrite(yellowLed, error ? HIGH : LOW);
+    digitalWrite(blueLed, (!error && (load <= ZERO_LOAD)) ? HIGH : LOW);
+}
+
+void onMessage(char* topic, byte* payload, unsigned int length) {
+    // print message
+    PRINT("Message arrived [");
+    PRINT(topic);
+    PRINT("] ");
+    for (int i=0;i<length;i++) {
+        PRINT((char)payload[i]);
+    }
+    PRINT_LN();
+    String topicStr(topic);
+
+    if (topicStr == "/d-out/" ID "/is-online"){
+        online = payload[0] == '1';
+        PRINT("online : ");
+        PRINT_LN(payload[0]);
+    } else if (topicStr == "/d-out/" ID "/is-error"){
+        error = payload[0] == '1';
+        PRINT("error : ");
+        PRINT_LN(payload[0]);
+    }  else if (topicStr == "/d-out/" ID "/load"){
+        // Copy the payload to a new buffer
+        char* p = (char*)malloc(length + 1);
+        memcpy(p, payload, length);
+        p[length] = NULL;
+        String payloadStr(p);
+        load = payloadStr.toFloat();
+        PRINT("overload : ");
+        PRINT_LN(payloadStr);
+        free(p);
+    } else {
+        PRINT_LN(">> Unhandled!");
     }
 }
 
@@ -129,25 +163,31 @@ void setup() {
 
     // reset leds state
     applyStateToLeds();
-    // start the Ethernet and UDP
-    udp.begin(localPort);
 }
 
-OSCMessage msg;
-
+void reconnect() {
+    digitalWrite(greenLed, LOW);
+    digitalWrite(yellowLed, HIGH);
+    digitalWrite(blueLed, HIGH);
+    // Loop until we're reconnected
+    PRINT("Attempting MQTT connection...");
+    // Attempt to connect
+    if (client.connect("arduinoClient")) {
+        PRINT("connected");
+        // resubscribe to all daedalus output of this panel
+        client.subscribe("d-out/" ID "/#");
+    } else {
+        PRINT("failed, rc=");
+        PRINT(client.state());
+        PRINT_LN(" try again in 5 seconds");
+    }
+}
 void loop() {
-    //make an empty message to fill with the incoming data
-
-    // if there's data available, read a packet
-    int packetSize = udp.parsePacket();
-
-    if (packetSize) {
-        PRINT_LN("");
-        // read all pending packets
-        while (packetSize) {
-            handlePacket(packetSize);
-            // delay(1);
-            packetSize = udp.parsePacket();
+     if (!client.connected()) {
+        reconnect();
+        while (!client.connected()) {
+            reconnect();
+            delay(5000);
         }
     }
     enum PowerState oldState = currentState;
@@ -167,35 +207,6 @@ void loop() {
 
     PRINT("Zz");
     delay(10);
-}
-
-void handlePacket(int packetSize) {
-    serverIp = udp.remoteIP();
-    //  printPacketMetadata(packetSize);
-
-    // read ahead first 2 characters to decide if this message should be parsed
-    packetSize = packetSize - 2;
-    udp.read(packetBuffer, 2);
-    if (packetBuffer[1] == 'd') {
-         PRINT("1");
-        msg.fill(packetBuffer, 2);
-        while (packetSize--) {
-            msg.fill(udp.read());
-        }
-        if (msg.hasError()) {
-            OSCErrorCode errorCode = msg.getError();
-            PRINT("************ mesage error code : ");
-            PRINT_LN(errorCode);
-        } else {
-            //   printMessageData(msg);
-            msg.dispatch("/d/repairs/" ID "/is-online", handleIsOnline);
-            msg.dispatch("/d/repairs/" ID "/is-error", handleIsError);
-            msg.dispatch("/d/repairs/" ID "/load", handleOverload);
-        }
-        msg.empty();
-    } else {
-        PRINT("0");
-    }
 }
 
 void applyServerInputToState() {
@@ -222,7 +233,7 @@ void applyTimeouts() {
         case STARTUP_PENDING:
             if (millis() > endOfPendingTime) {
                 PRINT_LN("sending startup command");
-                sendMessage("/d/repairs/" ID "/start-up");
+                client.publish("/d-in/" ID "/start-up","");
             }
             break;
         case SOFT_RESET_PENDING:
@@ -233,13 +244,13 @@ void applyTimeouts() {
         case SOFT_RESET:
             if (millis() > endOfPendingTime) {
                 PRINT_LN("sending reset-load command");
-                sendMessage("/d/repairs/" ID "/load", 0.0);
+                client.publish("/d-in/" ID "/reset-load","");
             }
             break;
         case SHUTDOWN_PENDING:
             if (millis() > endOfPendingTime) {
                 PRINT_LN("sending shutdown command");
-                sendMessage("/d/repairs/" ID "/shut-down");
+                client.publish("/d-in/" ID "/shut-down","");
             }
             break;
     }
@@ -280,58 +291,4 @@ void handleButtons() {
             }
             break;
     }
-}
-
-void sendMessage(char msg[]) {
-    PRINT("sending to ");
-    PRINT_LN(udp.remoteIP());
-    OSCMessage msgOut(msg);
-    udp.beginPacket(udp.remoteIP(), serverPort);
-    msgOut.send(udp);
-    udp.endPacket();
-    if (msgOut.hasError()) {
-        PRINT_LN(msgOut.hasError());
-    }
-    msgOut.empty();
-}
-
-void sendMessage(char msg[], float data) {
-    PRINT("sending to ");
-    PRINT_LN(udp.remoteIP());
-    OSCMessage msgOut(msg);
-    msgOut.add((float) data);
-    udp.beginPacket(udp.remoteIP(), serverPort);
-    msgOut.send(udp);
-    udp.endPacket();
-    if (msgOut.hasError()) {
-        PRINT_LN(msgOut.hasError());
-    }
-    msgOut.empty();
-}
-
-void handleIsOnline(OSCMessage &msg) {
-    // printMessageData(msg);
-    online = msg.getInt(0) == 1;
-    PRINT("online : ");
-    PRINT_LN(msg.getInt(0));
-}
-
-void handleIsError(OSCMessage &msg) {
-    // printMessageData(msg);
-    error = msg.getInt(0) == 1;
-    PRINT("error : ");
-    PRINT_LN(msg.getInt(0));
-}
-
-void handleOverload(OSCMessage &msg) {
-    // printMessageData(msg);
-    load = msg.getFloat(0);
-    PRINT("overload : ");
-    PRINT_LN(msg.getFloat(0));
-}
-
-void applyStateToLeds() {
-    digitalWrite(greenLed, (currentState == ONLINE || (BLINK_STATE && (currentState != OFFLINE))) ? HIGH : LOW);
-    digitalWrite(yellowLed, error ? HIGH : LOW);
-    digitalWrite(blueLed, (!error && (load <= ZERO_LOAD)) ? HIGH : LOW);
 }
