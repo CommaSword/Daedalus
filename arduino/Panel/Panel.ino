@@ -21,6 +21,8 @@ byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xF0, 0x01};
 //jack
 #define jack 9
 
+#define RECONNECT_INTERVAL 5000
+
 // server data
 #define BLINK_INTERVAL 1000
 #define BLINK_STATE ((millis() / BLINK_INTERVAL) % 2)            // ledState used to set the LED
@@ -55,12 +57,15 @@ IPAddress serverIp(192, 168, 1, 173);
 EthernetClient ethClient;
 PubSubClient client(serverIp, 1883, onMessage, ethClient);
 
+// MQTT connection 
+long lastReconnectAttempt = 0;
+
 // STATE FLAGS
 boolean online = 0; // online state of the switch
 boolean error = 0; // mode of the panel
 float load = 0.0; // load of the panel
 enum PowerState currentState = OFFLINE;
-unsigned long endOfPendingTime = 0;        // will store last time LED was updated
+unsigned long endOfPendingTime = 0;        // when current _PENDING state should end
 
 void lightTest() {
 
@@ -77,12 +82,6 @@ void lightTest() {
         delay(i * 50);
         digitalWrite(blueLed, LOW);
     }
-}
-
-void applyStateToLeds() {
-    digitalWrite(greenLed, (currentState == ONLINE || (BLINK_STATE && (currentState != OFFLINE))) ? HIGH : LOW);
-    digitalWrite(yellowLed, error ? HIGH : LOW);
-    digitalWrite(blueLed, (!error && (load <= ZERO_LOAD)) ? HIGH : LOW);
 }
 
 void onMessage(char* topic, byte* payload, unsigned int length) {
@@ -165,34 +164,34 @@ void setup() {
     applyStateToLeds();
 }
 
-void reconnect() {
-    digitalWrite(greenLed, LOW);
-    digitalWrite(yellowLed, HIGH);
-    digitalWrite(blueLed, HIGH);
-    // Loop until we're reconnected
+boolean reconnectLoop() {
     PRINT("Attempting MQTT connection...");
-    // Attempt to connect
-    if (client.connect("arduinoClient")) {
-        PRINT("connected");
-        // resubscribe to all daedalus output of this panel
-        client.subscribe("d-out/" ID "/#");
-    } else {
-        PRINT("failed, rc=");
-        PRINT(client.state());
-        PRINT_LN(" try again in 5 seconds");
-    }
-}
-void loop() {
-    if (!client.connected()) {
-        reconnect();
-        while (!client.connected()) {
-            reconnect();
-            delay(5000);
+    long now = millis();
+    if (now - lastReconnectAttempt > RECONNECT_INTERVAL) {
+        lastReconnectAttempt = now;
+        if (client.connect("panel " ID)) {
+            PRINT("connected");
+            // resubscribe to all daedalus output of this panel
+            client.subscribe("d-out/" ID "/#");
+        } else {
+            PRINT("failed, rc=");
+            PRINT(client.state());
+            PRINT_LN(" try again");
+        }
+        if (client.connected()){
+            lastReconnectAttempt = 0;
         }
     }
-    client.loop();
-    enum PowerState oldState = currentState;
+}
 
+void loop() {
+    enum PowerState oldState = currentState;
+    if (client.connected()) {
+        // handle messages
+        client.loop();
+    } else {
+        reconnectLoop();
+    }
     applyServerInputToState();
     handleButtons();
 
@@ -234,7 +233,7 @@ void applyTimeouts() {
         case STARTUP_PENDING:
             if (millis() > endOfPendingTime) {
                 PRINT_LN("sending startup command");
-                client.publish("/d-in/" ID "/start-up","");
+                sendMessage("/d-in/" ID "/start-up");
             }
             break;
         case SOFT_RESET_PENDING:
@@ -245,15 +244,21 @@ void applyTimeouts() {
         case SOFT_RESET:
             if (millis() > endOfPendingTime) {
                 PRINT_LN("sending reset-load command");
-                client.publish("/d-in/" ID "/reset-load","");
+                sendMessage("/d-in/" ID "/reset-load");
             }
             break;
         case SHUTDOWN_PENDING:
             if (millis() > endOfPendingTime) {
                 PRINT_LN("sending shutdown command");
-                client.publish("/d-in/" ID "/shut-down","");
+                sendMessage("/d-in/" ID "/shut-down");
             }
             break;
+    }
+}
+
+void sendMessage(const char *topic){
+    if(client.connected()){
+        client.publish(topic, "");
     }
 }
 
@@ -291,5 +296,17 @@ void handleButtons() {
                 currentState = STARTUP_PENDING;
             }
             break;
+    }
+}
+
+void applyStateToLeds() {
+    if (client.connected()) {
+        digitalWrite(greenLed, (currentState == ONLINE || (BLINK_STATE && (currentState != OFFLINE))) ? HIGH : LOW);
+        digitalWrite(yellowLed, error ? HIGH : LOW);
+        digitalWrite(blueLed, (!error && (load <= ZERO_LOAD)) ? HIGH : LOW);
+    } else {
+        digitalWrite(greenLed, BLINK_STATE ? HIGH : LOW);
+        digitalWrite(yellowLed, BLINK_STATE ? HIGH : LOW);
+        digitalWrite(blueLed, BLINK_STATE ? HIGH : LOW);
     }
 }
