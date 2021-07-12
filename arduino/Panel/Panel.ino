@@ -183,13 +183,14 @@ void reconnect() {
     }
 }
 void loop() {
-     if (!client.connected()) {
+    if (!client.connected()) {
         reconnect();
         while (!client.connected()) {
             reconnect();
             delay(5000);
         }
     }
+    client.loop();
     enum PowerState oldState = currentState;
 
     applyServerInputToState();
