@@ -35,9 +35,6 @@ node_modules
 # TypeScript target
 dist
 
-# Visual Studio Code local project settings
-.vscode
-
 .nyc_output
 .idea
 test/config.ts

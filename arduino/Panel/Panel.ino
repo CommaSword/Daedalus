@@ -1,11 +1,11 @@
-/*
- Panel
- */
 #include <SPI.h>         // needed for Arduino versions later than 0018
 #include <Ethernet2.h>
 #include <EthernetUdp2.h>     // UDP library from: bjoern@cs.stanford.edu 12/30/2008
 
 #include <OSCMessage.h>        // https://github.com/CNMAT/OSC
+/*
+ Panel
+ */
 
 // #define DEBUG
 #define ID "B3"
@@ -52,7 +52,7 @@ enum PowerState {
     OFFLINE
 };
 
-char packetBuffer[UDP_TX_PACKET_MAX_SIZE]; //buffer to hold incoming packet,
+uint8_t packetBuffer[UDP_TX_PACKET_MAX_SIZE]; //buffer to hold incoming packet,
 
 
 //the Arduino's IP
