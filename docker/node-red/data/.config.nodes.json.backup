@@ -431,25 +431,6 @@
             }
         }
     },
-    "node-red-contrib-osc": {
-        "name": "node-red-contrib-osc",
-        "version": "1.1.0",
-        "local": true,
-        "user": true,
-        "nodes": {
-            "osc": {
-                "name": "osc",
-                "types": [
-                    "osc"
-                ],
-                "enabled": true,
-                "local": true,
-                "user": false,
-                "module": "node-red-contrib-osc",
-                "file": "/data/node_modules/node-red-contrib-osc/osc.js"
-            }
-        }
-    },
     "node-red-dashboard": {
         "name": "node-red-dashboard",
         "version": "2.29.3",
@@ -686,6 +667,44 @@
                 "user": false,
                 "module": "node-red-dashboard",
                 "file": "/data/node_modules/node-red-dashboard/nodes/ui_spacer.js"
+            }
+        }
+    },
+    "node-red-contrib-ui-led": {
+        "name": "node-red-contrib-ui-led",
+        "version": "0.4.9",
+        "local": true,
+        "user": true,
+        "nodes": {
+            "ui_led": {
+                "name": "ui_led",
+                "types": [
+                    "ui_led"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-ui-led",
+                "file": "/data/node_modules/node-red-contrib-ui-led/dist/nodes/ui_led/ui_led.js"
+            }
+        }
+    },
+    "node-red-contrib-finite-statemachine": {
+        "name": "node-red-contrib-finite-statemachine",
+        "version": "2.0.0",
+        "local": true,
+        "user": true,
+        "nodes": {
+            "finite-state-machine": {
+                "name": "finite-state-machine",
+                "types": [
+                    "finite-state-machine"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-finite-statemachine",
+                "file": "/data/node_modules/node-red-contrib-finite-statemachine/dist/finite-state-machine-node.js"
             }
         }
     }
