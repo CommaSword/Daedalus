@@ -56,6 +56,9 @@ IPAddress serverIp(192, 168, 1, 173);
 EthernetClient ethClient;
 PubSubClient client(serverIp, 1883, onMessage, ethClient);
 
+// Initialize the Ethernet server library
+EthernetServer server(80);
+
 // MQTT connection
 long lastReconnectAttempt = 0;
 
@@ -172,6 +175,7 @@ void setup()
         PRINT(".");
     }
 
+    server.begin();
     // reset leds state
     applyStateToLeds();
 }
@@ -183,7 +187,7 @@ boolean reconnectLoop()
     if (now - lastReconnectAttempt > RECONNECT_INTERVAL)
     {
         lastReconnectAttempt = now;
-        if (client.connect("panel " ID))
+        if (client.connect("panel_" ID))
         {
             PRINT("connected");
             // resubscribe to all daedalus output of this panel
@@ -201,7 +205,77 @@ boolean reconnectLoop()
         }
     }
 }
+void handleHttpRequest()
+{
+    // listen for incoming clients
+    EthernetClient client = server.available();
+    if (client)
+    {
+        PRINT_LN("new client");
+        // an http request ends with a blank line
+        boolean currentLineIsBlank = true;
+        while (client.connected())
+        {
+            if (client.available())
+            {
+                char c = client.read();
+                PRINT(c);
+                // if you've gotten to the end of the line (received a newline
+                // character) and the line is blank, the http request has ended,
+                // so you can send a reply
+                if (c == '\n' && currentLineIsBlank)
+                {
+                    // send a standard http response header
+                    client.println("HTTP/1.1 200 OK");
+                    client.println("Content-Type: application/json");
+                    client.println("Connection: close"); // the connection will be closed after completion of the response
+                    client.println("Refresh: 5");        // refresh the page automatically every 5 sec
+                    client.println();
+                    client.println("{");
+                    // output the state
+                    client.print("\t\"online\": ");
+                    client.print(online);
+                    client.println(",");
 
+                    client.print("\t\"error\": ");
+                    client.print(error);
+                    client.println(",");
+
+                    client.print("\t\"load\": ");
+                    client.print(load);
+                    client.println(",");
+
+                    client.print("\t\"currentState\": ");
+                    client.print(currentState);
+                    client.println(",");
+
+                    client.print("\t\"pending\": ");
+                    client.print(endOfPendingTime - millis());
+                    client.println(",");
+
+                    client.print("\t\"connected\": ");
+                    client.print(client.connected() ? "true" : "false");
+                    client.println(",");
+
+                    client.println("}");
+                    delay(1);
+                    client.stop();
+                    PRINT_LN("client disconnected");
+                }
+                if (c == '\n')
+                {
+                    // you're starting a new line
+                    currentLineIsBlank = true;
+                }
+                else if (c != '\r')
+                {
+                    // you've gotten a character on the current line
+                    currentLineIsBlank = false;
+                }
+            }
+        }
+    }
+}
 void loop()
 {
     enum PowerState oldState = currentState;
