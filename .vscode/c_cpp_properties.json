@@ -6,7 +6,7 @@
                 "${workspaceFolder}/arduino/**",
                 "${workspaceFolder}/arduino/libraries/**",
                 "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\cores\\arduino",
-                "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\variants\\standard",
+                // "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\variants\\micro", // standard
                 "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\libraries\\**"
             ],
             "forcedInclude": [

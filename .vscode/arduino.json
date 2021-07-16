@@ -1,3 +1,6 @@
 {
-    "board": "arduino:avr:uno"
+    "board": "arduino:avr:leonardo",
+    "sketch": "arduino\\engineering_ecp-46a\\test\\test.ino",
+    "port": "COM3",
+    "output": "arduino\\logs"
 }
