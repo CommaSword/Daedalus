@@ -11,17 +11,17 @@
 #endif
 
 // Constant that maps the physical pin to the joystick button.
-const int joystickId = 1;
+const int joystickId = 2;
 const int AXIS_X_PIN = A1;
-const int AXIS_Y_PIN = A8;
+const int AXIS_Y_PIN = A9;
 const int AXIS_Z_PIN = A2;
-const int AXIS_RX_PIN = A7;
-const int AXIS_RY_PIN = A3;
-const int AXIS_RZ_PIN = A6;
-// const int AXIS_THROTTLE_PIN = A6;
+const int AXIS_RX_PIN = A8;
+const int AXIS_RY_PIN = A6;
+const int AXIS_RZ_PIN = A7;
+const int HAT_0_PIN = A3;
 
 // Create the joystick
-Joystick_ joystick(0x03 + joystickId, JOYSTICK_TYPE_JOYSTICK, 0, 0, true, true, true, true, true, true, false, false, false, false, false);
+Joystick_ joystick(0x03 + joystickId, JOYSTICK_TYPE_JOYSTICK, 0, 1, true, true, true, true, true, true, false, false, false, false, false);
 
 #define MARGIN_FILTER 15
 #define OUT_MAX 1023
@@ -37,7 +37,7 @@ void setup()
 	pinMode(AXIS_RX_PIN, INPUT);
 	pinMode(AXIS_RY_PIN, INPUT);
 	pinMode(AXIS_RZ_PIN, INPUT);
-	// pinMode(AXIS_THROTTLE_PIN, INPUT);
+	pinMode(HAT_0_PIN, INPUT);
 
 #ifdef DEBUG
     Serial.begin(9600);
@@ -49,6 +49,13 @@ void setup()
 long readSlider(int pinId)
 {
 	long val = OUT_MAX - map(constrain(analogRead(pinId), S_IN_MIN, S_IN_MAX), S_IN_MIN, S_IN_MAX, 0, OUT_MAX);
+	PRINT_LN(val);
+	return val;
+}
+
+long readHatSlider(int pinId)
+{
+	long val = 360 - map(constrain(analogRead(pinId), S_IN_MIN, S_IN_MAX), S_IN_MIN, S_IN_MAX, 0, 180);
 	PRINT_LN(val);
 	return val;
 }
@@ -73,8 +80,8 @@ void loop()
 	PRINT("RY: ");
 	joystick.setRyAxis(readSlider(AXIS_RY_PIN));
 
-	// PRINT("Throttlr: ");
-	// joystick.setThrottle(readSlider(AXIS_THROTTLE_PIN));
+	PRINT("setHatSwitch 0: ");
+	joystick.setHatSwitch(0, readHatSlider(HAT_0_PIN));
 
 	joystick.sendState();
 	delay(50);
