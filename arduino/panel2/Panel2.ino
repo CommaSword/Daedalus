@@ -10,9 +10,9 @@ Serial.begin(9600);
 pinMode(led1, OUTPUT);
 pinMode(led2, OUTPUT);
 pinMode(led3, OUTPUT);
-pinMode(button1, INPUT);
-pinMode(button2, INPUT);
-pinMode(button3, INPUT);
+pinMode(button1, INPUT_PULLUP);
+pinMode(button2, INPUT_PULLUP);
+pinMode(button3, INPUT_PULLUP);
 }
 
 void loop() {

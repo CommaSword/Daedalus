@@ -6,8 +6,8 @@
 #include <PubSubClient.h> // https://github.com/knolleary/pubsubclient
 #include <stdlib.h>
 
-// #define DEBUG
-#define ID "B3"
+#define DEBUG
+#define ID "B1"
 byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xF0, 0x01};
 
 //leds
@@ -51,8 +51,10 @@ enum PowerState
 
 char packetBuffer[UDP_TX_PACKET_MAX_SIZE]; //buffer to hold incoming packet,
 
+void onMessage(char *topic, byte *payload, unsigned int length);
+
 //the Arduino's IP
-IPAddress serverIp(192, 168, 1, 173);
+IPAddress serverIp(192, 168, 0, 10);
 EthernetClient ethClient;
 PubSubClient client(serverIp, 1883, onMessage, ethClient);
 
@@ -101,19 +103,19 @@ void onMessage(char *topic, byte *payload, unsigned int length)
     PRINT_LN();
     String topicStr(topic);
 
-    if (topicStr == "/d-out/" ID "/is-online")
+    if (topicStr == "d-out/" ID "/is-online")
     {
         online = payload[0] == '1';
         PRINT("online : ");
         PRINT_LN(payload[0]);
     }
-    else if (topicStr == "/d-out/" ID "/is-error")
+    else if (topicStr == "d-out/" ID "/is-error")
     {
         error = payload[0] == '1';
         PRINT("error : ");
         PRINT_LN(payload[0]);
     }
-    else if (topicStr == "/d-out/" ID "/load")
+    else if (topicStr == "d-out/" ID "/load")
     {
         // Copy the payload to a new buffer
         char *p = (char *)malloc(length + 1);
@@ -140,9 +142,9 @@ void setup()
     pinMode(blueLed, OUTPUT);
 
     //set button and jack pins as input
-    pinMode(buttonOn, INPUT);
-    pinMode(buttonOff, INPUT);
-    pinMode(jack, INPUT);
+    pinMode(buttonOn, INPUT_PULLUP);
+    pinMode(buttonOff, INPUT_PULLUP);
+    pinMode(jack, INPUT_PULLUP);
 
     lightTest();
 
@@ -302,7 +304,7 @@ void loop()
     applyTimeouts();
     applyStateToLeds();
 
-    PRINT("Zz");
+    // PRINT("Zz");
     delay(10);
 }
 
@@ -337,7 +339,7 @@ void applyTimeouts()
         if (millis() > endOfPendingTime)
         {
             PRINT_LN("sending startup command");
-            sendMessage("/d-in/" ID "/start-up");
+            sendMessage("d-in/" ID "/start-up");
         }
         break;
     case SOFT_RESET_PENDING:
@@ -350,14 +352,14 @@ void applyTimeouts()
         if (millis() > endOfPendingTime)
         {
             PRINT_LN("sending reset-load command");
-            sendMessage("/d-in/" ID "/reset-load");
+            sendMessage("d-in/" ID "/reset-load");
         }
         break;
     case SHUTDOWN_PENDING:
         if (millis() > endOfPendingTime)
         {
             PRINT_LN("sending shutdown command");
-            sendMessage("/d-in/" ID "/shut-down");
+            sendMessage("d-in/" ID "/shut-down");
         }
         break;
     }
@@ -381,11 +383,11 @@ void handleButtons()
     switch (currentState)
     {
     case ONLINE:
-        if (buttonOffVal == LOW)
+        if (buttonOffVal == HIGH)
         {
             PRINT_LN("Button OFF is pressed");
             endOfPendingTime = millis() + SHUTDOWN_DELAY;
-            if (jackVal == HIGH)
+            if (jackVal == LOW)
             {
                 PRINT_LN("SOFT_RESET started");
                 currentState = SOFT_RESET_PENDING;
@@ -398,14 +400,14 @@ void handleButtons()
         }
         break;
     case SOFT_RESET:
-        if (jackVal == LOW)
+        if (jackVal == HIGH)
         {
             PRINT_LN("SOFT_RESET completed");
             currentState = online ? ONLINE : OFFLINE;
         }
         break;
     case OFFLINE:
-        if (buttonOnVal == HIGH)
+        if (buttonOnVal == LOW)
         {
             PRINT_LN("Button ON is pressed");
             endOfPendingTime = millis() + STARTUP_DELAY;
