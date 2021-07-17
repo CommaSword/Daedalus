@@ -6,9 +6,9 @@
 #include <PubSubClient.h> // https://github.com/knolleary/pubsubclient
 #include <stdlib.h>
 
-#define DEBUG
-#define ID "B1"
-byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xF0, 0x01};
+// #define DEBUG
+#define ID "A2"
+byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xF0, 0x02};
 
 //leds
 #define greenLed 4
@@ -49,12 +49,11 @@ enum PowerState
     OFFLINE
 };
 
-char packetBuffer[UDP_TX_PACKET_MAX_SIZE]; //buffer to hold incoming packet,
 
 void onMessage(char *topic, byte *payload, unsigned int length);
 
 //the Arduino's IP
-IPAddress serverIp(192, 168, 0, 10);
+IPAddress serverIp(192, 168, 0, 150);
 EthernetClient ethClient;
 PubSubClient client(serverIp, 1883, onMessage, ethClient);
 

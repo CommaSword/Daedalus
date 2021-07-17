@@ -1,6 +1,6 @@
 {
     "board": "arduino:avr:leonardo",
     "sketch": "arduino\\Panel\\Panel.ino",
-    "port": "COM3",
+    "port": "COM4",
     "output": "arduino\\logs"
 }
