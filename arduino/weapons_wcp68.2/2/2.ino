@@ -21,8 +21,7 @@
 #endif
 
 // Constant that maps the physical pin to the joystick button.
-const int BUTTON_PINS[] = {
-	2,	// trajectory control
+const int PUSH_BUTTON_PINS[] = {
 	3,	// previous target
 	4,	// next target
 	5,	// previous sub-system
@@ -31,14 +30,18 @@ const int BUTTON_PINS[] = {
 	8,	// shield frequency right
 	10,	// beam frequency left
 	16,	// beam frequency right
-	14,	// raise/lower shields
 };
-const int buttonCount = 9;
+const int pushButtonCount = 8;
+const int TOGGLE_BUTTON_PINS[] = {
+	2,	// trajectory control
+	9,	// raise/lower shields
+};
+const int toggleButtonCount = 2;
 
-const int AXIS_X_PIN = A0; // assuming manual aim axis
+const int AXIS_X_PIN = A3; // assuming manual aim axis
 
 // Create the joystick
-Joystick_ joystick(0x03, JOYSTICK_TYPE_JOYSTICK, buttonCount, 0, false, false, false, false, false, false, false, false, false, false, false);
+Joystick_ joystick(0x03, JOYSTICK_TYPE_JOYSTICK, pushButtonCount + toggleButtonCount * 2, 0, true, false, false, false, false, false, false, false, false, false, false);
 
 #define MARGIN_FILTER 15
 #define OUT_MAX 1023
@@ -48,9 +51,14 @@ Joystick_ joystick(0x03, JOYSTICK_TYPE_JOYSTICK, buttonCount, 0, false, false, f
 void setup()
 {
 	// Initialize Button Pins
-	for (int buttonIndex = 0; buttonIndex < buttonCount; buttonIndex++)
+	for (int buttonIndex = 0; buttonIndex < pushButtonCount; buttonIndex++)
 	{
-		pinMode(BUTTON_PINS[buttonIndex], INPUT_PULLUP);
+		pinMode(PUSH_BUTTON_PINS[buttonIndex], INPUT_PULLUP);
+	}
+	// Initialize Button Pins
+	for (int buttonIndex = 0; buttonIndex < toggleButtonCount; buttonIndex++)
+	{
+		pinMode(TOGGLE_BUTTON_PINS[buttonIndex], INPUT_PULLUP);
 	}
 
 #ifdef DEBUG
@@ -69,9 +77,18 @@ long readSlider(int pinId)
 
 void readPushButton(const int buttonIndex)
 {
-	const int val = digitalRead(BUTTON_PINS[buttonIndex]);
+	const int val = digitalRead(PUSH_BUTTON_PINS[buttonIndex]);
 	PRINT_LN("button " buttonIndex "value " val);
 	joystick.setButton(buttonIndex, val);
+}
+
+void readToggleButton(const int buttonIndex)
+{
+	const int val = digitalRead(TOGGLE_BUTTON_PINS[buttonIndex]);
+	PRINT_LN("toggle button " buttonIndex "value " val);
+	const int firstButtonId = pushButtonCount + buttonIndex * 2;
+	joystick.setButton(firstButtonId, val);
+	joystick.setButton(firstButtonId + 1, !val);
 }
 
 void loop()
@@ -79,11 +96,14 @@ void loop()
 	PRINT("X: ");
 	joystick.setXAxis(readSlider(AXIS_X_PIN));
 
-	for (int buttonIndex = 0; buttonIndex < buttonCount; buttonIndex++)
+	for (int buttonIndex = 0; buttonIndex < pushButtonCount; buttonIndex++)
 	{
 		readPushButton(buttonIndex);
 	}
-
+	for (int buttonIndex = 0; buttonIndex < toggleButtonCount; buttonIndex++)
+	{
+		readToggleButton(buttonIndex);
+	}
 	joystick.sendState();
 	delay(50);
 }
