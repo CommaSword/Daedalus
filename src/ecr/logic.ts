@@ -71,9 +71,7 @@ export class EcrLogic {
     addOverloadToSwitchBoard(id: ESwitchBoard, overload: number) {
         const system2 = this.model.switchBoards[id];
         system2.addOverload(overload);
-        if (system2.overload > system2.overloadErrorThreshold) {
-            this.setError(system2.id);
-        }
+        this.setError(system2.id, system2.overload >= system2.overloadErrorThreshold);
     }
 
     getPrimarySystemStatus(id: ESystem): PrimarySystemStatus {
@@ -88,24 +86,22 @@ export class EcrLogic {
         console.log('setOverload', ESwitchBoard[id], value);
         const system2 = this.model.switchBoards[id];
         system2.overload = value;
-        if (system2.overload > system2.overloadErrorThreshold) {
-            this.setError(system2.id);
-        }
+        this.setError(system2.id, system2.overload >= system2.overloadErrorThreshold);
     }
 
     setOverloadThreshold(id: ESwitchBoard, value: number) {
         console.log('setOverloadThreshold', ESwitchBoard[id], value);
         const system2 = this.model.switchBoards[id];
         system2.overloadErrorThreshold = value;
-        if (system2.overload > system2.overloadErrorThreshold) {
-            this.setError(system2.id);
-        }
+        this.setError(system2.id, system2.overload >= system2.overloadErrorThreshold);
     }
 
     /* private */
-    setError(id: ESwitchBoard) {
-        this.model.switchBoards[id].setError();
-        this.updateSupportedSystems(id);
+    setError(id: ESwitchBoard, error: boolean) {
+        const changed = this.model.switchBoards[id].setError(error);
+        if (changed) {
+            this.updateSupportedSystems(id);
+        }
     }
 
     setHardError(id: ESwitchBoard) {

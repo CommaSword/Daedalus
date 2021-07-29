@@ -138,10 +138,12 @@ export class SwitchBoard implements SwitchBoardStatus {
         this.isOnline = true;
     }
 
-    setError() {
-        if (this.isOnline) {
-            this.error = true;
+    setError(error: boolean) {
+        if (this.isOnline && error != this.error) {
+            this.error = error;
+            return true;
         }
+        return false;
     }
 
     setHardError() {
