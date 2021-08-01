@@ -5,7 +5,7 @@
     "buildPreferences": [
         [
             "build.extra_flags",
-            "-DUSB_VID=0x9999 -DUSB_PID=0x9011 '-DUSB_MANUFACTURER=\"Helios\"' '-DUSB_PRODUCT=\"Helios Weapons 1\"'"
+            "-DUSB_VID=0x9999 -DUSB_PID=0x9000 '-DUSB_MANUFACTURER=\"Helios\"' '-DUSB_PRODUCT=\"Helios ECR AUX\"'"
         ]
     ]
 **/
@@ -22,28 +22,15 @@
 
 // Constant that maps the physical pin to the joystick button.
 const int BUTTON_PINS[] = {
-	9,	// fire left 1
-	8,	// fire left 2
-	A4,	// fire right 1
-	A2,	// fire right 2
-	A0,	// fire rear
-	3,	// select cruise
-	10,	// select emp
-	7,	// select heavy
-	11,	// select hvli
-	12,	// select mine
-	13,	// select nuke
-	4	// select torpedo
+	3,	// warp freq. prev.
+	7,	// warp freq. next.
+	6	// warp calibration
 };
-const int pushButtonCount = 12;
+const int pushButtonCount = 3;
 const int TOGGLE_BUTTON_PINS[] = {
-	6,	// load left 1
-	2,	// load left 2
-	0,	// load right 1
-	A3,	// load right 2
-	1	// load rear
+	5	// control to bridge
 };
-const int toggleButtonCount = 5;
+const int toggleButtonCount = 1;
 
 // Create the joystick
 Joystick_ joystick(0x03, JOYSTICK_TYPE_JOYSTICK, pushButtonCount + toggleButtonCount * 2, 0, true, false, false, false, false, false, false, false, false, false, false);
