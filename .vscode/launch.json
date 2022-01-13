@@ -50,7 +50,7 @@
         "--resources",
         "${workspaceFolder}/resources",
         "--eeAddress",
-        "http://192.168.0.51:8081"
+        "http://192.168.1.151:8081"
       ],
       "runtimeArgs": ["--nolazy", "-r", "ts-node/register/transpile-only"],
       "resolveSourceMapLocations": [

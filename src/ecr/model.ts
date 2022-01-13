@@ -69,7 +69,6 @@ export enum ESwitchBoard {
     A2,
     A3,
     B1,
-    B2,
     B3,
     COUNT
 }
@@ -189,9 +188,8 @@ export class EcrModel {
     static readonly switchboardstMap: { [switchId: number]: ESystem[] } = {
         [ESwitchBoard.A1]: [ESystem.BeamWeapons, ESystem.Impulse, ESystem.Warp, ESystem.FrontShield],
         [ESwitchBoard.A2]: [ESystem.Reactor, ESystem.MissileSystem, ESystem.Impulse, ESystem.FrontShield],
-        [ESwitchBoard.A3]: [ESystem.Reactor, ESystem.Maneuver, ESystem.RearShield, ESystem.Drones],
-        [ESwitchBoard.B1]: [ESystem.Reactor, ESystem.MissileSystem, ESystem.Impulse, ESystem.RearShield, ESystem.Drones],
-        [ESwitchBoard.B2]: [ESystem.Reactor, ESystem.BeamWeapons, ESystem.Maneuver, ESystem.RearShield, ESystem.Docks],
+        [ESwitchBoard.A3]: [ESystem.Reactor, ESystem.Maneuver, ESystem.RearShield, ESystem.Drones, , ESystem.Docks],
+        [ESwitchBoard.B1]: [ESystem.Reactor, ESystem.MissileSystem, ESystem.Impulse, ESystem.RearShield, ESystem.Drones, ESystem.BeamWeapons],
         [ESwitchBoard.B3]: [ESystem.MissileSystem, ESystem.Maneuver, ESystem.Warp, ESystem.FrontShield, ESystem.Docks],
     };
 
