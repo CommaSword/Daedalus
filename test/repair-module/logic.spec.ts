@@ -118,14 +118,14 @@ describe('repair module', () => {
         }).timeout(20 * 1000);
     });
 
-    it('When a system2’s overload level reaches its overload threshold, it goes into error state', () => {
-        const system2 = repair.getSwitchBoardStatus(ESwitchBoard.B2) as SwitchBoard;
-        expect(system2.isError).to.eql(false);
-        repair.addOverloadToSwitchBoard(ESwitchBoard.B2, system2.overloadErrorThreshold);
-        expect(system2.isError).to.eql(false);
-        repair.addOverloadToSwitchBoard(ESwitchBoard.B2, 0.00001);
-        expect(system2.isError).to.eql(true);
-    });
+    // it('When a system2’s overload level reaches its overload threshold, it goes into error state', () => {
+    //     const system2 = repair.getSwitchBoardStatus(ESwitchBoard.B2) as SwitchBoard;
+    //     expect(system2.isError).to.eql(false);
+    //     repair.addOverloadToSwitchBoard(ESwitchBoard.B2, system2.overloadErrorThreshold);
+    //     expect(system2.isError).to.eql(false);
+    //     repair.addOverloadToSwitchBoard(ESwitchBoard.B2, 0.00001);
+    //     expect(system2.isError).to.eql(true);
+    // });
 
     describe('When half of supporting system2 is in error state', () => {
         const dependant = ESystem.Impulse;
