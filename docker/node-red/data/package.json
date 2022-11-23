@@ -5,6 +5,6 @@
     "private": true,
     "dependencies": {
         "node-red-contrib-ui-led": "~0.4.9",
-        "node-red-dashboard": "~2.30.0"
+        "node-red-dashboard": "~3.2.3"
     }
 }
